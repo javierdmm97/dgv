@@ -1,0 +1,50 @@
+# Auto-label PRs based on files changed
+
+'feature: player-registration':
+  - lib/features/player_registration/**/*
+
+'feature: breathalyzer':
+  - lib/features/breathalyzer/**/*
+
+'feature: checkpoint':
+  - lib/features/checkpoint/**/*
+
+'feature: scoring':
+  - lib/features/scoring/**/*
+
+'feature: leaderboard':
+  - lib/features/leaderboard/**/*
+
+'feature: achievements':
+  - lib/features/achievements/**/*
+
+'feature: fake-id':
+  - lib/features/fake_id/**/*
+
+'area: ui':
+  - lib/widgets/**/*
+  - lib/core/theme/**/*
+
+'area: core':
+  - lib/core/**/*
+
+'area: tests':
+  - test/**/*
+
+'area: docs':
+  - '*.md'
+  - .github/**/*
+
+'area: ci/cd':
+  - .github/workflows/**/*
+  - lefthook.yml
+
+'area: dependencies':
+  - pubspec.yaml
+  - pubspec.lock
+
+'area: android':
+  - android/**/*
+
+'area: ios':
+  - ios/**/*

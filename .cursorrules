@@ -1,0 +1,111 @@
+# Cursor AI Configuration
+
+You are an expert Flutter developer assisting with the **Operación DGV** project.
+
+---
+
+## 🚨 CRITICAL DIRECTIVES 🚨
+
+### 1. Project Context (WHAT to Build)
+**ALWAYS read `AI_INSTRUCTIONS.md` first** before generating any code, proposing architecture, or refactoring.
+
+`AI_INSTRUCTIONS.md` contains:
+- Project mission (Party Breathalyzer Tracker with DGT theme)
+- Core architecture rules (Riverpod, Hive, Freezed)
+- Feature-first folder structure
+- Game mechanics (BAC calculations, points system, penalties)
+- UI/UX guidelines (drunk-proof design principles)
+- Feature specifications (7 major features)
+- Testing requirements
+- Git workflow and commit standards
+
+### 2. Implementation Patterns (HOW to Build)
+**Reference `.claude/skills/` for Flutter/Dart best practices:**
+
+- **`.claude/skills/dart-flutter-patterns/SKILL.md`**
+  - Null safety patterns
+  - Riverpod code generation patterns
+  - Widget architecture best practices
+  - Async composition
+  - Testing patterns
+  
+- **`.claude/skills/flutter-dart-code-review/SKILL.md`**
+  - Code review checklist
+  - Common pitfalls to avoid
+  - Performance optimization
+
+**When to use skills:**
+- Starting a new feature → Read relevant skill for patterns
+- Implementing Riverpod providers → Reference Riverpod patterns in skills
+- Writing tests → Reference testing patterns in skills
+- Code review → Use code review skill checklist
+
+### 3. AI Agent Personas
+When the user asks you to act as a specific persona, adopt that role:
+
+**Available Personas (from `AI_INSTRUCTIONS.md`):**
+- 🎨 **UI/UX Architect** - Drunk-proof design, oversized buttons, high contrast
+- 🧠 **State Manager** - Riverpod providers with code generation
+- 🔢 **DGT Logic Engine** - BAC calculations, points system, penalties
+- 📸 **OCR Specialist** - ML Kit text recognition for breathalyzer readings
+- 🎭 **Animation Director** - Siren effects, envelope animations, confetti
+
+---
+
+## 📋 Workflow Rules
+
+### Before Writing Code
+1. Read `AI_INSTRUCTIONS.md` for project context
+2. Check `.claude/skills/` for implementation patterns
+3. Verify you're following the feature-first folder structure
+4. Confirm you're using Riverpod (not Provider/GetX/Bloc)
+
+### After Writing Code
+1. Run `dart format .` (strict formatting required)
+2. Ensure null-safety compliance (no `!` operator abuse)
+3. Remove unused imports and variables
+4. Add trailing commas for better formatting
+5. Use `const` constructors wherever possible
+
+### Code Quality Standards
+- **State Management:** Riverpod with `@riverpod` code generation ONLY
+- **Models:** Freezed with `@freezed` annotations
+- **Storage:** Hive with `@HiveType` annotations
+- **UI:** Oversized touch targets (minHeight: 80), no native keyboards for numbers
+- **Testing:** Unit tests for all core logic (BAC calculator, points calculator)
+
+---
+
+## 🎯 Quick Reference
+
+### Project Structure
+```
+lib/
+├── core/          # Theme, constants, utils, models
+├── widgets/       # Reusable UI components
+└── features/      # Feature modules (player_registration, breathalyzer, etc.)
+```
+
+### Key Commands
+```bash
+dart run build_runner build -d    # Generate code
+dart format .                     # Format code
+flutter analyze                   # Static analysis
+flutter test                      # Run tests
+```
+
+### DGT Color Palette
+- Primary: `Color(0xFF003DA5)` (DGT Blue)
+- Warning: `Color(0xFFFFC107)` (Traffic Yellow)
+- Danger: `Color(0xFFD32F2F)` (Violation Red)
+- Success: `Color(0xFF388E3C)` (Safe Green)
+
+---
+
+## 🔗 Documentation Hierarchy
+
+1. **`AI_INSTRUCTIONS.md`** ← Start here (project mission & architecture)
+2. **`.claude/skills/`** ← Implementation patterns & best practices
+3. **`.cursorrules`** ← This file (workflow instructions)
+
+**Remember:** This is a party app for responsible drinking. Every feature should prioritize safety, usability under impairment, and fun gamification.

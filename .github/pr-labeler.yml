@@ -1,0 +1,8 @@
+# Auto-label PRs based on branch name
+
+feature: 'feature/*'
+fix: 'fix/*'
+hotfix: 'hotfix/*'
+refactor: 'refactor/*'
+docs: 'docs/*'
+chore: 'chore/*'
