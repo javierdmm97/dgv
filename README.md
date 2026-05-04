@@ -58,14 +58,20 @@ lib/
 
 ## 🎮 Core Features
 
-1. **Player Registration** - Avatar selection, sex/body size input, photo capture
-2. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
-3. **Checkpoint System** - Timed rounds with police siren alerts
-4. **Points System** - BAC-based scoring with penalties for "speeding"
-5. **Leaderboard** - Real-time rankings with BAC progression graphs
-6. **DGT Titles** - Awards like "Velocidad de Crucero" and "Multa por Exceso"
-7. **Fake DGT License** - Generated ID cards with player photos and achievements
-8. **Final Ceremony** - "Mario Party" style reveal with envelope animations
+1. **Main Menu** - Persistent home screen with Add Player, Fake News, Fake Error (jokes), Start/Resume Game
+2. **Player Registration** - Name + surname, sex/body size, photo capture, auto-generated license ID
+3. **Round 0 (Baseline)** - Initial BAC measurement with no feedback (silent baseline)
+4. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
+5. **Checkpoint System** - Timed rounds with police siren alerts
+6. **"Sweet Spot" System** - Price is Right mechanic: get close to optimal BAC without going over
+7. **Points System** - Hybrid scoring: gain points for staying in zone, lose for dangerous behavior
+8. **Real-time Feedback** - Messages after each measurement (points, titles, warnings)
+9. **Live License Updates** - Licenses auto-update with badges, viewable anytime by clicking player
+10. **Leaderboard** - Real-time rankings with BAC progression graphs
+11. **DGT Titles** - Per-round awards with logos (Velocidad de Crucero, Multa por Exceso, etc.)
+12. **Environmental Badges** - Top 5 highest BAC players get eco-style distinctive badges (as a joke)
+13. **Final Ceremony** - 3 Grand Prizes + Environmental Distinctives reveal with animations
+14. **Persistent State** - All data saved continuously, resume game after crash/restart
 
 ---
 
@@ -107,10 +113,13 @@ flutter build appbundle --release       # Android App Bundle
 ## 🎨 Design System
 
 ### DGT Color Palette
-- **Primary:** `#003DA5` (DGT Blue)
-- **Warning:** `#FFC107` (Traffic Yellow)
-- **Danger:** `#D32F2F` (Violation Red)
-- **Success:** `#388E3C` (Safe Green)
+- **Primary:** `#0F5993` (DGT Blue)
+- **Background:** `#F6F4F5` (Light Gray)
+- **License ID:** `#F3E8EC` (Light Pink)
+- **Green:** `#D2D667` (Lime Green)
+- **Yellow:** `#F4E944` (Bright Yellow)
+- **Orange:** `#F3910E` (Traffic Orange)
+- **Red:** `#EF6B6A` (Violation Red)
 
 ### UI/UX Principles
 - **Oversized touch targets** (minHeight: 80)
@@ -123,13 +132,27 @@ flutter build appbundle --release       # Android App Bundle
 
 ## 🧮 Game Mechanics
 
-### Points System
+### "Sweet Spot" System (Price is Right Mechanic)
+Each player has a personalized **optimal BAC zone** based on body size:
+- **Small (S):** 0.05 optimal BAC
+- **Medium (M):** 0.07 optimal BAC
+- **Large (L):** 0.09 optimal BAC
+- **Tolerance:** ±0.02 (the "sweet spot")
+
+### Points System (Hybrid)
 - Everyone starts with **15 points**
-- Points are deducted based on BAC increase rate:
-  - Safe pace (0.00-0.02/hr): 0 points
-  - Moderate (0.02-0.05/hr): -1 point
-  - Fast (0.05-0.10/hr): -3 points
-  - Dangerous (>0.10/hr): -5 points
+- **Gain points** for staying in your zone:
+  - In the zone (±0.02): +2 points
+  - Close (±0.02-0.05): +1 point
+- **Lose points** for dangerous behavior:
+  - Too low (<-0.05): 0 points
+  - Over the line (>+0.05): -3 points + lose Grand Prize eligibility
+  - Spike too fast (>0.15/hr): -2 points
+  - Impoundment (≥1.2): -5 points + sit out next round
+
+### Round System
+- **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
+- **Round 1+:** Full feedback after each measurement (points, titles, warnings)
 
 ### BAC Calculation
 Uses the **Widmark formula** with sex and body size:
@@ -137,12 +160,58 @@ Uses the **Widmark formula** with sex and body size:
 - `r = 0.68` for men, `0.55` for women
 - Body sizes: S (55kg), M (70kg), L (90kg)
 
-### DGT Titles
-- 🟢 **Velocidad de Crucero** - Most consistent pace
-- 🔴 **Multa por Exceso** - Aggressive BAC spike
-- 🔰 **La 'L' de Prácticas** - Lowest overall score
-- 🔋 **Vehículo Híbrido** - Drank water (BAC dropped)
-- 🛠️ **ITV Passed** - Same reading twice in a row
+### DGT Titles (Per-Round Awards)
+Awarded **every checkpoint** based on player behavior:
+- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
+- 🔴 **Multa por Exceso** - Highest BAC spike from last round
+- 🔰 **L de Prácticas** - Lowest BAC in the round
+- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
+- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
+
+Players accumulate these titles throughout the night (tracked with counters).
+
+### Environmental Distinctive Badges
+At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
+
+### Grand Prizes (Final Ceremony)
+Three separate grand prizes awarded at the end:
+1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
+2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
+3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
+
+### Quick Example
+```
+Player: Medium (M), Optimal: 0.07
+Round 0: BAC 0.03 → "Reading recorded" (no feedback)
+Round 1: BAC 0.07 → "+2 points: In the zone!" (green screen)
+Round 2: BAC 0.12 → "-3 points: Over the line!" (red screen)
+```
+  - Impoundment (≥1.2): -5 points + sit out next round
+
+### BAC Calculation
+Uses the **Widmark formula** with sex and body size:
+- `BAC = (Alcohol in grams / (Body weight × r)) × 100`
+- `r = 0.68` for men, `0.55` for women
+- Body sizes: S (55kg), M (70kg), L (90kg)
+
+### DGT Titles (Per-Round Awards)
+Awarded **every checkpoint** based on player behavior:
+- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
+- 🔴 **Multa por Exceso** - Highest BAC spike from last round
+- 🔰 **L de Prácticas** - Lowest BAC in the round
+- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
+- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
+
+Players accumulate these titles throughout the night (tracked with counters).
+
+### Environmental Distinctive Badges
+At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
+
+### Grand Prizes (Final Ceremony)
+Three separate grand prizes awarded at the end:
+1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
+2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
+3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
 
 ---
 
