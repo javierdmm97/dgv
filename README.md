@@ -272,3 +272,46 @@ Drunk-proof UX **cannot be validated in simulators**. Always test on real device
 ---
 
 **Built with Flutter 💙 | Powered by Riverpod ⚡ | Gamifying Responsible Drinking 🚔**
+
+---
+
+## 🚀 Quick Reference
+
+### Common Commands
+
+```bash
+# Setup
+flutter pub get                       # Install dependencies
+lefthook install                      # Install git hooks
+dart run build_runner build -d        # Generate code
+
+# Development
+dart run build_runner watch -d        # Watch mode for code generation
+dart format .                         # Format code
+flutter analyze                       # Static analysis
+flutter test                          # Run tests
+flutter test --coverage               # Run tests with coverage
+
+# Running
+flutter run                           # Run in debug mode
+flutter run --release                 # Run in release mode
+
+# Building
+flutter build apk --debug             # Build debug APK
+flutter build apk --release           # Build release APK
+flutter build appbundle --release     # Build release bundle
+```
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Lefthook not running | `lefthook install` |
+| CI failing on format | `dart format . && git add . && git commit --amend --no-edit` |
+| Build runner errors | `flutter clean && flutter pub get && dart run build_runner build -d` |
+| Merge conflicts | `git checkout develop && git pull && git checkout your-branch && git merge develop` |
+
+**For detailed guides, see:**
+- [Development Guide](docs/DEVELOPMENT.md) - Setup, workflow, standards
+- [Automation Guide](docs/AUTOMATION.md) - CI/CD, hooks, releases
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute

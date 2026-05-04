@@ -1,5 +1,9 @@
 # Contributing to Operación DGV
 
+> 📚 **Documentation Navigation:** [README](README.md) | [Development Guide](docs/DEVELOPMENT.md) | [Automation Guide](docs/AUTOMATION.md)
+>
+> This is the entry point for contributors. For detailed setup, workflow, coding standards, and testing information, see the [Development Guide](docs/DEVELOPMENT.md). For CI/CD, git hooks, and release processes, see the [Automation Guide](docs/AUTOMATION.md).
+
 Thank you for your interest in contributing to Operación DGV! This document provides guidelines and instructions for contributing to the project.
 
 ---
@@ -12,7 +16,8 @@ Thank you for your interest in contributing to Operación DGV! This document pro
 4. [Commit Convention](#commit-convention)
 5. [Pull Request Process](#pull-request-process)
 6. [Testing Requirements](#testing-requirements)
-7. [Documentation](#documentation)
+7. [Automation](#automation)
+8. [Documentation](#documentation)
 
 ---
 
@@ -20,41 +25,22 @@ Thank you for your interest in contributing to Operación DGV! This document pro
 
 ### Prerequisites
 
-- Flutter 3.10+ installed
-- Dart 3.0+ installed
-- Git installed
-- Android Studio or VS Code with Flutter extensions
+You'll need Flutter 3.10+, Dart 3.0+, Git, and an IDE with Flutter extensions.
 
-### Initial Setup
+**For complete setup instructions, see: [Setup Guide](docs/DEVELOPMENT.md#quick-setup)**
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/dgv.git
-   cd dgv
-   ```
+### Quick Start
 
-2. **Install dependencies:**
-   ```bash
-   flutter pub get
-   ```
+```bash
+# Clone and setup
+git clone https://github.com/yourusername/dgv.git
+cd dgv
+flutter pub get
+lefthook install
+dart run build_runner build -d
+```
 
-3. **Set up git hooks:**
-   ```bash
-   # Add lefthook to dev_dependencies first
-   flutter pub add --dev lefthook
-   lefthook install
-   ```
-
-4. **Run code generation:**
-   ```bash
-   dart run build_runner build -d
-   ```
-
-5. **Verify setup:**
-   ```bash
-   flutter analyze
-   flutter test
-   ```
+**For detailed setup and verification, see: [Setup Guide](docs/DEVELOPMENT.md#quick-setup)**
 
 ### Read the Documentation
 
@@ -70,115 +56,35 @@ Before contributing, please read:
 
 ### Branch Strategy
 
-- **`main`** - Production-ready code (protected)
-- **`develop`** - Integration branch (protected)
-- **`feature/*`** - New features (e.g., `feature/player-registration`)
-- **`fix/*`** - Bug fixes (e.g., `fix/points-calculation`)
-- **`refactor/*`** - Code refactoring
-- **`docs/*`** - Documentation updates
+We use Git Flow with `main` (production), `develop` (integration), and feature branches (`feature/*`, `fix/*`, `refactor/*`, `docs/*`).
 
-### Creating a New Branch
-
-```bash
-# Always branch from develop
-git checkout develop
-git pull origin develop
-
-# Create your feature branch
-git checkout -b feature/your-feature-name
-```
+**For complete branch strategy and workflow, see: [Git Workflow](docs/DEVELOPMENT.md#git-workflow)**
 
 ### Daily Workflow
 
-1. **Pull latest changes:**
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout your-branch
-   git merge develop
-   ```
+1. Branch from `develop`
+2. Make your changes
+3. Test and format your code
+4. Commit using conventional commits
+5. Push and create a PR
 
-2. **Make your changes**
-
-3. **Run code generation (if needed):**
-   ```bash
-   dart run build_runner build -d
-   ```
-
-4. **Test your changes:**
-   ```bash
-   flutter analyze
-   flutter test
-   dart format .
-   ```
-
-5. **Commit your changes:**
-   ```bash
-   git add .
-   git commit -m "feat(scope): description"
-   ```
-
-6. **Push to your branch:**
-   ```bash
-   git push origin your-branch
-   ```
-
-7. **Create a Pull Request** on GitHub
+**For detailed daily workflow, see: [Daily Workflow](docs/DEVELOPMENT.md#daily-workflow)**
 
 ---
 
 ## 📝 Coding Standards
 
-### Architecture Rules
+We follow strict coding standards to maintain consistency and quality across the codebase.
 
-- **State Management:** Riverpod ONLY (no Provider, GetX, or Bloc)
-- **Models:** Use Freezed for immutable data classes
-- **Storage:** Use Hive for local storage
-- **Folder Structure:** Follow feature-first architecture (see `AI_INSTRUCTIONS.md`)
+### Key Standards
 
-### Code Style
+- **State Management:** Riverpod only
+- **Models:** Freezed for immutable data classes
+- **Storage:** Hive for local storage
+- **Code Style:** Run `dart format .` before committing
+- **UI/UX:** Touch targets minimum 80px, no native keyboards for numbers
 
-- **Formatting:** Run `dart format .` before committing
-- **Line Length:** 120 characters maximum
-- **Trailing Commas:** Required for all function calls with multiple parameters
-- **Const Constructors:** Use `const` wherever possible
-- **Null Safety:** Avoid `!` operator, use `?.` and `??` instead
-
-### UI/UX Guidelines
-
-- **Touch Targets:** Minimum `minHeight: 60`, recommended `minHeight: 80`
-- **No Native Keyboards:** Use custom keypads for numerical input
-- **High Contrast:** Use DGT color palette for accessibility
-- **Minimal Navigation:** Keep flows simple and linear
-
-### Example Code
-
-```dart
-// ✅ GOOD
-@riverpod
-class PlayerList extends _$PlayerList {
-  @override
-  Future<List<PlayerProfile>> build() async {
-    final repo = ref.watch(playerRepositoryProvider);
-    return repo.getAll();
-  }
-  
-  Future<void> addPlayer(PlayerProfile player) async {
-    final repo = ref.read(playerRepositoryProvider);
-    await repo.save(player);
-    ref.invalidateSelf();
-  }
-}
-
-// ❌ BAD
-class PlayerListNotifier extends StateNotifier<List<PlayerProfile>> {
-  PlayerListNotifier() : super([]);
-  
-  void addPlayer(PlayerProfile player) {
-    state = [...state, player]; // Direct state mutation
-  }
-}
-```
+**For complete coding standards and examples, see: [Coding Standards](docs/DEVELOPMENT.md#coding-standards)**
 
 ---
 
@@ -186,55 +92,22 @@ class PlayerListNotifier extends StateNotifier<List<PlayerProfile>> {
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/).
 
-### Format
+### Commit Format
 
-```
+```text
 <type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
 ```
 
-### Types
+**Common types:** feat, fix, docs, style, refactor, test, chore
 
-- **feat** - New feature
-- **fix** - Bug fix
-- **docs** - Documentation changes
-- **style** - Code style changes (formatting, no logic change)
-- **refactor** - Code refactoring (no feature change)
-- **test** - Adding or updating tests
-- **chore** - Maintenance tasks (dependencies, build config)
-- **perf** - Performance improvements
-- **ci** - CI/CD changes
-- **build** - Build system changes
-- **revert** - Revert a previous commit
-
-### Scopes
-
-Use feature names or areas:
-- `player-registration`
-- `breathalyzer`
-- `checkpoint`
-- `scoring`
-- `leaderboard`
-- `achievements`
-- `fake-id`
-- `ui`
-- `core`
-- `tests`
-- `docs`
-
-### Examples
-
+**Examples:**
 ```bash
 feat(breathalyzer): add OCR camera screen
-fix(scoring): correct points deduction for negative deltas
+fix(scoring): correct points deduction formula
 docs(readme): update installation instructions
-refactor(ui): extract massive button to reusable widget
-test(calculator): add BAC calculation edge cases
-chore(deps): update riverpod to 2.4.0
 ```
+
+**For complete commit convention guide, see: [Commit Convention](docs/DEVELOPMENT.md#commit-convention)**
 
 ---
 
@@ -305,81 +178,22 @@ chore(deps): update riverpod to 2.4.0
 
 ## 🧪 Testing Requirements
 
-### Test Coverage
+### Testing Overview
 
 - **Minimum:** 80% code coverage for core logic
-- **Unit Tests:** Required for all utilities and business logic
-- **Widget Tests:** Required for all custom widgets
-- **Integration Tests:** Required for complete user flows
+- **Required:** Unit tests for utilities, widget tests for components, integration tests for flows
 
-### Writing Tests
+**For complete testing guide and examples, see: [Testing](docs/DEVELOPMENT.md#testing)**
 
-**Unit Test Example:**
-```dart
-// test/core/utils/points_calculator_test.dart
-void main() {
-  group('PointsCalculator', () {
-    test('should deduct 3 points for fast BAC increase', () {
-      final penalty = PointsCalculator.calculatePenalty(
-        0.20, // previous
-        0.60, // current
-        const Duration(minutes: 30),
-      );
-      expect(penalty, 3);
-    });
-    
-    test('should deduct 0 points for safe pace', () {
-      final penalty = PointsCalculator.calculatePenalty(
-        0.20,
-        0.22,
-        const Duration(hours: 1),
-      );
-      expect(penalty, 0);
-    });
-  });
-}
-```
+---
 
-**Widget Test Example:**
-```dart
-// test/widgets/massive_button_test.dart
-void main() {
-  testWidgets('MassiveButton calls onPressed when tapped', (tester) async {
-    var pressed = false;
-    
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: MassiveButton(
-            label: 'Test',
-            onPressed: () => pressed = true,
-          ),
-        ),
-      ),
-    );
-    
-    await tester.tap(find.text('Test'));
-    expect(pressed, isTrue);
-  });
-}
-```
+## ⚙️ Automation
 
-### Running Tests
+Our project uses automated workflows for quality assurance:
 
-```bash
-# Run all tests
-flutter test
-
-# Run specific test file
-flutter test test/core/utils/points_calculator_test.dart
-
-# Run with coverage
-flutter test --coverage
-
-# View coverage report
-genhtml coverage/lcov.info -o coverage/html
-open coverage/html/index.html
-```
+- **Git Hooks:** Pre-commit checks for formatting and analysis - [Details](docs/AUTOMATION.md#git-hooks-lefthook)
+- **CI/CD:** Automated testing and building on PRs - [Details](docs/AUTOMATION.md#github-actions)
+- **Releases:** Automated release creation from tags - [Details](docs/AUTOMATION.md#release-automation)
 
 ---
 

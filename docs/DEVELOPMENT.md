@@ -1,6 +1,8 @@
 # 🛠️ Development Guide
 
-Complete guide for setup, daily workflow, coding standards, and collaboration.
+> 📚 **Documentation:** [README](../README.md) | [Contributing](../CONTRIBUTING.md) | [Automation](AUTOMATION.md)
+
+This guide is the authoritative source for development practices, setup, workflow, coding standards, and testing.
 
 ---
 
@@ -34,6 +36,8 @@ flutter pub add --dev lefthook
 lefthook install
 dart run build_runner build -d
 ```
+
+**Note:** Git hooks are managed by Lefthook. For hook configuration details, see [Git Hooks](AUTOMATION.md#git-hooks-lefthook).
 
 ### Verify Installation
 
@@ -105,18 +109,56 @@ docs/update-readme
 
 ## 💬 Commit Convention
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+We follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+### Format
 
 ```
 <type>(<scope>): <description>
 
-Types: feat, fix, docs, style, refactor, test, chore, perf, ci
-Scopes: player-registration, breathalyzer, checkpoint, scoring, etc.
+[optional body]
 
-Examples:
+[optional footer]
+```
+
+### Types
+
+- **feat** - New feature
+- **fix** - Bug fix
+- **docs** - Documentation changes
+- **style** - Code style changes (formatting, no logic change)
+- **refactor** - Code refactoring (no feature change)
+- **test** - Adding or updating tests
+- **chore** - Maintenance tasks (dependencies, build config)
+- **perf** - Performance improvements
+- **ci** - CI/CD changes
+- **build** - Build system changes
+- **revert** - Revert a previous commit
+
+### Scopes
+
+Use feature names or areas:
+- `player-registration`
+- `breathalyzer`
+- `checkpoint`
+- `scoring`
+- `leaderboard`
+- `achievements`
+- `fake-id`
+- `ui`
+- `core`
+- `tests`
+- `docs`
+
+### Examples
+
+```bash
 feat(breathalyzer): add OCR camera screen
-fix(scoring): correct points deduction formula
+fix(scoring): correct points deduction for negative deltas
 docs(readme): update installation instructions
+refactor(ui): extract massive button to reusable widget
+test(calculator): add BAC calculation edge cases
+chore(deps): update riverpod to 2.4.0
 ```
 
 ---
@@ -192,6 +234,8 @@ Update `CHANGELOG.md` under `[Unreleased]`
 - ✅ No merge conflicts
 - ✅ Changelog updated
 
+**Note:** For CI/CD pipeline details, see [GitHub Actions](AUTOMATION.md#github-actions).
+
 ### After Merge
 
 ```bash
@@ -200,6 +244,8 @@ git push origin --delete feature/your-feature-name
 git checkout develop
 git pull origin develop
 ```
+
+**Note:** For release process, see [Release Automation](AUTOMATION.md#release-automation).
 
 ---
 
@@ -267,6 +313,8 @@ Before pushing:
 ---
 
 ## 🚀 Quick Commands
+
+**💡 Tip:** For a quick reference cheat sheet, see [Quick Reference](../README.md#quick-reference)
 
 ### Setup
 ```bash
@@ -361,6 +409,7 @@ git commit -m "chore: resolve merge conflicts"
 ---
 
 **See also:**
-- [AUTOMATION.md](AUTOMATION.md) - CI/CD details
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Project structure
-- [../AI_INSTRUCTIONS.md](../AI_INSTRUCTIONS.md) - Complete specification
+- [AUTOMATION.md](AUTOMATION.md) - Git hooks, CI/CD, and release automation
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - How to contribute
+- [README.md](../README.md) - Project overview and quick reference
+- [AI_INSTRUCTIONS.md](../AI_INSTRUCTIONS.md) - Complete specification
