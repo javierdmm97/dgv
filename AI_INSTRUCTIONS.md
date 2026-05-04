@@ -136,10 +136,10 @@ lib/
     │
     ├── main_menu/                     # Persistent home screen
     │   ├── presentation/
-    │   │   ├── main_menu_screen.dart
-    │   │   ├── fake_news_screen.dart      # Joke: fake DGT news articles
-    │   │   ├── fake_error_screen.dart     # Joke: fake error message
+    │   │   ├── main_menu_screen.dart  # Main DGT home screen
     │   │   └── widgets/
+    │   │       ├── fake_error_notification.dart  # Top notification with X to close
+    │   │       └── fake_news_section.dart        # "Actualidad DGT" section
     │   └── providers/
     │       └── game_state_provider.dart   # Track if game in progress
     │
@@ -547,12 +547,56 @@ class TitleEvaluator {
 ### 1. Main Menu (Persistent Home Screen)
 **Purpose:** Central hub that persists throughout the app lifecycle
 
-**Buttons:**
-- **Add Player** → Navigate to player registration
-- **Fake News** → Show satirical DGT/DGV news articles (joke feature)
-- **Fake Error Message** → Show fake error screen (joke feature)
-- **Start Game** → Begin Round 0 (only visible if no game in progress)
-- **Resume Game** → Continue existing game (only visible if game in progress)
+**Layout (mimicking DGT app):**
+```
+┌─────────────────────────────────────┐
+│  ☰  [DGT Logo]              🔔      │ ← Header
+├─────────────────────────────────────┤
+│  ⚠️ [Fake Error Notification]  ✕   │ ← Top notification (dismissible)
+├─────────────────────────────────────┤
+│                                     │
+│  [Start Game] / [Resume Game]       │ ← Replaces "Hola, Antonio" section
+│  (Large button, conditional)        │
+│                                     │
+├─────────────────────────────────────┤
+│  MIS VEHÍCULOS 🚗                   │ ← Keep to mimic DGT app
+│  ┌─────────────────────────────┐   │
+│  │  [Add Player]               │   │ ← Player registration
+│  │  (Shows list if players      │   │
+│  │   already added)             │   │
+│  └─────────────────────────────┘   │
+├─────────────────────────────────────┤
+│  ACTUALIDAD DGT                     │ ← Fake News section
+│  ┌─────────────────────────────┐   │
+│  │  📰 Satirical DGT articles  │   │
+│  │  (Scrollable list)           │   │
+│  └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+```
+
+**Components:**
+- **Fake Error Notification (Top):**
+  - Dismissible notification bar at top
+  - Shows fake error message (assets/msg_error.png or text)
+  - X button to close
+  - Reappears randomly or on certain events
+  
+- **Start/Resume Game Section:**
+  - Replaces "Hola, Antonio" + photo section
+  - Shows "Start Game" button if no game in progress
+  - Shows "Resume Game" button if game in progress
+  - Large, prominent button
+
+- **Mis Vehículos Section:**
+  - Keep to mimic DGT app better
+  - "Add Player" button
+  - Shows list of added players (if any)
+  - Tap player → view their license
+
+- **Actualidad DGT Section:**
+  - Fake news articles (satirical)
+  - Scrollable list
+  - Tap article → show full fake article
 
 **State Management:**
 - Check Hive for existing game state on app launch
