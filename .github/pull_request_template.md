@@ -47,6 +47,12 @@
 
 <!-- If applicable, add screenshots or videos to demonstrate the changes -->
 
+## 🏗️ Build Options
+
+<!-- Control CI/CD build behavior -->
+
+- [ ] **Build APK** - Check this to build Android APK in CI (takes ~5-10 minutes)
+
 ## ✅ Checklist
 
 <!-- Mark completed items with an 'x' -->

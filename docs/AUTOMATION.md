@@ -118,11 +118,15 @@ git push origin feature/breathalyzer
    - Runs all tests with coverage
    - Uploads coverage to Codecov (optional)
 
-3. **Build Android APK**
+3. **Build Android APK** (Optional - PR only)
+   - Only runs if you check `[x] **Build APK**` in the PR description
    - Builds debug APK
    - Uploads as artifact (available for 7 days)
+   - Comments on PR when build is ready
 
 **Status:** ✅ Must pass before merging PR
+
+**💡 Tip:** To save CI time, only check the "Build APK" box when you need to test the actual APK (e.g., testing on physical device, checking app size, etc.)
 
 #### 2. Release Pipeline (`.github/workflows/release.yml`)
 
@@ -416,15 +420,22 @@ When creating a PR, a template is automatically loaded with:
    git push origin feature/breathalyzer-ocr
    ```
 
-5. **GitHub automatically:**
+5. **Fill out PR template:**
+   - ✅ Describe your changes
+   - ✅ Check relevant options
+   - ✅ **Optional:** Check `[x] **Build APK**` if you need to test the APK
+   - ✅ Update changelog confirmation
+
+6. **GitHub automatically:**
    - ✅ Loads PR template
    - ✅ Adds labels (`feature`, `feature: breathalyzer`)
-   - ✅ Runs CI checks (format, analyze, test, build)
+   - ✅ Runs CI checks (format, analyze, test)
+   - ✅ Builds APK only if you checked the box
    - ✅ Checks if changelog was updated
 
-6. **Fill out PR template and request review**
+7. **Fill out PR template and request review**
 
-7. **After approval, merge to `develop`**
+8. **After approval, merge to `develop`**
 
 ---
 
