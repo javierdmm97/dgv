@@ -26,21 +26,35 @@ Write-Host ""
 
 # Install lefthook
 Write-Host "🪝 Setting up Git hooks..." -ForegroundColor Yellow
-$pubspecContent = Get-Content pubspec.yaml -Raw
-if ($pubspecContent -match "lefthook") {
-    Write-Host "✅ Lefthook already in pubspec.yaml" -ForegroundColor Green
-} else {
-    Write-Host "📝 Adding lefthook to dev_dependencies..." -ForegroundColor Yellow
-    flutter pub add --dev lefthook
+
+# Check if lefthook is installed globally
+$lefthookInstalled = $false
+try {
+    $lefthookVersion = lefthook version 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $lefthookInstalled = $true
+        Write-Host "✅ Lefthook found: $lefthookVersion" -ForegroundColor Green
+    }
+} catch {
+    # Lefthook not found
 }
 
-# Install hooks
-try {
-    lefthook install 2>&1 | Out-Null
-    Write-Host "✅ Git hooks installed" -ForegroundColor Green
-} catch {
-    Write-Host "⚠️  Lefthook not found in PATH" -ForegroundColor Yellow
-    Write-Host "   Run 'lefthook install' manually after 'flutter pub get'" -ForegroundColor Yellow
+if ($lefthookInstalled) {
+    # Install hooks
+    try {
+        lefthook install 2>&1 | Out-Null
+        Write-Host "✅ Git hooks installed" -ForegroundColor Green
+    } catch {
+        Write-Host "⚠️  Failed to install Git hooks" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "⚠️  Lefthook not found" -ForegroundColor Yellow
+    Write-Host "   Install it with one of these methods:" -ForegroundColor Yellow
+    Write-Host "   - npm install -g @evilmartians/lefthook" -ForegroundColor Gray
+    Write-Host "   - scoop install lefthook" -ForegroundColor Gray
+    Write-Host "   - choco install lefthook" -ForegroundColor Gray
+    Write-Host "   - Or download from: https://github.com/evilmartians/lefthook/releases" -ForegroundColor Gray
+    Write-Host "   Then run 'lefthook install' in the project directory" -ForegroundColor Yellow
 }
 Write-Host ""
 
