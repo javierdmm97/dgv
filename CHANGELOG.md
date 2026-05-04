@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Consolidated documentation structure to eliminate duplication
+- Streamlined README.md with essential information
+- Removed redundant docs: ARCHITECTURE.md, HUMAN_SUMMARY.md, INDEX.md
+- Improved documentation navigation and clarity
+
 ### 🎯 Planned Features
 - Player registration flow with photo capture
 - Manual BAC entry with custom keypad

@@ -2,71 +2,39 @@
 
 **Party Breathalyzer Tracker with DGT Theme**
 
-> 👋 **First time here?** Start with **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** for setup and workflow.
-> 
-> 📚 **Documentation:** [INDEX](docs/INDEX.md) | [Development](docs/DEVELOPMENT.md) | [Automation](docs/AUTOMATION.md) | [Architecture](docs/ARCHITECTURE.md)
-
 A Flutter mobile app that gamifies responsible drinking at parties through a satirical Spanish traffic authority (DGT) theme. Players compete to maintain the most "license points" by pacing their alcohol consumption, not by drinking the most.
+
+> 📚 **Documentation:** [CONTRIBUTING.md](CONTRIBUTING.md) | [Development Guide](docs/DEVELOPMENT.md) | [Automation Guide](docs/AUTOMATION.md) | [Roadmap](ROADMAP.md)
 
 ---
 
 ## 🎯 Quick Start
 
-### For Developers
+### Prerequisites
+- Flutter 3.10+ and Dart 3.0+
+- Git
+- Android Studio or VS Code with Flutter extensions
 
-1. **Clone the repository:**
+### Setup
+
+1. **Clone and setup:**
    ```bash
    git clone https://github.com/yourusername/dgv.git
    cd dgv
+   ./setup.sh          # Linux/macOS
+   .\setup.ps1         # Windows PowerShell
    ```
 
-2. **Run the setup script:**
-   
-   **Linux/macOS:**
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
-   
-   **Windows (PowerShell):**
-   ```powershell
-   .\setup.ps1
-   ```
-   
-   Or manually:
-   ```bash
-   flutter pub get
-   flutter pub add --dev lefthook
-   lefthook install
-   dart run build_runner build -d
-   ```
-
-3. **Read the documentation:**
-   - [`AI_INSTRUCTIONS.md`](AI_INSTRUCTIONS.md) - Complete project specification
-   - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) - Setup, workflow, and standards
-   - [`.claude/skills/`](.claude/skills/) - Flutter/Riverpod best practices
-   - [`ROADMAP.md`](ROADMAP.md) - Development plan and progress
-
-4. **Run the app:**
+2. **Run the app:**
    ```bash
    flutter run
    ```
 
-### For AI Assistants (Claude Web / Cursor)
-
-1. **Read [`AI_INSTRUCTIONS.md`](AI_INSTRUCTIONS.md) first** - Single source of truth for:
-   - Project mission and game mechanics
-   - Core architecture rules (Riverpod, Hive, Freezed)
-   - Feature specifications
-   - UI/UX guidelines (drunk-proof design)
-
-2. **Reference [`.claude/skills/`](.claude/skills/) for implementation patterns:**
-   - `dart-flutter-patterns/` - Riverpod, null safety, widget architecture
-   - `flutter-dart-code-review/` - Code review checklist
-
-3. **Follow the configuration:**
-   - Cursor users: See [`.cursorrules`](.cursorrules)
-   - Claude Web users: See [`CLAUDE.md`](CLAUDE.md)
+3. **Read the docs:**
+   - **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** - Complete project specification
+   - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
+   - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow
+   - **[ROADMAP.md](ROADMAP.md)** - Development plan
 
 ---
 
@@ -116,20 +84,23 @@ lib/
 ## 📋 Development Commands
 
 ```bash
-# Code Generation
-dart run build_runner build -d          # One-time build
-dart run build_runner watch -d          # Watch mode
+# Setup
+flutter pub get
+lefthook install
+dart run build_runner build -d
 
-# Code Quality
-dart format .                           # Format all files
+# Development
+dart format .                           # Format code
 flutter analyze                         # Static analysis
-flutter test                            # Run all tests
-flutter test --coverage                 # Generate coverage report
+flutter test                            # Run tests
+dart run build_runner watch -d          # Watch mode for code generation
 
 # Build
 flutter build apk --release             # Android APK
 flutter build appbundle --release       # Android App Bundle
 ```
+
+**See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for complete workflow and standards.**
 
 ---
 
@@ -175,119 +146,28 @@ Uses the **Widmark formula** with sex and body size:
 
 ---
 
-## 🤝 Collaboration
+## 🤝 Contributing
 
-This project is designed for **two developers** working in parallel using AI assistants:
+This project uses:
+- **Git workflow:** `main` (production), `develop` (integration), `feature/*`, `fix/*`
+- **Commit convention:** `type(scope): description` (e.g., `feat(breathalyzer): add OCR camera`)
+- **Automated checks:** Pre-commit hooks format and analyze code
+- **CI/CD:** GitHub Actions run tests and build on every PR
 
-### Git Workflow
-- `main` - Production-ready code
-- `develop` - Integration branch
-- `feature/*` - New features
-- `fix/*` - Bug fixes
-
-### Commit Convention
-```
-<type>(<scope>): <description>
-
-Examples:
-feat(breathalyzer): add OCR camera screen
-fix(scoring): correct points deduction formula
-refactor(ui): extract massive button widget
-test(calculator): add BAC calculation tests
-```
-
-### Pre-Commit Hooks
-Automatically runs on every commit:
-- `dart format .` - Format code
-- `flutter analyze` - Static analysis
-- `flutter test` - Run tests
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.**
 
 ---
 
 ## 📚 Documentation
 
-### Core Documentation
-- **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** - Complete project specification for AI assistants
-- **[ROADMAP.md](ROADMAP.md)** - Development plan and milestones
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
-- **[CLAUDE.md](CLAUDE.md)** - Claude AI configuration
-
-### In `docs/` folder
-- **[INDEX.md](docs/INDEX.md)** - Documentation navigation guide
-- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Setup, workflow, coding standards
-- **[AUTOMATION.md](docs/AUTOMATION.md)** - CI/CD, GitHub Actions, git hooks
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Project structure and organization
-- **[HUMAN_SUMMARY.md](docs/HUMAN_SUMMARY.md)** - Quick setup overview
-
----
-
-## 🤖 Automation & CI/CD
-
-This project includes comprehensive automation to facilitate collaboration:
-
-### ✅ Automated Checks
-- **Pre-commit hooks** - Format and analyze code before committing
-- **Commit message validation** - Enforce conventional commit format
-- **CI pipeline** - Test, analyze, and build on every PR
-- **Changelog checks** - Ensure changelog is updated with every PR
-
-### 🏷️ Auto-labeling
-- PRs are automatically labeled based on files changed and branch name
-- Makes it easy to filter and organize PRs
-
-### 🚀 Release Automation
-- Create a git tag → GitHub Actions automatically:
-  - Builds release APK and App Bundle
-  - Extracts changelog for the version
-  - Creates GitHub release with download links
-
-### 📋 Quick Commands
-```bash
-# Format code
-dart format .
-
-# Analyze code
-flutter analyze
-
-# Run tests
-flutter test
-
-# Create release
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-**See [`docs/AUTOMATION.md`](docs/AUTOMATION.md) for complete details.**
-
----
-
-## 🏁 Project Milestones
-
-### Phase 1: Foundation (Week 1)
-- [ ] Project setup (packages, folder structure)
-- [ ] Core theme and constants
-- [ ] Player registration flow
-- [ ] Hive storage implementation
-
-### Phase 2: Core Gameplay (Week 2)
-- [ ] Manual BAC entry with custom keypad
-- [ ] Points calculation logic
-- [ ] Checkpoint timer system
-- [ ] Basic leaderboard
-
-### Phase 3: Advanced Features (Week 3)
-- [ ] OCR camera integration
-- [ ] Round-robin "El Retén" flow
-- [ ] Penalty system with audio/visual alerts
-- [ ] DGT title evaluation
-
-### Phase 4: Polish (Week 4)
-- [ ] Fake license generation
-- [ ] Final ceremony animations
-- [ ] Comprehensive testing
-- [ ] Performance optimization
-- [ ] APK distribution via Firebase
+| File | Purpose |
+|------|---------|
+| **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** | Complete project specification |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines |
+| **[ROADMAP.md](ROADMAP.md)** | Development plan and milestones |
+| **[CHANGELOG.md](CHANGELOG.md)** | Version history |
+| **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** | Setup, workflow, coding standards |
+| **[docs/AUTOMATION.md](docs/AUTOMATION.md)** | CI/CD, GitHub Actions, git hooks |
 
 ---
 
