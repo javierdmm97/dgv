@@ -120,6 +120,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional APK build toggle in PR template to control CI build behavior
 
 ### Changed
+- **Documentation Refactoring**: Comprehensive restructuring to eliminate duplication and establish clear information hierarchy
+  - Eliminated all content duplication between CONTRIBUTING.md, docs/DEVELOPMENT.md, and docs/AUTOMATION.md
+  - Established single sources of truth: DEVELOPMENT.md for setup/workflow/standards, AUTOMATION.md for CI/CD/hooks/releases
+  - Transformed CONTRIBUTING.md into high-level entry point with navigation links to detailed documentation
+  - Added Quick Reference section to README.md with common commands and troubleshooting cheat sheet
+  - Created clear cross-file navigation with hyperlinks between related topics
+  - Preserved all existing documentation content while reorganizing for clarity
 - Consolidated documentation structure to eliminate duplication
 - Streamlined README.md with essential information
 - Removed redundant docs: ARCHITECTURE.md, HUMAN_SUMMARY.md, INDEX.md

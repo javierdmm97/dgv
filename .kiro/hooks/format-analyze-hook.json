@@ -1,0 +1,14 @@
+{
+  "name": "Auto-Format and Analyze Dart",
+  "version": "1.0.0",
+  "description": "Automatically format and analyze Dart files after changes",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": "write"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "dart format . && flutter analyze",
+    "timeout": 120
+  }
+}

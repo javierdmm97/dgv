@@ -136,10 +136,10 @@ lib/
     │
     ├── main_menu/                     # Persistent home screen
     │   ├── presentation/
-    │   │   ├── main_menu_screen.dart
-    │   │   ├── fake_news_screen.dart      # Joke: fake DGT news articles
-    │   │   ├── fake_error_screen.dart     # Joke: fake error message
+    │   │   ├── main_menu_screen.dart  # Main DGT home screen
     │   │   └── widgets/
+    │   │       ├── fake_error_notification.dart  # Top notification with X to close
+    │   │       └── fake_news_section.dart        # "Actualidad DGT" section
     │   └── providers/
     │       └── game_state_provider.dart   # Track if game in progress
     │
@@ -547,12 +547,56 @@ class TitleEvaluator {
 ### 1. Main Menu (Persistent Home Screen)
 **Purpose:** Central hub that persists throughout the app lifecycle
 
-**Buttons:**
-- **Add Player** → Navigate to player registration
-- **Fake News** → Show satirical DGT/DGV news articles (joke feature)
-- **Fake Error Message** → Show fake error screen (joke feature)
-- **Start Game** → Begin Round 0 (only visible if no game in progress)
-- **Resume Game** → Continue existing game (only visible if game in progress)
+**Layout (mimicking DGT app):**
+```
+┌─────────────────────────────────────┐
+│  ☰  [DGT Logo]              🔔      │ ← Header
+├─────────────────────────────────────┤
+│  ⚠️ [Fake Error Notification]  ✕   │ ← Top notification (dismissible)
+├─────────────────────────────────────┤
+│                                     │
+│  [Start Game] / [Resume Game]       │ ← Replaces "Hola, Antonio" section
+│  (Large button, conditional)        │
+│                                     │
+├─────────────────────────────────────┤
+│  MIS VEHÍCULOS 🚗                   │ ← Keep to mimic DGT app
+│  ┌─────────────────────────────┐   │
+│  │  [Add Player]               │   │ ← Player registration
+│  │  (Shows list if players      │   │
+│  │   already added)             │   │
+│  └─────────────────────────────┘   │
+├─────────────────────────────────────┤
+│  ACTUALIDAD DGT                     │ ← Fake News section
+│  ┌─────────────────────────────┐   │
+│  │  📰 Satirical DGT articles  │   │
+│  │  (Scrollable list)           │   │
+│  └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+```
+
+**Components:**
+- **Fake Error Notification (Top):**
+  - Dismissible notification bar at top
+  - Shows fake error message (assets/msg_error.png or text)
+  - X button to close
+  - Reappears randomly or on certain events
+  
+- **Start/Resume Game Section:**
+  - Replaces "Hola, Antonio" + photo section
+  - Shows "Start Game" button if no game in progress
+  - Shows "Resume Game" button if game in progress
+  - Large, prominent button
+
+- **Mis Vehículos Section:**
+  - Keep to mimic DGT app better
+  - "Add Player" button
+  - Shows list of added players (if any)
+  - Tap player → view their license
+
+- **Actualidad DGT Section:**
+  - Fake news articles (satirical)
+  - Scrollable list
+  - Tap article → show full fake article
 
 **State Management:**
 - Check Hive for existing game state on app launch
@@ -654,30 +698,142 @@ After each BAC entry, show full-screen feedback:
 - Update points display
 - Save updated license to storage
 
-### 5. Checkpoint System ("Control Sorpresa")
-**Timer Logic:**
-- Configurable interval (default: 45 minutes)
-- Visual countdown in app bar
-- Audio alert: police siren (3 seconds)
-- Screen flash: alternating red/blue
-- Lock UI until all players log BAC
-- **Timer state saved to Hive** (persists across app restarts)
+### 5. Checkpoint System ("Control Sorpresa") - Group-Based Measurement
+
+**Group-Based Timer Logic:**
+
+The checkpoint system divides players into groups to manage measurement sequentially rather than all at once. This prevents bottlenecks when many players need to be measured simultaneously.
+
+#### Group Calculation
+
+```dart
+// core/utils/checkpoint_calculator.dart
+class CheckpointCalculator {
+  /// Calculate group size based on number of players
+  /// Ensures manageable measurement flow
+  static int calculateGroupSize(int playerCount) {
+    // Recommended group sizes:
+    // 1-4 players: 1 group (measure all at once)
+    // 5-8 players: 2 groups (measure 2-4 at a time)
+    // 9-16 players: 3 groups (measure 3-5 at a time)
+    // 17-24 players: 4 groups (measure 4-6 at a time)
+    // 25+ players: 5-6 groups (measure 5-6 at a time)
+    
+    if (playerCount <= 4) return playerCount; // All in one group
+    if (playerCount <= 8) return (playerCount / 2).ceil();
+    if (playerCount <= 16) return (playerCount / 3).ceil();
+    if (playerCount <= 24) return (playerCount / 4).ceil();
+    return (playerCount / 5).ceil();
+  }
+  
+  /// Divide players into groups for sequential measurement
+  static List<List<PlayerProfile>> divideIntoGroups(
+    List<PlayerProfile> players,
+  ) {
+    final groupSize = calculateGroupSize(players.length);
+    final groups = <List<PlayerProfile>>[];
+    
+    for (int i = 0; i < players.length; i += groupSize) {
+      final end = (i + groupSize < players.length) 
+        ? i + groupSize 
+        : players.length;
+      groups.add(players.sublist(i, end));
+    }
+    
+    return groups;
+  }
+  
+  /// Calculate time per group (in seconds)
+  /// Assumes ~30 seconds per player for measurement + entry
+  static int calculateTimePerGroup(int groupSize) {
+    const secondsPerPlayer = 30;
+    return groupSize * secondsPerPlayer;
+  }
+  
+  /// Calculate total checkpoint interval based on player count
+  /// Formula: (number_of_groups × time_per_group) + buffer
+  static Duration calculateCheckpointInterval(int playerCount) {
+    final groups = divideIntoGroups(
+      List.generate(playerCount, (i) => i), // Dummy list for calculation
+    );
+    final groupSize = calculateGroupSize(playerCount);
+    final timePerGroup = calculateTimePerGroup(groupSize);
+    final totalSeconds = (groups.length * timePerGroup) + 300; // 5 min buffer
+    
+    return Duration(seconds: totalSeconds);
+  }
+}
+```
+
+#### Checkpoint State Model
+
+```dart
+@freezed
+@HiveType(typeId: 11)
+class CheckpointState with _$CheckpointState {
+  factory CheckpointState({
+    @HiveField(0) required int currentRound,
+    @HiveField(1) required Duration totalInterval,      // Total time for all groups
+    @HiveField(2) required Duration remainingTime,      // Time until next checkpoint
+    @HiveField(3) required int currentGroupIndex,       // Which group is being measured (0-based)
+    @HiveField(4) required List<List<String>> playerGroups, // Player IDs grouped
+    @HiveField(5) @Default(false) bool isCheckpointActive,
+    @HiveField(6) required DateTime lastCheckpointTime,
+  }) = _CheckpointState;
+}
+```
+
+#### Timer Logic
+
+**Timer Behavior:**
+1. **Checkpoint Triggered:** Divide all players into groups
+2. **Group 1 Measurement:** Show round-robin for Group 1 only
+3. **Group 1 Complete:** Move to Group 2, reset group timer
+4. **All Groups Complete:** Evaluate titles, award points, reset main timer
+5. **Main Timer Restarts:** Wait for next checkpoint interval
+
+**Example Timeline (20 players):**
+```
+Total Players: 20
+Group Size: 5 players per group
+Number of Groups: 4
+Time per Group: 5 × 30s = 150s (2.5 min)
+Total Checkpoint Time: (4 × 150s) + 300s buffer = 900s (15 min)
+Main Interval: 45 min (default)
+
+Timeline:
+00:00 - Checkpoint triggered, Group 1 starts
+02:30 - Group 1 complete, Group 2 starts
+05:00 - Group 2 complete, Group 3 starts
+07:30 - Group 3 complete, Group 4 starts
+10:00 - Group 4 complete, all measurements done
+10:00 - Evaluate titles, award points
+10:00 - Main timer resets to 45 min
+45:00 - Next checkpoint triggered
+```
 
 **Riverpod Provider:**
 ```dart
 @riverpod
 class CheckpointTimer extends _$CheckpointTimer {
-  Timer? _timer;
+  Timer? _mainTimer;      // Main interval timer (45 min)
+  Timer? _groupTimer;     // Current group measurement timer
   
   @override
   Future<CheckpointState> build() async {
-    // Load saved timer state from Hive
+    // Load saved checkpoint state from Hive
     final repo = ref.watch(gameRepositoryProvider);
     return repo.loadCheckpointState();
   }
   
-  void start() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  /// Start the main checkpoint interval timer
+  void startMainTimer() {
+    final players = ref.read(playerListProvider).value ?? [];
+    final interval = CheckpointCalculator.calculateCheckpointInterval(
+      players.length,
+    );
+    
+    _mainTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.value!.remainingTime.inSeconds <= 0) {
         _triggerCheckpoint();
       } else {
@@ -685,17 +841,126 @@ class CheckpointTimer extends _$CheckpointTimer {
           remainingTime: state.value!.remainingTime - const Duration(seconds: 1),
         );
         state = AsyncValue.data(newState);
-        _saveToHive(newState); // Persist timer state
+        _saveToHive(newState);
       }
     });
   }
   
+  /// Trigger checkpoint: divide players into groups and start group measurement
   void _triggerCheckpoint() {
-    // Play siren, show alert, navigate to round-robin screen
-    // Increment round number and save to Hive
+    _mainTimer?.cancel();
+    
+    final players = ref.read(playerListProvider).value ?? [];
+    final groups = CheckpointCalculator.divideIntoGroups(players);
+    final playerGroups = groups
+        .map((group) => group.map((p) => p.id).toList())
+        .toList();
+    
+    final newState = state.value!.copyWith(
+      isCheckpointActive: true,
+      currentGroupIndex: 0,
+      playerGroups: playerGroups,
+    );
+    state = AsyncValue.data(newState);
+    _saveToHive(newState);
+    
+    // Play siren and show alert
+    _playSirenAlert();
+    
+    // Start measuring first group
+    _startGroupMeasurement(0);
+  }
+  
+  /// Start measurement timer for a specific group
+  void _startGroupMeasurement(int groupIndex) {
+    final groupSize = state.value!.playerGroups[groupIndex].length;
+    final timePerGroup = CheckpointCalculator.calculateTimePerGroup(groupSize);
+    
+    _groupTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // Group measurement logic
+      // When group complete, move to next group or finish checkpoint
+    });
+  }
+  
+  /// Complete current group and move to next
+  void completeGroupMeasurement() {
+    _groupTimer?.cancel();
+    
+    final currentState = state.value!;
+    final nextGroupIndex = currentState.currentGroupIndex + 1;
+    
+    if (nextGroupIndex < currentState.playerGroups.length) {
+      // More groups to measure
+      final newState = currentState.copyWith(
+        currentGroupIndex: nextGroupIndex,
+      );
+      state = AsyncValue.data(newState);
+      _saveToHive(newState);
+      _startGroupMeasurement(nextGroupIndex);
+    } else {
+      // All groups complete
+      _completeCheckpoint();
+    }
+  }
+  
+  /// Complete checkpoint: evaluate titles, award points, reset main timer
+  void _completeCheckpoint() {
+    // Evaluate titles for all players
+    final players = ref.read(playerListProvider).value ?? [];
+    final titles = TitleEvaluator.evaluateRound(players, state.value!.currentRound);
+    
+    // Award titles and update licenses
+    // ... (title award logic)
+    
+    // Reset checkpoint state
+    final newState = state.value!.copyWith(
+      isCheckpointActive: false,
+      currentGroupIndex: 0,
+      playerGroups: [],
+      currentRound: state.value!.currentRound + 1,
+      remainingTime: CheckpointCalculator.calculateCheckpointInterval(
+        players.length,
+      ),
+    );
+    state = AsyncValue.data(newState);
+    _saveToHive(newState);
+    
+    // Restart main timer
+    startMainTimer();
+  }
+  
+  void _playSirenAlert() {
+    // Play police siren (3 seconds)
+    // Flash screen red/blue
+  }
+  
+  void _saveToHive(CheckpointState state) {
+    // Save to Hive for persistence
+  }
+  
+  @override
+  void dispose() {
+    _mainTimer?.cancel();
+    _groupTimer?.cancel();
+    super.dispose();
   }
 }
 ```
+
+#### UI Considerations
+
+**During Group Measurement:**
+- Show which group is being measured: "Group 1 of 4"
+- Show progress: "3/5 players measured"
+- Show time remaining for current group
+- Lock UI until group complete
+- Allow skipping to next group (admin only)
+
+**After All Groups Complete:**
+- Show summary: "All 20 players measured"
+- Display title awards
+- Update leaderboard
+- Show next checkpoint countdown
 
 ### 6. Penalty & Reward System
 **Automatic Points Changes (Round 1+ only):**

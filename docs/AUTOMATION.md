@@ -1,5 +1,9 @@
 # 🤖 Automation Guide - Operación DGV
 
+> 📚 **Documentation:** [README](../README.md) | [Contributing](../CONTRIBUTING.md) | [Development](DEVELOPMENT.md)
+
+This guide covers automation only. For development workflow, see [Development Guide](DEVELOPMENT.md).
+
 This document explains all the automation set up for the Operación DGV project to facilitate collaboration between developers.
 
 ---
@@ -12,7 +16,8 @@ This document explains all the automation set up for the Operación DGV project 
 4. [Changelog Automation](#changelog-automation)
 5. [Release Automation](#release-automation)
 6. [PR Automation](#pr-automation)
-7. [Quick Reference](#quick-reference)
+7. [Benefits](#benefits)
+8. [Additional Resources](#additional-resources)
 
 ---
 
@@ -62,6 +67,8 @@ Lefthook is a fast Git hooks manager that runs checks before commits and pushes.
 #### Commit-msg (validates commit message)
 - ✅ **Conventional commit check** - Ensures format: `type(scope): description`
 
+For complete commit message format details, see [Commit Convention](DEVELOPMENT.md#commit-convention).
+
 #### Pre-push (runs before `git push`)
 - ✅ **Tests** - Runs `flutter test` before pushing
 
@@ -97,6 +104,8 @@ git push origin feature/breathalyzer
 # ✅ Running tests...
 # ✅ All tests passed
 ```
+
+For complete development workflow details, see [Daily Workflow](DEVELOPMENT.md#daily-workflow).
 
 ---
 
@@ -441,103 +450,9 @@ When creating a PR, a template is automatically loaded with:
 
 ## 📋 Quick Reference
 
-### Common Commands
+For a quick reference cheat sheet with common commands and troubleshooting, see [Quick Reference](../README.md#quick-reference).
 
-```bash
-# Setup hooks
-lefthook install
-
-# Run hooks manually
-lefthook run pre-commit
-lefthook run pre-push
-
-# Format code
-dart format .
-
-# Analyze code
-flutter analyze
-
-# Run tests
-flutter test
-
-# Run tests with coverage
-flutter test --coverage
-
-# Build debug APK
-flutter build apk --debug
-
-# Build release APK
-flutter build apk --release
-
-# Create and push tag
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-### Commit Message Format
-
-```
-<type>(<scope>): <description>
-
-Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
-Scopes: player-registration, breathalyzer, checkpoint, scoring, leaderboard, etc.
-
-Examples:
-feat(breathalyzer): add OCR camera screen
-fix(scoring): correct points deduction formula
-docs(readme): update installation instructions
-```
-
-### Release Checklist
-
-- [ ] Update version in `pubspec.yaml`
-- [ ] Update `CHANGELOG.md` (move Unreleased to version section)
-- [ ] Commit changes: `chore: prepare vX.Y.Z release`
-- [ ] Merge to `main`
-- [ ] Create tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
-- [ ] Push tag: `git push origin vX.Y.Z`
-- [ ] Verify GitHub release was created
-- [ ] Test downloaded APK
-
-### Troubleshooting
-
-**Problem:** Lefthook not running
-```bash
-# Reinstall hooks
-lefthook install
-
-# Check if hooks are installed
-ls -la .git/hooks/
-```
-
-**Problem:** CI failing on format check
-```bash
-# Format locally
-dart format .
-
-# Commit formatted code
-git add .
-git commit -m "style: format code"
-```
-
-**Problem:** Changelog check failing
-```bash
-# Update CHANGELOG.md under [Unreleased]
-vim CHANGELOG.md
-
-# Commit changelog
-git add CHANGELOG.md
-git commit -m "docs: update changelog"
-```
-
-**Problem:** Release not created
-```bash
-# Check tag format (must be vX.Y.Z)
-git tag -l
-
-# Check GitHub Actions logs
-# Go to: https://github.com/user/repo/actions
-```
+For commit message format details, see [Commit Convention](DEVELOPMENT.md#commit-convention).
 
 ---
 

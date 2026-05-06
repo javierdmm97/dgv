@@ -117,6 +117,7 @@ DGTColors.success   // Color(0xFF388E3C) - Safe Green
 - ✅ Oversized touch targets (minHeight: 80)
 - ✅ Custom keypads (no native keyboards for numbers)
 - ✅ Unit tests for all core logic
+- ✅ Group-based checkpoint timer (divide players into N groups)
 - ❌ NO Provider, GetX, or Bloc
 - ❌ NO `setState` in StatefulWidgets
 - ❌ NO magic numbers (use constants)

@@ -1,0 +1,13 @@
+{
+  "name": "Security Check Before Commit",
+  "version": "1.0.0",
+  "description": "Validate security requirements before code is committed",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": "write"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Security validation checklist before committing:\n\n**Mandatory Checks:**\n- [ ] No hardcoded secrets (API keys, passwords, tokens)\n- [ ] All user inputs validated before processing\n- [ ] SQL injection prevention (parameterized queries)\n- [ ] XSS prevention (sanitized HTML)\n- [ ] CSRF protection enabled\n- [ ] Authentication/authorization verified\n- [ ] Rate limiting on all endpoints\n- [ ] Error messages don't leak sensitive data\n\n**Dart/Flutter Specific:**\n- [ ] Secrets in flutter_secure_storage, not SharedPreferences\n- [ ] HTTPS enforced for all API calls\n- [ ] Deep links validated before navigation\n- [ ] WebView JavaScript disabled unless required\n- [ ] Android components not exported unnecessarily\n- [ ] iOS Keychain used for sensitive data\n\n**If any check fails:**\n1. STOP immediately\n2. Fix CRITICAL issues before continuing\n3. Rotate any exposed secrets\n4. Review entire codebase for similar issues\n\nReference: .kiro/steering/common/security-checklist.md and .kiro/steering/dart/dart-security.md"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Enforce Planning Before Implementation",
+  "version": "1.0.0",
+  "description": "Trigger planning workflow before starting implementation tasks",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Before implementing, create a detailed implementation plan:\n\n1. **Requirements Analysis** - Understand the feature completely, identify success criteria\n2. **Architecture Review** - Analyze existing codebase, identify affected components\n3. **Step Breakdown** - Create detailed steps with file paths, dependencies, complexity, risks\n4. **Implementation Order** - Prioritize by dependencies, group related changes\n5. **Testing Strategy** - Unit tests, integration tests, E2E tests\n\nReference: .claude/agents/planner.md for detailed format and best practices.\n\nFormat your plan with clear phases, specific file paths, and risk assessments."
+  }
+}
