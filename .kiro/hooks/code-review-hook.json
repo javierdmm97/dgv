@@ -1,0 +1,13 @@
+{
+  "name": "Automatic Code Review",
+  "version": "1.0.0",
+  "description": "Perform comprehensive code review after code is written",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": "write"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the code against these criteria:\n\n**Dart Language:**\n- Null safety: Avoid !, prefer ?., ??, pattern matching\n- Immutability: Use final, const, copyWith\n- Error handling: Specify exception types in on clauses\n- Async: Always await or use unawaited()\n\n**Flutter Widgets:**\n- Widget decomposition: Functions <50 lines, files <800 lines\n- Const usage: Propagate const to stop rebuilds\n- Key usage: ValueKey for lists, avoid UniqueKey in build()\n- Theming: Use Theme.of(context), no hardcoded colors\n\n**State Management:**\n- Riverpod: Use @riverpod, separate UI from logic\n- Immutable state: Use freezed, sealed classes\n- No setState in StatefulWidgets\n\n**Performance:**\n- No expensive operations in build()\n- ListView.builder for large lists\n- const constructors where possible\n\n**Security:**\n- No hardcoded secrets\n- Input validation present\n- HTTPS enforced\n- Sensitive data in secure storage\n\nReference: .kiro/steering/dart/dart-coding-style.md and flutter-dart-code-review skill.\n\nReport severity: CRITICAL (block), HIGH (warn), MEDIUM (info), LOW (note)"
+  }
+}

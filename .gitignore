@@ -87,6 +87,3 @@ firebase_options.dart
 *.jks
 key.properties
 
-
-# Kiro
-.kiro/*

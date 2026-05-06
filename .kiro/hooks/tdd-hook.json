@@ -1,0 +1,13 @@
+{
+  "name": "Test-Driven Development Enforcement",
+  "version": "1.0.0",
+  "description": "Enforce TDD workflow after code is written",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": "write"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Code was just written. Follow Test-Driven Development (TDD) workflow:\n\n1. **RED** - Write a failing test that describes expected behavior\n2. **GREEN** - Write minimal implementation to make test pass\n3. **REFACTOR** - Improve code while keeping tests green\n4. **VERIFY** - Ensure 80%+ test coverage\n\nFor this code:\n- Write unit tests for all public functions\n- Write integration tests for API endpoints\n- Write E2E tests for critical user flows\n- Test edge cases: null/undefined, empty, invalid types, boundaries, errors\n- Use fakes over mocks for complex dependencies\n\nReference: .claude/agents/tdd-guide.md for detailed TDD patterns and examples.\n\nRun: flutter test --coverage to verify coverage >= 80%"
+  }
+}

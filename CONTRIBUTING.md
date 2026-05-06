@@ -202,7 +202,8 @@ Our project uses automated workflows for quality assurance:
 ### When to Update Documentation
 
 - Adding a new feature → Update `AI_INSTRUCTIONS.md` and `README.md`
-- Changing architecture → Update `AI_INSTRUCTIONS.md`
+- Changing architecture → Update `AI_INSTRUCTIONS.md` and `docs/DEVELOPMENT.md`
+- Changing checkpoint system → Update `AI_INSTRUCTIONS.md`, `docs/DEVELOPMENT.md`, and `CLAUDE.md`
 - Adding dependencies → Update `README.md` and `AI_INSTRUCTIONS.md`
 - Completing a milestone → Update `ROADMAP.md`
 - Making any change → Update `CHANGELOG.md`

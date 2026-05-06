@@ -312,7 +312,96 @@ Before pushing:
 
 ---
 
-## 🚀 Quick Commands
+## 🎯 Checkpoint System (Group-Based)
+
+### Overview
+
+The checkpoint system uses group-based measurement to handle large player counts efficiently. Instead of measuring all players simultaneously, players are divided into groups and measured sequentially.
+
+### Group Calculation
+
+**Group sizes are calculated based on player count:**
+
+| Players | Groups | Group Size | Total Time |
+|---------|--------|-----------|-----------|
+| 1-4 | 1 | 4 | ~2 min |
+| 5-8 | 2 | 2-4 | ~5 min |
+| 9-16 | 3 | 3-5 | ~8 min |
+| 17-24 | 4 | 4-6 | ~12 min |
+| 25+ | 5-6 | 5-6 | ~15 min |
+
+**Formula:**
+```
+Time per group = (group_size × 30 seconds) + buffer
+Total checkpoint time = (number_of_groups × time_per_group) + 5 min buffer
+Main interval = 45 minutes (default, configurable)
+```
+
+### Implementation
+
+**Key files:**
+- `core/utils/checkpoint_calculator.dart` - Group calculation logic
+- `features/checkpoint/providers/checkpoint_timer_provider.dart` - Timer state management
+- `features/checkpoint/presentation/checkpoint_screen.dart` - UI for group measurement
+
+**Core logic:**
+```dart
+// Calculate groups
+final groups = CheckpointCalculator.divideIntoGroups(players);
+
+// Calculate time per group
+final timePerGroup = CheckpointCalculator.calculateTimePerGroup(groupSize);
+
+// Calculate total interval
+final interval = CheckpointCalculator.calculateCheckpointInterval(playerCount);
+```
+
+### Checkpoint Flow
+
+1. **Main Timer Running** (45 min default)
+   - Countdown visible in app bar
+   - Players can measure BAC manually anytime
+
+2. **Checkpoint Triggered**
+   - Divide players into groups
+   - Play siren alert (3 seconds)
+   - Flash screen red/blue
+
+3. **Group Measurement** (repeat for each group)
+   - Show round-robin for current group only
+   - Display: "Group X of Y"
+   - Display: "Z/N players measured"
+   - Lock UI until group complete
+
+4. **All Groups Complete**
+   - Evaluate titles
+   - Award points
+   - Update licenses
+   - Reset main timer
+
+### Testing
+
+**Unit tests for checkpoint calculator:**
+```dart
+test('should calculate correct group size for 20 players', () {
+  final groupSize = CheckpointCalculator.calculateGroupSize(20);
+  expect(groupSize, 5);
+});
+
+test('should divide 20 players into 4 groups of 5', () {
+  final players = List.generate(20, (i) => createPlayer(id: '$i'));
+  final groups = CheckpointCalculator.divideIntoGroups(players);
+  expect(groups.length, 4);
+  expect(groups[0].length, 5);
+});
+
+test('should calculate correct interval for 20 players', () {
+  final interval = CheckpointCalculator.calculateCheckpointInterval(20);
+  expect(interval.inSeconds, greaterThan(900)); // At least 15 min
+});
+```
+
+---
 
 **💡 Tip:** For a quick reference cheat sheet, see [Quick Reference](../README.md#quick-reference)
 
