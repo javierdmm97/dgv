@@ -30,98 +30,129 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-### 🚧 Phase 1: Foundation (Week 1) - IN PROGRESS
+### ✅ Phase 1: Foundation (Week 1) - COMPLETED
 
 **Goal:** Set up core architecture and basic infrastructure
 
 #### Tasks
 
 **1.1 Project Setup**
-- [ ] Configure `pubspec.yaml` with all required dependencies
-- [ ] Set up Hive for local storage with persistent state management
-- [ ] Initialize Riverpod providers
-- [ ] Configure code generation (build_runner)
-- [ ] Set up lefthook for pre-commit hooks
+- [x] Configure `pubspec.yaml` with all required dependencies
+- [x] Set up Hive for local storage with persistent state management
+- [x] Initialize Riverpod providers
+- [x] Configure code generation (build_runner)
+- [x] Set up lefthook for pre-commit hooks
 
 **1.2 Core Theme & Constants**
-- [ ] Implement DGT color palette (`lib/core/theme/dgt_colors.dart`)
+- [x] Implement DGT color palette (`lib/core/theme/dgt_colors.dart`)
   - Primary: #0F5993 (DGT Blue)
   - Background: #F6F4F5 (Light Gray)
   - License ID: #F3E8EC (Light Pink)
   - Green: #D2D667, Yellow: #F4E944, Orange: #F3910E, Red: #EF6B6A
-- [ ] Create typography system (`lib/core/theme/dgt_typography.dart`)
-- [ ] Build theme configuration (`lib/core/theme/dgt_theme.dart`)
-- [ ] Define app constants (`lib/core/constants/app_constants.dart`)
-  - Optimal BAC zones: S=0.05, M=0.07, L=0.09
-  - Tolerance: ±0.02
-  - Impoundment threshold: 1.2
-- [ ] Set up asset paths (`lib/core/constants/asset_paths.dart`)
+- [x] Create typography system (`lib/core/theme/dgt_typography.dart`)
+- [x] Build theme configuration (`lib/core/theme/dgt_theme.dart`)
+- [x] Define app constants (`lib/core/constants/app_constants.dart`)
+  - **Updated:** Breathalyzer readings in mg/L (based on real DGT data)
+  - Optimal BAC zones: Small=2.5, Medium=2.0, Large=1.8 mg/L
+  - Tolerance: ±0.2 mg/L (in zone), ±0.4 mg/L (close)
+  - Impoundment threshold: 3.5 mg/L
+  - Dangerous spike: >0.8 mg/L per hour
+- [x] Set up asset paths (`lib/core/constants/asset_paths.dart`)
   - Include fake error message: assets/msg_error.png
-- [ ] Create DGT strings (`lib/core/constants/dgt_strings.dart`)
+- [x] Create DGT strings (`lib/core/constants/dgt_strings.dart`)
 
 **1.3 Core Models**
-- [ ] Create `PlayerProfile` model (Freezed + Hive)
+- [x] Create `PlayerProfile` model (Freezed + JSON)
   - Add `name` and `surname` fields
   - Add `photoPath` for camera capture
   - Add `optimalBAC` field (calculated from body size)
   - Add `titleCounts` map to track DGT title accumulation
   - Add `crossedOptimalLine` flag for Grand Prize eligibility
   - Add `licenseImagePath` for auto-generated license
-- [ ] Create `BACReading` model (Freezed + Hive)
+- [x] Create `BACReading` model (Freezed + JSON)
   - Add `roundNumber` field (0 for baseline)
-- [ ] Create `GameState` model (Freezed + Hive)
-  - Track current round, timer state, game in progress flag
-- [ ] Generate Hive type adapters
+  - Add `entryMethod` field (manual, OCR, roundRobin)
+  - Add `pointsChange` field
+- [x] Create `GameState` model (Freezed + JSON)
+  - Track current round, game in progress flag, player IDs
+- [x] Create `CheckpointState` model (Freezed + JSON)
+  - **Updated:** Per-group checkpoint system with independent timers
+  - Each group has its own `lastMeasurement` and `intervalMinutes`
+  - Groups can measure at different times (e.g., Group 1 at 14:00, Group 2 at 14:30)
+- [x] Create `DGTTitle` enum with display names and icons
+- [x] Create `GrandPrize` enum with metadata
+- [x] Generate Freezed and JSON serialization code
 - [ ] Write unit tests for models
 
-**1.4 Reusable Widgets**
+**1.4 Core Utilities (Business Logic)**
+- [x] Implement BAC calculator (`lib/core/utils/bac_calculator.dart`)
+  - **Updated:** Calibrated with real DGT data for breathalyzer readings (mg/L)
+  - Widmark formula for estimation only
+  - Optimal zone calculations based on body size
+  - Zone checking methods (isInOptimalZone, isCloseToOptimal, crossedOptimalLine)
+- [x] Implement points calculator (`lib/core/utils/points_calculator.dart`)
+  - Hybrid points system (+2 in zone, +1 close, -3 crossed, -2 spike, -5 impounded)
+  - Feedback message generation
+  - Average distance from optimal calculation
+- [x] Implement title evaluator (`lib/core/utils/title_evaluator.dart`)
+  - Per-round title awards (5 titles)
+  - Grand prize calculation (3 prizes)
+  - Environmental distinctive selection (top 5)
+- [x] Implement checkpoint calculator (`lib/core/utils/checkpoint_calculator.dart`)
+  - **Updated:** Per-group timer calculations
+  - Independent checkpoint times for each group
+  - Configurable intervals (30, 45, 60 minutes)
+  - Group division logic (3-8 players per group)
+  - Beer consumption estimation
+- [ ] Write comprehensive unit tests for all utilities
+
+**1.5 Data Layer (Repositories)**
+- [x] Create repository interfaces (Player, GameState, Checkpoint)
+- [x] Implement Hive repositories with JSON serialization
+- [x] Create Hive service for initialization and box management
+- [x] Implement stream support for reactive updates
+- [ ] Write unit tests for repositories
+
+**1.6 State Management (Riverpod Providers)**
+- [x] Create repository providers (DI)
+- [x] Create player providers (list, by ID, count, mutations)
+- [x] Create game state providers (start, resume, finish, advance round)
+- [ ] Create checkpoint providers (per-group timer management)
+- [ ] Write tests for provider logic
+
+**1.7 App Entry Point**
+- [x] Set up main.dart with Hive initialization
+- [x] Create app.dart with MaterialApp and DGT theme
+- [x] Wrap app with ProviderScope
+- [x] Update basic smoke test
+- [ ] Main Menu (Persistent Home Screen) - **TO BE DONE BY PERSON B**
+- [ ] Fake News & Fake Error Screens - **TO BE DONE BY PERSON B**
+- [ ] Player Registration Flow - **TO BE DONE BY PERSON B**
+
+**1.8 Reusable Widgets** - **TO BE DONE BY PERSON B**
 - [ ] Build `MassiveButton` widget (oversized, high-contrast)
 - [ ] Build `CustomKeypad` widget (drunk-proof number pad)
 - [ ] Build `TitleBadge` widget (DGT title with counter: 🟢×3)
+- [ ] Build `LicenseCard` widget (display player license)
 - [ ] Write widget tests
-
-**1.5 Main Menu (Persistent Home Screen)**
-- [ ] Build main menu screen with DGT/DGV branding
-- [ ] Add "Add Player" button → navigate to registration
-- [ ] Add "Fake News" button → show satirical DGT news screen
-- [ ] Add "Fake Error Message" button → show fake error screen
-- [ ] Add "Start Game" button (visible if no game in progress)
-- [ ] Add "Resume Game" button (visible if game in progress)
-- [ ] Implement game state provider (check Hive for existing game)
-- [ ] Write integration tests for menu navigation
-
-**1.6 Fake News & Fake Error Screens**
-- [ ] Design fake news screen with satirical DGT articles
-- [ ] Implement fake error screen (display assets/msg_error.png)
-- [ ] Add "Back to Menu" buttons
-- [ ] Write widget tests
-
-**1.7 Player Registration Flow**
-- [ ] Name input screen with custom keyboard
-- [ ] Surname input screen with custom keyboard
-- [ ] Sex selection screen (Male/Female buttons)
-- [ ] Body size selection screen (S/M/L buttons with weight indicators)
-- [ ] Photo capture screen with countdown timer
-- [ ] Confirmation screen (shows calculated optimal BAC zone)
-- [ ] Implement license generation service
-  - Load template image
-  - Add photo, name, surname, sex, size, ID, points
-  - Reserve space for badge slots
-  - Save license image to app documents
-- [ ] Implement Riverpod providers for registration state
-- [ ] Calculate optimal BAC based on body size
-- [ ] Implement Hive storage for player profiles
-- [ ] Write integration tests for registration flow
 
 **Deliverables:**
-- ✅ Working app with theme and navigation
-- ✅ Main menu with all buttons (Add Player, Fake News, Fake Error, Start/Resume)
-- ✅ Fake News and Fake Error screens
-- ✅ Complete player registration flow (name + surname)
-- ✅ License auto-generation system with template
-- ✅ Players saved to Hive storage
-- ✅ Persistent game state management
-- ✅ All tests passing
+- ✅ Complete core infrastructure (Person A)
+  - ✅ All dependencies installed
+  - ✅ Theme system complete
+  - ✅ All constants defined (calibrated with real DGT data)
+  - ✅ 6 domain models with Freezed + JSON
+  - ✅ 4 utility classes with business logic
+  - ✅ 3 repositories with Hive storage
+  - ✅ Riverpod providers for data access
+  - ✅ App entry point configured
+  - ✅ Tests passing, analysis clean
+- ⏳ UI screens and widgets (Person B)
+  - [ ] Main menu with all buttons
+  - [ ] Fake News and Fake Error screens
+  - [ ] Complete player registration flow
+  - [ ] License auto-generation system
+  - [ ] Custom widgets (MassiveButton, CustomKeypad, etc.)
 
 **Estimated Completion:** End of Week 1
 
@@ -134,12 +165,14 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 #### Tasks
 
 **2.1 BAC Calculation Utilities**
-- [ ] Implement Widmark formula (`lib/core/utils/bac_calculator.dart`)
-- [ ] Implement optimal BAC zone calculation (S=0.05, M=0.07, L=0.09)
-- [ ] Add zone checking methods (isInOptimalZone, isCloseToOptimal, crossedOptimalLine)
-- [ ] Implement hybrid points system (`lib/core/utils/points_calculator.dart`)
+- [x] Implement Widmark formula (`lib/core/utils/bac_calculator.dart`)
+- [x] Implement optimal BAC zone calculation (calibrated with real DGT data)
+  - **Updated:** Breathalyzer readings in mg/L
+  - Small: 2.5 mg/L, Medium: 2.0 mg/L, Large: 1.8 mg/L
+- [x] Add zone checking methods (isInOptimalZone, isCloseToOptimal, crossedOptimalLine)
+- [x] Implement hybrid points system (`lib/core/utils/points_calculator.dart`)
   - Gain points for staying in zone (+2 in zone, +1 close)
-  - Lose points for dangerous behavior (-3 over line, -2 fast spike, -5 impoundment)
+  - Lose points for dangerous behavior (-3 over line, -2 fast spike, -5 impounded)
 - [ ] Write comprehensive unit tests with edge cases
 - [ ] Test with real-world scenarios
 
@@ -156,7 +189,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Build manual entry screen with custom keypad
 - [ ] Implement BAC entry provider (Riverpod)
 - [ ] Add haptic feedback on keypad taps
-- [ ] Implement BAC validation (0.00-9.99 range)
+- [ ] Implement BAC validation (0.00-9.99 mg/L range)
 - [ ] Save BAC readings to Hive with round number
 - [ ] Write widget and integration tests
 
@@ -180,22 +213,25 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 **2.6 Checkpoint Timer System**
 - [ ] Implement checkpoint timer provider (Riverpod)
-- [ ] Build shot clock widget (countdown display)
-- [ ] Add police siren audio alert
+  - **Updated:** Per-group timer system
+  - Each group has independent timer based on their last measurement
+  - Configurable intervals (30, 45, 60 minutes)
+- [ ] Build timer widget for each group (countdown display)
+- [ ] Add police siren audio alert when group checkpoint is due
 - [ ] Implement screen flash animation (red/blue)
-- [ ] Lock UI until all players log BAC
-- [ ] Save timer state to Hive every second
-- [ ] Trigger per-round title evaluation after all players log
+- [ ] Lock UI for active group until all players in group log BAC
+- [ ] Save timer state to Hive for each group
+- [ ] Trigger per-round title evaluation after all groups complete
 - [ ] Write tests for timer logic and persistence
 
 **2.7 Points & Title System**
-- [ ] Implement automatic points change after BAC entry (Round 1+ only)
-- [ ] Calculate position relative to optimal zone
-- [ ] Apply rewards/penalties based on zone position
+- [x] Implement automatic points change after BAC entry (Round 1+ only)
+- [x] Calculate position relative to optimal zone
+- [x] Apply rewards/penalties based on zone position
 - [ ] Update player points in Hive
 - [ ] Show notification UI ("+2 points: In the zone!" or "-3 points: Over the line!")
-- [ ] Mark `crossedOptimalLine` flag when player exceeds optimal + 0.05
-- [ ] Implement per-round title evaluation (`lib/core/utils/title_evaluator.dart`)
+- [ ] Mark `crossedOptimalLine` flag when player exceeds optimal + 0.4 mg/L
+- [x] Implement per-round title evaluation (`lib/core/utils/title_evaluator.dart`)
 - [ ] Award 5 titles per checkpoint (Velocidad de Crucero, Multa por Exceso, etc.)
 - [ ] Increment title counters in player profiles
 - [ ] Show title award animation with logo
@@ -215,7 +251,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 **Deliverables:**
 - ✅ Working BAC entry system
 - ✅ Round 0 baseline measurement (no feedback)
-- ✅ Functional checkpoint timer with persistence
+- ✅ Functional checkpoint timer with per-group intervals
 - ✅ Hybrid points calculation (rewards + penalties)
 - ✅ Real-time feedback system (Round 1+)
 - ✅ License update system (auto-update after each round)
@@ -252,6 +288,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 **3.3 Penalty System**
 - [ ] Implement "Vehículo Inmovilizado" (impoundment) logic
+  - **Updated:** Threshold at 3.5 mg/L (based on real DGT data)
 - [ ] Build full-screen fake error message UI (assets/msg_error.png)
 - [ ] Add error buzzer sound
 - [ ] Mark player as impounded in Hive
@@ -410,23 +447,29 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ### Overall Progress
 - **Phase 0:** ✅ 100% Complete
-- **Phase 1:** 🚧 0% Complete (In Progress)
-- **Phase 2:** ⏳ 0% Complete (Planned)
+- **Phase 1:** ✅ 80% Complete (Core infrastructure done by Person A, UI pending for Person B)
+- **Phase 2:** ⏳ 20% Complete (Business logic done, UI implementation pending)
 - **Phase 3:** ⏳ 0% Complete (Planned)
 - **Phase 4:** ⏳ 0% Complete (Planned)
 
 ### Feature Completion
 | Feature | Status | Progress |
 |---------|--------|----------|
+| Core Infrastructure | ✅ Complete | 100% |
+| Theme System | ✅ Complete | 100% |
+| Domain Models | ✅ Complete | 100% |
+| Business Logic | ✅ Complete | 100% |
+| Data Layer | ✅ Complete | 100% |
+| State Management | 🚧 In Progress | 70% |
 | Player Registration | ⏳ Planned | 0% |
 | Manual BAC Entry | ⏳ Planned | 0% |
 | OCR Camera | ⏳ Planned | 0% |
 | Round-Robin Flow | ⏳ Planned | 0% |
-| Checkpoint Timer | ⏳ Planned | 0% |
-| Points System | ⏳ Planned | 0% |
+| Checkpoint Timer | 🚧 In Progress | 50% |
+| Points System | 🚧 In Progress | 80% |
 | Penalty System | ⏳ Planned | 0% |
 | Leaderboard | ⏳ Planned | 0% |
-| DGT Titles | ⏳ Planned | 0% |
+| DGT Titles | 🚧 In Progress | 80% |
 | BAC Graphs | ⏳ Planned | 0% |
 | Fake License | ⏳ Planned | 0% |
 | Final Ceremony | ⏳ Planned | 0% |
@@ -435,23 +478,35 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ## 🤝 Collaboration Strategy
 
-### Developer 1 Focus Areas
-- Player registration flow
-- Manual BAC entry
-- Leaderboard UI
-- Fake license generation
+### Person A (Core Infrastructure) - ✅ COMPLETED
+- ✅ All dependencies and project setup
+- ✅ Complete theme system (colors, typography, theme)
+- ✅ All constants (calibrated with real DGT data)
+- ✅ All domain models (6 models with Freezed + JSON)
+- ✅ All business logic utilities (4 utility classes)
+- ✅ Complete data layer (3 repositories with Hive)
+- ✅ Riverpod providers for data access
+- ✅ App entry point and configuration
 
-### Developer 2 Focus Areas
-- OCR camera integration
-- Checkpoint timer system
-- Points calculation logic
-- Final ceremony animations
+### Person B (UI & Screens) - 🚧 IN PROGRESS
+- [ ] Main menu screen (persistent home)
+- [ ] Fake News and Fake Error screens
+- [ ] Player registration flow (6 screens)
+- [ ] Custom widgets (MassiveButton, CustomKeypad, LicenseCard, TitleBadge)
+- [ ] Manual BAC entry screen
+- [ ] Leaderboard screen
+- [ ] License viewing screen
+- [ ] Checkpoint timer UI
+- [ ] Feedback screens
+- [ ] OCR camera integration
+- [ ] Round-robin flow
+- [ ] Final ceremony animations
 
 ### Shared Responsibilities
-- Core theme and widgets
 - Testing (both write tests for their features)
 - Code reviews (review each other's PRs)
 - Documentation updates
+- Physical device testing
 
 ---
 
@@ -465,5 +520,14 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-**Last Updated:** May 4, 2026  
-**Next Review:** May 11, 2026 (End of Phase 1)
+**Last Updated:** May 6, 2026  
+**Next Review:** May 13, 2026 (End of Phase 2)
+
+**Key Changes in This Update:**
+- ✅ Phase 1 core infrastructure completed by Person A
+- 🔄 Updated BAC thresholds based on real DGT data (breathalyzer readings in mg/L)
+- 🔄 Updated checkpoint system to per-group timers with configurable intervals
+- 🔄 Calibrated optimal zones: Small=2.5, Medium=2.0, Large=1.8 mg/L
+- 🔄 Updated impoundment threshold to 3.5 mg/L
+- 🔄 Updated tolerances: ±0.2 mg/L (in zone), ±0.4 mg/L (close)
+- 📝 Person B to continue with UI screens and widgets
