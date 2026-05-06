@@ -1,324 +1,277 @@
 # Contributing to Operación DGV
 
-> 📚 **Documentation Navigation:** [README](README.md) | [Development Guide](docs/DEVELOPMENT.md) | [Automation Guide](docs/AUTOMATION.md)
->
-> This is the entry point for contributors. For detailed setup, workflow, coding standards, and testing information, see the [Development Guide](docs/DEVELOPMENT.md). For CI/CD, git hooks, and release processes, see the [Automation Guide](docs/AUTOMATION.md).
-
-Thank you for your interest in contributing to Operación DGV! This document provides guidelines and instructions for contributing to the project.
+> 🚔 **Parallel Development Guide** - How to split work with your partner for maximum efficiency
 
 ---
 
-## 📋 Table of Contents
+## 📋 Quick Overview
 
-1. [Getting Started](#getting-started)
-2. [Development Workflow](#development-workflow)
-3. [Coding Standards](#coding-standards)
-4. [Commit Convention](#commit-convention)
-5. [Pull Request Process](#pull-request-process)
-6. [Testing Requirements](#testing-requirements)
-7. [Automation](#automation)
-8. [Documentation](#documentation)
+**Operación DGV** is a mid-to-large Flutter app with complex state management, multiple interconnected features, and specific game mechanics. We recommend **parallel work** with clear boundaries to ship faster.
 
 ---
 
-## 🚀 Getting Started
+## 🎯 Recommendation: PARALLEL Work (Not Series)
 
-### Prerequisites
+### Why Parallel?
 
-You'll need Flutter 3.10+, Dart 3.0+, Git, and an IDE with Flutter extensions.
+- ✅ Features are mostly independent
+- ✅ Clean architectural boundaries (domain, data, presentation)
+- ✅ Minimal blocking between team members
+- ✅ Faster time to market
 
-**For complete setup instructions, see: [Setup Guide](docs/DEVELOPMENT.md#quick-setup)**
+### Why Not Series?
 
-### Quick Start
+- ❌ Slow - waiting for one person to finish before starting
+- ❌ Inefficient - doesn't leverage your team
+- ❌ Risk - single point of failure
 
-```bash
-# Clone and setup
-git clone https://github.com/yourusername/dgv.git
-cd dgv
-flutter pub get
-lefthook install
-dart run build_runner build -d
+---
+
+## 👥 Suggested Work Split
+
+### Person A: Core Infrastructure & State Management
+
+**Responsibility:** Build the foundation that everything else depends on
+
+**Tasks:**
+- Set up Riverpod providers architecture
+- Create all data models (freezed + Hive types)
+- Implement Hive storage layer
+- Build BAC calculator & points calculator utilities
+- Create game state provider (checkpoint, round management)
+- Set up theme & constants
+
+**Why this person starts first:** These are foundational. Other features depend on them.
+
+**Estimated time:** 3-4 days
+
+**Deliverables:**
+- `core/` folder fully implemented
+- `domain/` models ready
+- `data/` repository layer ready
+- All providers scaffolded
+
+---
+
+### Person B: UI Components & Screens (in parallel)
+
+**Responsibility:** Build all user-facing screens and components
+
+**Tasks:**
+- Build custom widgets (massive button, custom keypad, license card, etc.)
+- Implement Main Menu screen
+- Build Player Registration flow (all 6 screens)
+- Create Leaderboard & Player Detail screens
+- Build Breathalyzer entry screens (manual + OCR)
+- Implement Checkpoint timer UI
+
+**Why this can start in parallel:** Person A provides the models/providers, Person B builds UI against those interfaces.
+
+**Estimated time:** 4-5 days
+
+**Deliverables:**
+- `widgets/` folder complete
+- `features/main_menu/` complete
+- `features/player_registration/` complete
+- `features/leaderboard/` complete
+- `features/breathalyzer/` UI complete
+
+---
+
+## 🔗 Dependency Map
+
+```
+Person A (Infrastructure)
+├── Models & Providers
+│   └── Needed by: Person B (all screens)
+│   └── Needed by: Person C (game logic)
+└── Hive Storage
+    └── Needed by: Person C (persistence)
+
+Person B (UI)
+├── Screens & Widgets
+│   └── Depends on: Person A (models, providers)
+│   └── Needs: Person C (game logic providers)
+└── Can work independently on UI structure
+
+Person C (Game Logic) - Optional 3rd person
+├── Title evaluation
+├── Scoring logic
+├── Round management
+└── Depends on: Person A (models, providers)
 ```
 
-**For detailed setup and verification, see: [Setup Guide](docs/DEVELOPMENT.md#quick-setup)**
+---
 
-### Read the Documentation
+## 📅 Timeline
 
-Before contributing, please read:
+### Week 1
 
-1. **[`AI_INSTRUCTIONS.md`](./AI_INSTRUCTIONS.md)** - Complete project specification
-2. **[`.claude/skills/`](./.claude/skills/)** - Flutter/Riverpod best practices
-3. **[`ROADMAP.md`](./ROADMAP.md)** - Project roadmap and current priorities
+**Day 1-2:**
+- Person A builds core infrastructure (models, providers, storage)
+- Person B starts UI with mock data from Person A's interfaces
+
+**Day 3-4:**
+- Person B integrates real providers from Person A
+- Person A refines based on feedback
+
+**Day 5:**
+- Both refine and test integration
+
+### Week 2
+
+**Day 1-2:**
+- Person A builds game logic (title evaluation, scoring)
+- Person B polishes UI, adds animations
+
+**Day 3-5:**
+- Integration testing, bug fixes, final polish
 
 ---
 
-## 🔄 Development Workflow
+## 🛡️ How to Avoid Conflicts
 
-### Branch Strategy
+### 1. Define Interfaces First
 
-We use Git Flow with `main` (production), `develop` (integration), and feature branches (`feature/*`, `fix/*`, `refactor/*`, `docs/*`).
-
-**For complete branch strategy and workflow, see: [Git Workflow](docs/DEVELOPMENT.md#git-workflow)**
-
-### Daily Workflow
-
-1. Branch from `develop`
-2. Make your changes
-3. Test and format your code
-4. Commit using conventional commits
-5. Push and create a PR
-
-**For detailed daily workflow, see: [Daily Workflow](docs/DEVELOPMENT.md#daily-workflow)**
-
----
-
-## 📝 Coding Standards
-
-We follow strict coding standards to maintain consistency and quality across the codebase.
-
-### Key Standards
-
-- **State Management:** Riverpod only
-- **Models:** Freezed for immutable data classes
-- **Storage:** Hive for local storage
-- **Code Style:** Run `dart format .` before committing
-- **UI/UX:** Touch targets minimum 80px, no native keyboards for numbers
-
-**For complete coding standards and examples, see: [Coding Standards](docs/DEVELOPMENT.md#coding-standards)**
-
----
-
-## 💬 Commit Convention
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/).
-
-### Commit Format
-
-```text
-<type>(<scope>): <description>
-```
-
-**Common types:** feat, fix, docs, style, refactor, test, chore
-
-**Examples:**
-```bash
-feat(breathalyzer): add OCR camera screen
-fix(scoring): correct points deduction formula
-docs(readme): update installation instructions
-```
-
-**For complete commit convention guide, see: [Commit Convention](docs/DEVELOPMENT.md#commit-convention)**
-
----
-
-## 🔀 Pull Request Process
-
-### Before Creating a PR
-
-1. **Ensure all tests pass:**
-   ```bash
-   flutter test
-   ```
-
-2. **Run static analysis:**
-   ```bash
-   flutter analyze
-   ```
-
-3. **Format your code:**
-   ```bash
-   dart format .
-   ```
-
-4. **Update documentation** if needed
-
-5. **Update `CHANGELOG.md`** under `[Unreleased]` section
-
-### Creating a PR
-
-1. **Push your branch** to GitHub
-
-2. **Create a Pull Request** from your branch to `develop`
-
-3. **Fill out the PR template** completely:
-   - Description of changes
-   - Type of change
-   - Feature area
-   - Testing performed
-   - Screenshots (if UI changes)
-   - Checklist completion
-
-4. **Request review** from your partner
-
-5. **Address review comments** promptly
-
-### PR Requirements
-
-- ✅ All CI checks pass (format, analyze, test, build)
-- ✅ At least 1 approval from a team member
-- ✅ No merge conflicts with `develop`
-- ✅ Changelog updated
-- ✅ Documentation updated (if needed)
-
-### After PR is Merged
-
-1. **Delete your feature branch:**
-   ```bash
-   git branch -d feature/your-feature-name
-   git push origin --delete feature/your-feature-name
-   ```
-
-2. **Update your local `develop`:**
-   ```bash
-   git checkout develop
-   git pull origin develop
-   ```
-
----
-
-## 🧪 Testing Requirements
-
-### Testing Overview
-
-- **Minimum:** 80% code coverage for core logic
-- **Required:** Unit tests for utilities, widget tests for components, integration tests for flows
-
-**For complete testing guide and examples, see: [Testing](docs/DEVELOPMENT.md#testing)**
-
----
-
-## ⚙️ Automation
-
-Our project uses automated workflows for quality assurance:
-
-- **Git Hooks:** Pre-commit checks for formatting and analysis - [Details](docs/AUTOMATION.md#git-hooks-lefthook)
-- **CI/CD:** Automated testing and building on PRs - [Details](docs/AUTOMATION.md#github-actions)
-- **Releases:** Automated release creation from tags - [Details](docs/AUTOMATION.md#release-automation)
-
----
-
-## 📚 Documentation
-
-### When to Update Documentation
-
-- Adding a new feature → Update `AI_INSTRUCTIONS.md` and `README.md`
-- Changing architecture → Update `AI_INSTRUCTIONS.md` and `docs/DEVELOPMENT.md`
-- Changing checkpoint system → Update `AI_INSTRUCTIONS.md`, `docs/DEVELOPMENT.md`, and `CLAUDE.md`
-- Adding dependencies → Update `README.md` and `AI_INSTRUCTIONS.md`
-- Completing a milestone → Update `ROADMAP.md`
-- Making any change → Update `CHANGELOG.md`
-
-### Documentation Files
-
-- **`AI_INSTRUCTIONS.md`** - Project specification and architecture
-- **`README.md`** - Quick start and overview
-- **`ROADMAP.md`** - Development plan and progress
-- **`CHANGELOG.md`** - Version history and changes
-- **`CONTRIBUTING.md`** - This file
-- **`DOCUMENTATION_STRUCTURE.md`** - How docs fit together
-
-### Code Comments
-
-- Add comments for complex logic
-- Use `///` for public API documentation
-- Use `//` for implementation notes
-- Avoid obvious comments
+Before Person B starts UI, Person A should provide:
+- Model signatures (what fields each model has)
+- Provider signatures (what each provider returns)
+- Expected behavior documentation
 
 **Example:**
 ```dart
-/// Calculates BAC using the Widmark formula.
-/// 
-/// Formula: BAC = (Alcohol in grams / (Body weight × r)) × 100
-/// where r = 0.68 for men, 0.55 for women
-/// 
-/// Returns BAC as a percentage (e.g., 0.08 for 0.08%)
-static double calculateBAC({
-  required double alcoholGrams,
-  required Sex sex,
-  required BodySize bodySize,
-}) {
-  // Get body weight based on size category
-  final bodyWeight = _getBodyWeight(bodySize);
-  
-  // Distribution ratio varies by sex
-  final r = sex == Sex.male ? 0.68 : 0.55;
-  
-  return (alcoholGrams / (bodyWeight * 1000 * r)) * 100;
+// Person A defines this interface
+@riverpod
+Future<List<PlayerProfile>> playerList(Ref ref) async {
+  // Implementation TBD
 }
+
+// Person B uses it immediately
+class LeaderboardScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final players = ref.watch(playerListProvider);
+    // Build UI
+  }
+}
+```
+
+### 2. Use Feature Branches
+
+```bash
+git checkout -b feat/core-infrastructure
+git checkout -b feat/ui-components
+git checkout -b feat/game-logic
+```
+
+### 3. Merge Frequently (Daily)
+
+- Person A merges to `develop` first
+- Person B pulls and integrates
+- Resolve conflicts early, not at the end
+
+### 4. Mock Data During Development
+
+Person B can mock providers while Person A builds:
+
+```dart
+// Person B's mock during development
+final mockPlayers = [
+  PlayerProfile(id: '1', name: 'Alice', ...),
+  PlayerProfile(id: '2', name: 'Bob', ...),
+];
+
+// Swap to real provider when Person A is done
 ```
 
 ---
 
-## 🤝 Communication
+## 🔀 Git Workflow for Parallel Work
 
-### When to Sync with Your Partner
+### Person A's Workflow
 
-- Before starting a new feature
-- After completing a major component
-- When encountering architectural decisions
-- Before merging to `develop`
-- When blocked on an issue
+```bash
+git checkout -b feat/core-infrastructure
+# ... work on models, providers, storage ...
+git add .
+git commit -m "feat(core): add player models and providers"
+git push -u origin feat/core-infrastructure
+# Create PR, merge to develop
+```
 
-### What to Communicate
+### Person B's Workflow
 
-- "I'm working on [feature]"
-- "I've pushed [component], ready for review"
-- "I need [data model/API] from you to proceed"
-- "I'm blocked on [issue], can you help?"
+```bash
+git checkout develop
+git pull
+git checkout -b feat/ui-screens
+# ... work on UI, pulling Person A's changes regularly ...
+git pull origin develop  # Get Person A's merged changes
+git add .
+git commit -m "feat(ui): add leaderboard screen"
+git push -u origin feat/ui-screens
+# Create PR, merge to develop
+```
 
-### Code Review Guidelines
+### Daily Sync
 
-**As a Reviewer:**
-- Be constructive and respectful
-- Check against `AI_INSTRUCTIONS.md` standards
-- Test the changes locally if possible
-- Approve only if all requirements are met
-
-**As an Author:**
-- Respond to all comments
-- Don't take feedback personally
-- Ask for clarification if needed
-- Thank reviewers for their time
-
----
-
-## 🎭 Using AI Assistants
-
-### AI Agent Personas
-
-When working with AI assistants (Claude or Cursor), use these personas:
-
-- **🎨 UI/UX Architect** - For drunk-proof UI design
-- **🧠 State Manager** - For Riverpod providers
-- **🔢 DGT Logic Engine** - For BAC calculations and game logic
-- **📸 OCR Specialist** - For ML Kit integration
-- **🎭 Animation Director** - For animations and effects
-
-### AI Workflow
-
-1. Tell the AI to read `AI_INSTRUCTIONS.md`
-2. Reference `.claude/skills/` for patterns
-3. Specify which persona to use
-4. Review and test AI-generated code
-5. Ensure it follows project standards
+```bash
+# Both do this daily to stay in sync
+git checkout develop
+git pull origin develop
+git checkout your-feature-branch
+git merge develop  # Integrate latest changes
+```
 
 ---
 
-## ❓ Questions?
+## ✅ Success Criteria for Parallel Work
 
-If you have questions:
-
-1. Check `AI_INSTRUCTIONS.md` first
-2. Review `.claude/skills/` for patterns
-3. Ask your development partner
-4. Create a GitHub issue with the `question` label
-
----
-
-## 🎉 Thank You!
-
-Thank you for contributing to Operación DGV! Your work helps create a fun, safe app that gamifies responsible drinking. 🚔🍻
+- ✅ Clear interface contracts (models, providers)
+- ✅ Daily syncs (15 min standup)
+- ✅ Frequent merges (avoid long-lived branches)
+- ✅ Mock data for testing
+- ✅ Automated tests to catch integration issues
+- ✅ Code reviews before merging
 
 ---
 
-**Remember:** The goal is to create a technically excellent app with drunk-proof UX. Every contribution should serve that mission.
+## 🤝 Communication Checklist
+
+### Before Starting
+
+- [ ] Agree on who does what
+- [ ] Define model/provider interfaces
+- [ ] Set up shared branch strategy
+- [ ] Schedule daily syncs
+
+### During Development
+
+- [ ] "I'm working on [feature]"
+- [ ] "I've pushed [component], ready for review"
+- [ ] "I need [data model/API] from you to proceed"
+- [ ] "I'm blocked on [issue], can you help?"
+
+### Before Merging
+
+- [ ] All tests pass
+- [ ] Code reviewed by partner
+- [ ] No merge conflicts
+- [ ] Documentation updated
+
+---
+
+## 📚 Reference
+
+For detailed information, see:
+
+- **`AI_INSTRUCTIONS.md`** - Complete project specification
+- **`.kiro/steering/`** - Development standards and patterns
+- **`.kiro/skills/`** - Flutter/Riverpod best practices
+- **`ROADMAP.md`** - Project roadmap and priorities
+
+---
+
+## 🎉 Let's Build!
+
+You have a solid architecture and clear separation of concerns. Go parallel, communicate daily, and ship fast. 🚔🍻
