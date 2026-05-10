@@ -135,6 +135,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Optional APK build toggle in PR template to control CI build behavior
+- Phase 1 completion spec with requirements document ready for implementation
+  - 17 detailed requirements covering checkpoint providers, unit tests, UI screens, and reusable widgets
+  - Checkpoint provider with per-group timer management and Hive persistence
+  - Comprehensive unit tests for BAC Calculator, Points Calculator, Title Evaluator, and Checkpoint Calculator (90% coverage target)
+  - Unit tests for all repositories (85% coverage target)
+  - Main Menu screen (persistent home with game state detection)
+  - Fake News and Fake Error screens (satirical DGT theme)
+  - Reusable widgets: Massive Button, Custom Keypad, Title Badge, License Card (drunk-proof design)
+  - Integration tests for checkpoint providers with Hive persistence
+  - JSON serialization requirements for CheckpointState and GameState
+  - Spec location: `.kiro/specs/phase-1-completion/`
 
 ### Changed
 - **Documentation Refactoring**: Comprehensive restructuring to eliminate duplication and establish clear information hierarchy
