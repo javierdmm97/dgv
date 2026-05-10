@@ -9,7 +9,12 @@ jobs:
   check-changelog:
     name: Check Changelog Updated
     runs-on: ubuntu-latest
-    
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
