@@ -32,20 +32,21 @@ echo ""
 
 # Install lefthook
 echo "🪝 Setting up Git hooks..."
-if grep -q "lefthook" pubspec.yaml; then
-    echo "✅ Lefthook already in pubspec.yaml"
-else
-    echo "📝 Adding lefthook to dev_dependencies..."
-    flutter pub add --dev lefthook
-fi
-
-# Install hooks
+# Check if lefthook binary is available
 if command -v lefthook &> /dev/null; then
     lefthook install
-    echo "✅ Git hooks installed"
+    echo "✅ Git hooks installed with lefthook"
 else
-    echo "⚠️  Lefthook not found in PATH"
-    echo "   Run 'lefthook install' manually after 'flutter pub get'"
+    echo "⚠️  Lefthook binary not found"
+    echo ""
+    echo "To install lefthook, run one of:"
+    echo "  - npm install -g lefthook"
+    echo "  - brew install lefthook (macOS)"
+    echo "  - curl -1sLf 'https://dl.cloudsmith.io/public/evilmartians/lefthook/setup.deb.sh' | sudo -E bash && sudo apt install lefthook (Ubuntu/Debian)"
+    echo ""
+    echo "Or download from: https://github.com/evilmartians/lefthook/releases"
+    echo ""
+    echo "Continuing without git hooks..."
 fi
 echo ""
 
