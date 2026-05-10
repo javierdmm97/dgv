@@ -1,50 +1,70 @@
 # Auto-label PRs based on files changed
+# Format for actions/labeler@v5
 
 'feature: player-registration':
-  - lib/features/player_registration/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/player_registration/**/*'
 
 'feature: breathalyzer':
-  - lib/features/breathalyzer/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/breathalyzer/**/*'
 
 'feature: checkpoint':
-  - lib/features/checkpoint/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/checkpoint/**/*'
 
 'feature: scoring':
-  - lib/features/scoring/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/scoring/**/*'
 
 'feature: leaderboard':
-  - lib/features/leaderboard/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/leaderboard/**/*'
 
 'feature: achievements':
-  - lib/features/achievements/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/achievements/**/*'
 
 'feature: fake-id':
-  - lib/features/fake_id/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/features/fake_id/**/*'
 
 'area: ui':
-  - lib/widgets/**/*
-  - lib/core/theme/**/*
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/widgets/**/*'
+      - 'lib/core/theme/**/*'
 
 'area: core':
-  - lib/core/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'lib/core/**/*'
 
 'area: tests':
-  - test/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'test/**/*'
 
 'area: docs':
-  - '*.md'
-  - .github/**/*
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.md'
+      - '.github/**/*'
 
 'area: ci/cd':
-  - .github/workflows/**/*
-  - lefthook.yml
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**/*'
+      - 'lefthook.yml'
 
 'area: dependencies':
-  - pubspec.yaml
-  - pubspec.lock
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
 
 'area: android':
-  - android/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'android/**/*'
 
 'area: ios':
-  - ios/**/*
+  - changed-files:
+    - any-glob-to-any-file: 'ios/**/*'

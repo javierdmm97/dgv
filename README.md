@@ -13,6 +13,7 @@ A Flutter mobile app that gamifies responsible drinking at parties through a sat
 ### Prerequisites
 - Flutter 3.10+ and Dart 3.0+
 - Git
+- **Lefthook** (for git hooks) - [Installation instructions](#lefthook-installation)
 - Android Studio or VS Code with Flutter extensions
 
 ### Setup
@@ -35,6 +36,42 @@ A Flutter mobile app that gamifies responsible drinking at parties through a sat
    - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
    - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow
    - **[ROADMAP.md](ROADMAP.md)** - Development plan
+
+---
+
+## 🪝 Lefthook Installation
+
+Lefthook is used for git hooks (pre-commit formatting, linting, etc.). Install it before running the setup script:
+
+### Option 1: Using npm (recommended if you have Node.js)
+```bash
+npm install -g lefthook
+```
+
+### Option 2: Using Homebrew (macOS)
+```bash
+brew install lefthook
+```
+
+### Option 3: Using apt (Ubuntu/Debian/WSL)
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/evilmartians/lefthook/setup.deb.sh' | sudo -E bash
+sudo apt install lefthook
+```
+
+### Option 4: Direct download
+Download the binary from [Lefthook Releases](https://github.com/evilmartians/lefthook/releases) and add it to your PATH.
+
+### Verify installation
+```bash
+lefthook version
+```
+
+After installing lefthook, run the setup script to configure git hooks:
+```bash
+./setup.sh          # Linux/macOS/WSL
+.\setup.ps1         # Windows PowerShell
+```
 
 ---
 
