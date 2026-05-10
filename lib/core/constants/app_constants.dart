@@ -11,10 +11,14 @@ class AppConstants {
   // DGT Reference (3 beers): Men 70kg = 0.8, Men 80kg = 0.7, Women 50kg = 1.5, Women 60kg = 1.2
   // Party context: 10-12 beers over 6-8 hours with metabolism
   // Expected peak readings: Men 2.0-3.0 mg/L, Women 3.5-5.0 mg/L
-  static const double optimalToleranceClose = 0.2; // ±0.2 mg/L for "in the zone"
-  static const double optimalToleranceFar = 0.4; // ±0.4 mg/L for "close to optimal"
-  static const double impoundmentThreshold = 3.5; // >= 3.5 mg/L = impounded (sit out next round)
-  static const double dangerousSpikeRate = 0.8; // >0.8 mg/L per hour = dangerous spike (3 beers/hour)
+  static const double optimalToleranceClose =
+      0.2; // ±0.2 mg/L for "in the zone"
+  static const double optimalToleranceFar =
+      0.4; // ±0.4 mg/L for "close to optimal"
+  static const double impoundmentThreshold =
+      3.5; // >= 3.5 mg/L = impounded (sit out next round)
+  static const double dangerousSpikeRate =
+      0.8; // >0.8 mg/L per hour = dangerous spike (3 beers/hour)
 
   // Points Changes
   static const int pointsInOptimalZone = 2; // +2 for being in sweet spot
@@ -43,14 +47,19 @@ class AppConstants {
   static const double widmarkRFemale = 0.55;
 
   // Checkpoint Timer (per-group intervals, configurable)
-  static const List<int> availableIntervalMinutes = [30, 45, 60]; // User-selectable
+  static const List<int> availableIntervalMinutes = [
+    30,
+    45,
+    60,
+  ]; // User-selectable
   static const int defaultIntervalMinutes = 45;
   static const Duration defaultCheckpointInterval = Duration(minutes: 45);
-  
+
   // Beer consumption constants
   static const double standardBeerML = 330.0;
   static const double standardBeerAlcoholPercent = 5.0;
-  static const double gramsAlcoholPerStandardBeer = 13.0; // 330ml @ 5% = ~13g alcohol
+  static const double gramsAlcoholPerStandardBeer =
+      13.0; // 330ml @ 5% = ~13g alcohol
 
   // Round System
   static const int baselineRound = 0; // Round 0 = baseline (no feedback)

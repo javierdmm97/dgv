@@ -12,7 +12,7 @@ class DGTStrings {
   static const String resumeGame = 'Continuar Control';
   static const String addPlayer = 'Añadir Conductor';
   static const String myVehicles = 'MIS VEHÍCULOS';
-  static const String actualidadDGV= 'ACTUALIDAD DGV';
+  static const String actualidadDGV = 'ACTUALIDAD DGV';
 
   // Player Registration
   static const String registrationTitle = 'Registro de Conductor';
@@ -87,7 +87,8 @@ class DGTStrings {
 
   // Grand Prize Descriptions
   static const String descConductorPerfecto = 'Más puntos sin cruzar la línea';
-  static const String descPrecisionAbsoluta = 'Promedio más cercano a zona óptima';
+  static const String descPrecisionAbsoluta =
+      'Promedio más cercano a zona óptima';
   static const String descColeccionistaTitulos = 'Más títulos DGT acumulados';
   static const String descEnvironmentalDistinctive = 'Top 5 tasas más altas';
 
@@ -111,9 +112,11 @@ class DGTStrings {
 
   // Dialogs
   static const String confirmFinishGame = '¿Finalizar el control?';
-  static const String confirmFinishGameMessage = 'Se mostrarán los resultados finales y premios.';
+  static const String confirmFinishGameMessage =
+      'Se mostrarán los resultados finales y premios.';
   static const String confirmDeletePlayer = '¿Eliminar conductor?';
-  static const String confirmDeletePlayerMessage = 'Esta acción no se puede deshacer.';
+  static const String confirmDeletePlayerMessage =
+      'Esta acción no se puede deshacer.';
   static const String yes = 'Sí';
   static const String no = 'No';
 

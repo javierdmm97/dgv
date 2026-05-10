@@ -16,9 +16,7 @@ class GameStateRepositoryImpl implements GameStateRepository {
 
     if (json == null) return null;
 
-    return GameState.fromJson(
-      jsonDecode(json) as Map<String, dynamic>,
-    );
+    return GameState.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
   @override

@@ -9,9 +9,5 @@ void main() async {
   // Initialize Hive
   await HiveService.init();
 
-  runApp(
-    const ProviderScope(
-      child: DGVApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: DGVApp()));
 }

@@ -15,11 +15,11 @@ class CheckpointCalculator {
   }
 
   /// Check if a group's checkpoint is due
-  static bool isCheckpointDue(
-    DateTime lastMeasurement,
-    int intervalMinutes,
-  ) {
-    final nextCheckpoint = calculateNextCheckpoint(lastMeasurement, intervalMinutes);
+  static bool isCheckpointDue(DateTime lastMeasurement, int intervalMinutes) {
+    final nextCheckpoint = calculateNextCheckpoint(
+      lastMeasurement,
+      intervalMinutes,
+    );
     return DateTime.now().isAfter(nextCheckpoint);
   }
 
@@ -28,7 +28,10 @@ class CheckpointCalculator {
     DateTime lastMeasurement,
     int intervalMinutes,
   ) {
-    final nextCheckpoint = calculateNextCheckpoint(lastMeasurement, intervalMinutes);
+    final nextCheckpoint = calculateNextCheckpoint(
+      lastMeasurement,
+      intervalMinutes,
+    );
     final remaining = nextCheckpoint.difference(DateTime.now());
     return remaining.isNegative ? Duration.zero : remaining;
   }
@@ -46,8 +49,8 @@ class CheckpointCalculator {
     final groupSize = (players.length / numberOfGroups).ceil();
 
     for (int i = 0; i < players.length; i += groupSize) {
-      final end = (i + groupSize < players.length) 
-          ? i + groupSize 
+      final end = (i + groupSize < players.length)
+          ? i + groupSize
           : players.length;
       groups.add(players.sublist(i, end));
     }
@@ -93,17 +96,20 @@ class CheckpointCalculator {
     BodySize bodySize,
     Duration timeSinceFirstBeer,
   ) {
-    final totalAlcoholGrams = beersConsumed * AppConstants.gramsAlcoholPerStandardBeer;
+    final totalAlcoholGrams =
+        beersConsumed * AppConstants.gramsAlcoholPerStandardBeer;
     final bodyWeight = _getBodyWeight(bodySize);
-    final r = sex == Sex.male ? AppConstants.widmarkRMale : AppConstants.widmarkRFemale;
-    
+    final r = sex == Sex.male
+        ? AppConstants.widmarkRMale
+        : AppConstants.widmarkRFemale;
+
     // Widmark formula
     final peakBAC = (totalAlcoholGrams / (bodyWeight * 1000 * r)) * 100;
-    
+
     // Account for alcohol metabolism (~0.015% per hour)
     final hoursElapsed = timeSinceFirstBeer.inMinutes / 60.0;
     final metabolizedBAC = hoursElapsed * 0.015;
-    
+
     final currentBAC = peakBAC - metabolizedBAC;
     return currentBAC > 0 ? currentBAC : 0;
   }

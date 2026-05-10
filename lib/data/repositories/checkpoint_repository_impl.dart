@@ -16,9 +16,7 @@ class CheckpointRepositoryImpl implements CheckpointRepository {
 
     if (json == null) return null;
 
-    return CheckpointState.fromJson(
-      jsonDecode(json) as Map<String, dynamic>,
-    );
+    return CheckpointState.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
   @override

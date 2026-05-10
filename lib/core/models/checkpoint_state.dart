@@ -37,7 +37,9 @@ class CheckpointState with _$CheckpointState {
 extension GroupCheckpointX on GroupCheckpoint {
   /// Get time remaining until next checkpoint
   Duration get timeRemaining {
-    final next = nextCheckpoint ?? lastMeasurement.add(Duration(minutes: intervalMinutes));
+    final next =
+        nextCheckpoint ??
+        lastMeasurement.add(Duration(minutes: intervalMinutes));
     final remaining = next.difference(DateTime.now());
     return remaining.isNegative ? Duration.zero : remaining;
   }

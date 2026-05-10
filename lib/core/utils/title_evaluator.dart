@@ -22,13 +22,19 @@ class TitleEvaluator {
     if (playersWithReadings.isEmpty) return awards;
 
     // 🟢 Velocidad de Crucero: Closest to their optimal zone
-    final closestPlayer = _findClosestToOptimal(playersWithReadings, currentRound);
+    final closestPlayer = _findClosestToOptimal(
+      playersWithReadings,
+      currentRound,
+    );
     if (closestPlayer != null) {
       awards[closestPlayer.id] = DGTTitle.velocidadDeCrucero;
     }
 
     // 🔴 Multa por Exceso: Highest BAC spike from last round
-    final highestSpikePlayer = _findHighestSpike(playersWithReadings, currentRound);
+    final highestSpikePlayer = _findHighestSpike(
+      playersWithReadings,
+      currentRound,
+    );
     if (highestSpikePlayer != null) {
       awards[highestSpikePlayer.id] = DGTTitle.multaPorExceso;
     }
@@ -40,7 +46,10 @@ class TitleEvaluator {
     }
 
     // 🔋 Vehículo Híbrido: BAC dropped (drank water)
-    final hybridPlayers = _findHybridVehicles(playersWithReadings, currentRound);
+    final hybridPlayers = _findHybridVehicles(
+      playersWithReadings,
+      currentRound,
+    );
     for (final player in hybridPlayers) {
       awards[player.id] = DGTTitle.vehiculoHibrido;
     }

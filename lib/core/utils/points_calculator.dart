@@ -64,15 +64,9 @@ class PointsCalculator {
   }
 
   /// Calculate total points for a player (clamped between min and max)
-  static int calculateTotalPoints(
-    int currentPoints,
-    int pointsChange,
-  ) {
+  static int calculateTotalPoints(int currentPoints, int pointsChange) {
     final newPoints = currentPoints + pointsChange;
-    return newPoints.clamp(
-      AppConstants.minPoints,
-      AppConstants.maxPoints,
-    );
+    return newPoints.clamp(AppConstants.minPoints, AppConstants.maxPoints);
   }
 
   /// Get feedback message based on points change
@@ -107,9 +101,4 @@ class PointsCalculator {
 }
 
 /// Feedback color for UI
-enum FeedbackColor {
-  green,
-  yellow,
-  red,
-  neutral,
-}
+enum FeedbackColor { green, yellow, red, neutral }

@@ -31,7 +31,7 @@ class GameStateNotifier extends _$GameStateNotifier {
   /// Start a new game
   Future<void> startGame(List<String> playerIds) async {
     final repository = ref.read(gameStateRepositoryProvider);
-    
+
     final newGame = GameState(
       id: const Uuid().v4(),
       startTime: DateTime.now(),

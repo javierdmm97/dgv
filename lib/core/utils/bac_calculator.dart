@@ -2,26 +2,26 @@ import '../constants/app_constants.dart';
 import '../models/player_profile.dart';
 
 /// BAC Calculator for breathalyzer readings (BrAC in mg/L)
-/// 
+///
 /// IMPORTANT: Breathalyzers measure BrAC (Breath Alcohol Content) in mg/L of exhaled air
-/// 
+///
 /// DGT Reference Data (immediate consumption, no metabolism):
 /// Men 70kg:  1 beer = 0.3 mg/L | 2 beers = 0.6 mg/L | 3 beers = 0.8 mg/L
 /// Men 80kg:  1 beer = 0.2 mg/L | 2 beers = 0.5 mg/L | 3 beers = 0.7 mg/L
 /// Women 50kg: 1 beer = 0.5 mg/L | 2 beers = 1.0 mg/L | 3 beers = 1.5 mg/L
 /// Women 60kg: 1 beer = 0.5 mg/L | 2 beers = 0.8 mg/L | 3 beers = 1.2 mg/L
-/// 
+///
 /// Party Context (6-8 hours, 10-12 beers with metabolism):
 /// - Small person (50-60kg): Peak ~4.0-5.0 mg/L, Optimal ~2.5 mg/L
 /// - Medium person (65-75kg): Peak ~3.0-3.5 mg/L, Optimal ~2.0 mg/L
 /// - Large person (80-90kg): Peak ~2.5-3.0 mg/L, Optimal ~1.8 mg/L
-/// 
+///
 /// Game Thresholds:
 /// - Optimal zone: ±0.2 mg/L from target
 /// - Close: ±0.4 mg/L from target
 /// - Impoundment: 3.5 mg/L (sit out next round)
 /// - Dangerous spike: >0.8 mg/L per hour (3 beers/hour)
-/// 
+///
 /// The breathalyzer reading is the actual measurement - we personalize targets
 /// by body size to level the playing field between different players.
 class BACCalculator {
@@ -37,8 +37,8 @@ class BACCalculator {
     required BodySize bodySize,
   }) {
     final bodyWeight = _getBodyWeight(bodySize);
-    final r = sex == Sex.male 
-        ? AppConstants.widmarkRMale 
+    final r = sex == Sex.male
+        ? AppConstants.widmarkRMale
         : AppConstants.widmarkRFemale;
     return (alcoholGrams / (bodyWeight * 1000 * r)) * 100;
   }
@@ -62,7 +62,7 @@ class BACCalculator {
   /// - Small (50-60kg): 2.5 mg/L (~6-7 beers sustained)
   /// - Medium (65-75kg): 2.0 mg/L (~7-8 beers sustained)
   /// - Large (80-90kg): 1.8 mg/L (~8-9 beers sustained)
-  /// 
+  ///
   /// Note: Larger people have LOWER optimal readings because they metabolize
   /// alcohol more efficiently and feel comfortable at lower BrAC levels
   static double calculateOptimalBAC(BodySize size) {
@@ -78,14 +78,15 @@ class BACCalculator {
 
   /// Check if BAC is in the "sweet spot" (±0.02 tolerance)
   static bool isInOptimalZone(double currentBAC, double optimalBAC) {
-    return (currentBAC - optimalBAC).abs() <= AppConstants.optimalToleranceClose;
+    return (currentBAC - optimalBAC).abs() <=
+        AppConstants.optimalToleranceClose;
   }
 
   /// Check if BAC is close to optimal (±0.02-0.05)
   static bool isCloseToOptimal(double currentBAC, double optimalBAC) {
     final diff = (currentBAC - optimalBAC).abs();
-    return diff > AppConstants.optimalToleranceClose && 
-           diff <= AppConstants.optimalToleranceFar;
+    return diff > AppConstants.optimalToleranceClose &&
+        diff <= AppConstants.optimalToleranceFar;
   }
 
   /// Check if player crossed the optimal line (>+0.05)

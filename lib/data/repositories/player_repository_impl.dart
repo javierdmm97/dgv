@@ -39,9 +39,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
 
     if (json == null) return null;
 
-    return PlayerProfile.fromJson(
-      jsonDecode(json) as Map<String, dynamic>,
-    );
+    return PlayerProfile.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
   @override
