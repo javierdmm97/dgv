@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **README.md & AI_INSTRUCTIONS.md Game Mechanics Update:** Updated documentation to reflect breathalyzer readings in mg/L instead of BAC percentages
+  - Changed optimal zones: Small 2.5 mg/L, Medium 2.0 mg/L, Large 1.8 mg/L (was 0.05, 0.07, 0.09 BAC)
+  - Updated tolerance zones: ±0.2 mg/L (in zone), ±0.4 mg/L (close) - was ±0.02 BAC
+  - Updated thresholds: Spike rate >0.8 mg/L/hr, Impoundment ≥3.5 mg/L (was >0.15/hr, ≥1.2 BAC)
+  - README.md: Added Measurement System section explaining mg/L vs BAC percentages
+  - README.md: Updated Quick Example with mg/L readings
+  - README.md: Removed duplicate sections (BAC Calculation, DGT Titles, Grand Prizes)
+  - AI_INSTRUCTIONS.md: Updated BACCalculator, PointsCalculator, and TitleEvaluator code examples
+  - AI_INSTRUCTIONS.md: Updated leaderboard card layout example and impoundment threshold
+  - Documentation now matches app_constants.dart implementation
 - Improved setup script to source bashrc for Flutter PATH detection in non-interactive shells
 - Switched from incompatible lefthook Dart package to native lefthook binary
 - Added comprehensive lefthook installation guide to README

@@ -331,31 +331,31 @@ class BACCalculator {
     }
   }
   
-  /// Calculate optimal BAC zone based on body size
-  /// Small: 0.05, Medium: 0.07, Large: 0.09
-  /// TODO: Later implement real formula based on weight and sex
+  /// Calculate optimal BAC zone based on body size (in mg/L)
+  /// Small: 2.5 mg/L, Medium: 2.0 mg/L, Large: 1.8 mg/L
+  /// Based on DGT data extrapolated for party context (6-8 beers sustained)
   static double calculateOptimalBAC(BodySize size) {
     switch (size) {
-      case BodySize.small: return 0.05;
-      case BodySize.medium: return 0.07;
-      case BodySize.large: return 0.09;
+      case BodySize.small: return 2.5;   // ~6-7 beers sustained
+      case BodySize.medium: return 2.0;  // ~7-8 beers sustained
+      case BodySize.large: return 1.8;   // ~8-9 beers sustained
     }
   }
   
-  /// Check if BAC is in the "sweet spot" (±0.02 tolerance)
+  /// Check if BAC is in the "sweet spot" (±0.2 mg/L tolerance)
   static bool isInOptimalZone(double currentBAC, double optimalBAC) {
-    return (currentBAC - optimalBAC).abs() <= 0.02;
+    return (currentBAC - optimalBAC).abs() <= 0.2;
   }
   
-  /// Check if BAC is close to optimal (±0.02-0.05)
+  /// Check if BAC is close to optimal (±0.2-0.4 mg/L)
   static bool isCloseToOptimal(double currentBAC, double optimalBAC) {
     final diff = (currentBAC - optimalBAC).abs();
-    return diff > 0.02 && diff <= 0.05;
+    return diff > 0.2 && diff <= 0.4;
   }
   
-  /// Check if player crossed the optimal line (>+0.05)
+  /// Check if player crossed the optimal line (>+0.4 mg/L)
   static bool crossedOptimalLine(double currentBAC, double optimalBAC) {
-    return currentBAC > (optimalBAC + 0.05);
+    return currentBAC > (optimalBAC + 0.4);
   }
 }
 ```
@@ -366,36 +366,37 @@ class BACCalculator {
 class PointsCalculator {
   /// Calculate points change based on BAC relative to optimal zone
   /// Returns positive for gains, negative for penalties
+  /// All thresholds in mg/L (breathalyzer readings)
   static int calculatePointsChange({
     required double currentBAC,
     required double optimalBAC,
     required double previousBAC,
     required Duration timeDelta,
   }) {
-    // Check if in optimal zone (±0.02)
+    // Check if in optimal zone (±0.2 mg/L)
     if (BACCalculator.isInOptimalZone(currentBAC, optimalBAC)) {
       return 2; // +2 points for being in the sweet spot
     }
     
-    // Check if close to optimal (±0.02-0.05)
+    // Check if close to optimal (±0.4 mg/L)
     if (BACCalculator.isCloseToOptimal(currentBAC, optimalBAC)) {
       return 1; // +1 point for being close
     }
     
-    // Check if crossed the optimal line (>+0.05)
+    // Check if crossed the optimal line (>+0.4 mg/L)
     if (BACCalculator.crossedOptimalLine(currentBAC, optimalBAC)) {
       return -3; // -3 points + lose Grand Prize eligibility
     }
     
-    // Check if too low (<-0.05 from optimal)
-    if (currentBAC < (optimalBAC - 0.05)) {
+    // Check if too low (<-0.4 mg/L from optimal)
+    if (currentBAC < (optimalBAC - 0.4)) {
       return 0; // No points (not drinking enough)
     }
     
-    // Check for dangerous spike (>0.15/hr)
+    // Check for dangerous spike (>0.8 mg/L per hour)
     final delta = currentBAC - previousBAC;
     final ratePerHour = delta / (timeDelta.inMinutes / 60.0);
-    if (ratePerHour > 0.15) {
+    if (ratePerHour > 0.8) {
       return -2; // -2 points for spiking too fast
     }
     
@@ -403,8 +404,9 @@ class PointsCalculator {
   }
   
   /// Check if player exceeded maximum BAC threshold (impoundment)
+  /// Threshold: ≥3.5 mg/L
   static bool isImpounded(double currentBAC) {
-    return currentBAC >= 1.2; // -5 points + sit out next round
+    return currentBAC >= 3.5; // -5 points + sit out next round
   }
   
   /// Calculate average distance from optimal zone across all readings
@@ -976,7 +978,7 @@ class CheckpointTimer extends _$CheckpointTimer {
 - Update license image with new points value
 
 **Impoundment ("Vehículo Inmovilizado"):**
-- Trigger when `currentBAC >= 1.2`
+- Trigger when `currentBAC >= 3.5` mg/L
 - Show fake error message (assets/msg_error.png) full-screen
 - Play error buzzer sound
 - Mark player as `isImpounded = true`
@@ -1000,8 +1002,8 @@ class CheckpointTimer extends _$CheckpointTimer {
 ┌─────────────────────────────────┐
 │ 🏆 1st Place                    │
 │ [Photo] Juan García             │
-│ 12 points | 0.45 BAC            │
-│ Optimal: 0.07 (±0.02)           │
+│ 12 points | 1.8 mg/L            │
+│ Optimal: 2.0 mg/L (±0.2)        │
 │ 🟢×3 🔴×1 🔰×0 🔋×2 🛠️×1       │
 │ [Tap to view license]           │
 └─────────────────────────────────┘

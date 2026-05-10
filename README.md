@@ -169,23 +169,27 @@ flutter build appbundle --release       # Android App Bundle
 
 ## 🧮 Game Mechanics
 
+### Measurement System
+The app uses **breathalyzer readings in mg/L** (milligrams per liter of exhaled air), which is the standard DGT measurement format. This is different from blood alcohol concentration (BAC) percentages.
+
 ### "Sweet Spot" System (Price is Right Mechanic)
-Each player has a personalized **optimal BAC zone** based on body size:
-- **Small (S):** 0.05 optimal BAC
-- **Medium (M):** 0.07 optimal BAC
-- **Large (L):** 0.09 optimal BAC
-- **Tolerance:** ±0.02 (the "sweet spot")
+Each player has a personalized **optimal breathalyzer reading zone** based on body size:
+- **Small (S):** 2.5 mg/L optimal (equivalent to ~6-7 beers sustained)
+- **Medium (M):** 2.0 mg/L optimal (equivalent to ~7-8 beers sustained)
+- **Large (L):** 1.8 mg/L optimal (equivalent to ~8-9 beers sustained)
+- **Tolerance zones:**
+  - **In the zone:** ±0.2 mg/L (the "sweet spot")
+  - **Close to optimal:** ±0.4 mg/L
 
 ### Points System (Hybrid)
 - Everyone starts with **15 points**
 - **Gain points** for staying in your zone:
-  - In the zone (±0.02): +2 points
-  - Close (±0.02-0.05): +1 point
+  - In the zone (±0.2 mg/L): +2 points
+  - Close to optimal (±0.4 mg/L): +1 point
 - **Lose points** for dangerous behavior:
-  - Too low (<-0.05): 0 points
-  - Over the line (>+0.05): -3 points + lose Grand Prize eligibility
-  - Spike too fast (>0.15/hr): -2 points
-  - Impoundment (≥1.2): -5 points + sit out next round
+  - Over the line (beyond +0.4 mg/L): -3 points + lose Grand Prize eligibility
+  - Spike too fast (>0.8 mg/L per hour): -2 points
+  - Impoundment (≥3.5 mg/L): -5 points + sit out next round
 
 ### Round System
 - **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
@@ -200,10 +204,10 @@ Uses the **Widmark formula** with sex and body size:
 ### DGT Titles (Per-Round Awards)
 Awarded **every checkpoint** based on player behavior:
 - 🟢 **Velocidad de Crucero** - Closest to their optimal zone
-- 🔴 **Multa por Exceso** - Highest BAC spike from last round
-- 🔰 **L de Prácticas** - Lowest BAC in the round
-- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
+- 🔴 **Multa por Exceso** - Highest reading spike from last round
+- 🔰 **L de Prácticas** - Lowest reading in the round
+- 🔋 **Vehículo Híbrido** - Reading dropped (drank water)
+- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01 mg/L)
 
 Players accumulate these titles throughout the night (tracked with counters).
 
@@ -218,37 +222,11 @@ Three separate grand prizes awarded at the end:
 
 ### Quick Example
 ```
-Player: Medium (M), Optimal: 0.07
-Round 0: BAC 0.03 → "Reading recorded" (no feedback)
-Round 1: BAC 0.07 → "+2 points: In the zone!" (green screen)
-Round 2: BAC 0.12 → "-3 points: Over the line!" (red screen)
+Player: Medium (M), Optimal: 2.0 mg/L
+Round 0: Reading 0.8 mg/L → "Reading recorded" (no feedback)
+Round 1: Reading 2.0 mg/L → "+2 points: In the zone!" (green screen)
+Round 2: Reading 2.8 mg/L → "-3 points: Over the line!" (red screen)
 ```
-  - Impoundment (≥1.2): -5 points + sit out next round
-
-### BAC Calculation
-Uses the **Widmark formula** with sex and body size:
-- `BAC = (Alcohol in grams / (Body weight × r)) × 100`
-- `r = 0.68` for men, `0.55` for women
-- Body sizes: S (55kg), M (70kg), L (90kg)
-
-### DGT Titles (Per-Round Awards)
-Awarded **every checkpoint** based on player behavior:
-- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
-- 🔴 **Multa por Exceso** - Highest BAC spike from last round
-- 🔰 **L de Prácticas** - Lowest BAC in the round
-- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
-
-Players accumulate these titles throughout the night (tracked with counters).
-
-### Environmental Distinctive Badges
-At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
-
-### Grand Prizes (Final Ceremony)
-Three separate grand prizes awarded at the end:
-1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
-2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
-3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
 
 ---
 
@@ -303,8 +281,8 @@ Drunk-proof UX **cannot be validated in simulators**. Always test on real device
 
 ## 👥 Contributors
 
-- Developer 1: [Your name]
-- Developer 2: [Partner's name]
+- Developer 1: [Javier]
+- Developer 2: [Kristian]
 
 ---
 
