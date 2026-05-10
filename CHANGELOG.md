@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Improved setup script to source bashrc for Flutter PATH detection in non-interactive shells
+- Switched from incompatible lefthook Dart package to native lefthook binary
+- Added comprehensive lefthook installation guide to README
+
 ### Changed - Game Mechanics & Flow Redesign (May 4, 2026)
 
 **Major game mechanics and app flow overhaul:**
