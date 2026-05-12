@@ -62,6 +62,7 @@ flutter:
   
   assets:
     - assets/
-    - assets/pegatinas/
+    - assets/license/
+    - assets/environmentalDistinctives/
     - assets/titles/
     - assets/plantillas_app_dgt/
