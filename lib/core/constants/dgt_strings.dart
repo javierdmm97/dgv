@@ -1,3 +1,106 @@
+/// A satirical fake news article for the DGV app.
+class FakeNewsArticle {
+  const FakeNewsArticle({
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.body,
+    required this.date,
+    required this.imagePath,
+  });
+
+  final String id;
+  final String title;
+  final String summary;
+  final String body;
+  final String date;
+  final String imagePath;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FakeNewsArticle &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+/// Static list of satirical fake news articles.
+const List<FakeNewsArticle> kFakeNewsArticles = [
+  FakeNewsArticle(
+    id: 'fn_001',
+    title: 'La DGV recomienda beber agua entre copas',
+    summary:
+        'El organismo publica una guía de buenas prácticas para conductores responsables.',
+    body:
+        'La Dirección General de Vitis ha publicado hoy una revolucionaria guía '
+        'en la que recomienda alternar bebidas alcohólicas con agua. '
+        '"Es fundamental mantenerse hidratado para una experiencia óptima", '
+        'declaró el portavoz de la institución. La guía incluye tablas de '
+        'referencia y consejos prácticos para cada complexión corporal.',
+    date: '15 Jun 2025',
+    imagePath: '',
+  ),
+  FakeNewsArticle(
+    id: 'fn_002',
+    title: 'Nuevo radar detecta niveles de diversión',
+    summary:
+        'La tecnología DGV-Scan mide en tiempo real el índice de buen rollo de los conductores.',
+    body:
+        'La DGV ha presentado el DGV-Scan, un dispositivo capaz de medir el '
+        'nivel de diversión de cualquier conductor en menos de dos segundos. '
+        '"Si el índice baja de 7, el sistema emite una alerta automática", '
+        'explicó la directora de innovación. El aparato ya está operativo '
+        'en varios controles piloto de la capital.',
+    date: '10 Jun 2025',
+    imagePath: '',
+  ),
+  FakeNewsArticle(
+    id: 'fn_003',
+    title: 'Multa de 200€ por no disfrutar lo suficiente',
+    summary:
+        'La nueva normativa obliga a los conductores a mantener un mínimo de alegría.',
+    body:
+        'El Boletín Oficial del Estado ha publicado hoy la Orden DGV/2025/42, '
+        'que establece una sanción de 200 euros para aquellos conductores cuyo '
+        'índice de diversión sea inferior al mínimo reglamentario. '
+        'Las asociaciones de consumidores han mostrado su apoyo unánime '
+        'a la medida, calificándola de "necesaria y justa".',
+    date: '5 Jun 2025',
+    imagePath: '',
+  ),
+  FakeNewsArticle(
+    id: 'fn_004',
+    title: 'Campaña especial: "Si bebes, bebe con cabeza"',
+    summary:
+        'La DGV lanza su campaña más ambiciosa para promover el consumo responsable.',
+    body:
+        'Con el lema "Si bebes, bebe con cabeza", la DGV ha iniciado una '
+        'campaña de concienciación que incluye anuncios en televisión, '
+        'vallas publicitarias y un musical de Broadway. '
+        '"Queremos que cada conductor llegue a la zona óptima sin pasarse", '
+        'afirmó el director general en rueda de prensa.',
+    date: '1 Jun 2025',
+    imagePath: '',
+  ),
+  FakeNewsArticle(
+    id: 'fn_005',
+    title: 'Récord histórico de conductores responsables',
+    summary:
+        'El último control DGV registra el mayor porcentaje de tasas óptimas de la historia.',
+    body:
+        'El pasado fin de semana se registró un hito histórico: el 94% de los '
+        'conductores sometidos a control DGV presentaron tasas dentro de la '
+        'zona óptima. "Nunca habíamos visto cifras así", declaró emocionado '
+        'el inspector jefe. Los expertos atribuyen el éxito a la popularidad '
+        'creciente de la aplicación Operación DGV.',
+    date: '28 May 2025',
+    imagePath: '',
+  ),
+];
+
 /// Spanish DGT-themed strings
 class DGTStrings {
   DGTStrings._();
