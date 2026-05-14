@@ -80,35 +80,58 @@ After installing lefthook, run the setup script to configure git hooks:
 ```
 lib/
 ├── core/                    # Shared resources (theme, constants, utils, models)
+│   ├── constants/           # App constants, asset paths, DGT strings + fake news
+│   ├── models/              # Freezed models (PlayerProfile, BACReading, GameState, etc.)
+│   ├── providers/           # Riverpod providers (player, game state, checkpoint)
+│   ├── storage/             # Hive service
+│   ├── theme/               # DGT color palette, typography, theme config
+│   └── utils/               # Business logic (BACCalculator, PointsCalculator, etc.)
+├── data/
+│   └── repositories/        # Hive-backed repository implementations
 ├── widgets/                 # Reusable UI components
+│   ├── massive_button.dart  # 80px min-height drunk-proof button
+│   ├── custom_keypad.dart   # 3×4 grid keypad (no native keyboard)
+│   ├── title_badge.dart     # DGT title icon + ×N counter
+│   └── license_card.dart    # Player license card with photo, points, badges
 └── features/                # Feature modules (feature-first architecture)
-    ├── player_registration/ # Player creation & setup
-    ├── breathalyzer/        # BAC data entry & OCR
-    ├── checkpoint/          # Round management & timers
-    ├── scoring/             # Points calculation & penalties
-    ├── leaderboard/         # "Carnet por Puntos" display
-    ├── achievements/        # DGT titles & awards
-    └── fake_id/             # DGT License generation
+    ├── main_menu/           # Persistent home screen + fake news/error screens
+    ├── player_registration/ # Player creation & setup (Phase 2)
+    ├── breathalyzer/        # BAC data entry & OCR (Phase 2/3)
+    ├── checkpoint/          # Round management & timer UI (Phase 2)
+    ├── scoring/             # Points calculation & penalties (Phase 2)
+    ├── leaderboard/         # "Carnet por Puntos" display (Phase 2)
+    ├── achievements/        # DGT titles & awards (Phase 3)
+    └── fake_id/             # DGT License generation (Phase 4)
 ```
 
 ---
 
 ## 🎮 Core Features
 
-1. **Main Menu** - Persistent home screen with Add Player, Fake News, Fake Error (jokes), Start/Resume Game
-2. **Player Registration** - Name + surname, sex/body size, photo capture, auto-generated license ID
-3. **Round 0 (Baseline)** - Initial BAC measurement with no feedback (silent baseline)
-4. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
-5. **Checkpoint System** - Timed rounds with police siren alerts
-6. **"Sweet Spot" System** - Price is Right mechanic: get close to optimal BAC without going over
-7. **Points System** - Hybrid scoring: gain points for staying in zone, lose for dangerous behavior
-8. **Real-time Feedback** - Messages after each measurement (points, titles, warnings)
-9. **Live License Updates** - Licenses auto-update with badges, viewable anytime by clicking player
-10. **Leaderboard** - Real-time rankings with BAC progression graphs
-11. **DGT Titles** - Per-round awards with logos (Velocidad de Crucero, Multa por Exceso, etc.)
-12. **Environmental Badges** - Top 5 highest BAC players get eco-style distinctive badges (as a joke)
-13. **Final Ceremony** - 3 Grand Prizes + Environmental Distinctives reveal with animations
-14. **Persistent State** - All data saved continuously, resume game after crash/restart
+### ✅ Implemented (Phase 1)
+1. **Main Menu** - Persistent home screen with Start/Resume Game, Mis Vehículos, Fake News section
+2. **Fake News Screen** - Satirical DGT articles list + full article view
+3. **Fake Error Screen** - Satirical DGT error modal with close button
+4. **Checkpoint Provider** - Per-group timer management with Hive persistence and restart recovery
+5. **MassiveButton** - 80px min-height, haptic feedback, drunk-proof button widget
+6. **CustomKeypad** - 3×4 grid, 80×80px buttons, 0.XX format, no native keyboard
+7. **TitleBadge** - DGT title icon with ×N accumulation counter
+8. **LicenseCard** - Player license with circular photo, points, title badges, impounded overlay
+
+### 📋 Planned (Phase 2+)
+9. **Player Registration** - Name + surname, sex/body size, photo capture, auto-generated license ID
+10. **Round 0 (Baseline)** - Initial BAC measurement with no feedback (silent baseline)
+11. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
+12. **Checkpoint System UI** - Timed rounds with police siren alerts
+13. **"Sweet Spot" System** - Price is Right mechanic: get close to optimal BAC without going over
+14. **Points System UI** - Hybrid scoring: gain points for staying in zone, lose for dangerous behavior
+15. **Real-time Feedback** - Messages after each measurement (points, titles, warnings)
+16. **Live License Updates** - Licenses auto-update with badges, viewable anytime by clicking player
+17. **Leaderboard** - Real-time rankings with BAC progression graphs
+18. **DGT Titles** - Per-round awards with logos (Velocidad de Crucero, Multa por Exceso, etc.)
+19. **Environmental Badges** - Top 5 highest BAC players get eco-style distinctive badges (as a joke)
+20. **Final Ceremony** - 3 Grand Prizes + Environmental Distinctives reveal with animations
+21. **Persistent State** - All data saved continuously, resume game after crash/restart
 
 ---
 
