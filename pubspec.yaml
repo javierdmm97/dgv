@@ -31,8 +31,7 @@ dependencies:
   # UI
   fl_chart: ^0.70.1
   image_picker: ^1.1.2
-  image_gallery_saver: ^2.0.3
-  
+
   # Audio
   audioplayers: ^6.1.0
   
