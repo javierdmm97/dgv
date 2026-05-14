@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:dgv/core/models/dgt_title.dart';
@@ -97,9 +99,13 @@ class _PlayerAvatar extends StatelessWidget {
     final hasPhoto = player.photoPath.isNotEmpty;
 
     if (hasPhoto) {
+      final isAsset = player.photoPath.startsWith('assets/');
+      final image = isAsset
+          ? AssetImage(player.photoPath) as ImageProvider
+          : FileImage(File(player.photoPath));
       return CircleAvatar(
         radius: 28,
-        backgroundImage: AssetImage(player.photoPath),
+        backgroundImage: image,
         onBackgroundImageError: (_, stackTrace) {},
         child: null,
       );

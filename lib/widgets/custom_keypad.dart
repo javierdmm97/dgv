@@ -7,15 +7,23 @@ import 'package:dgv/core/theme/dgt_colors.dart';
 ///
 /// Meets the Custom_Keypad spec:
 /// - 3×4 grid of 80×80 px buttons (digits 1–9, backspace ⌫, 0, confirm ✓)
-/// - Input buffer holds up to 2 digits; display formatted as `0.XX`
+/// - [maxDigits] = 2 (default): buffer holds 2 digits, display as `0.XX`
+/// - [maxDigits] = 3: buffer holds 3 digits, display as `X.XX` (for BAC entry)
 /// - Haptic feedback on every tap
 /// - Confirm button disabled when buffer is empty
 /// - Colors from [DGTColors]; display text from [Theme.of(context).textTheme]
 class CustomKeypad extends StatefulWidget {
-  const CustomKeypad({super.key, required this.onConfirm, this.initialValue});
+  const CustomKeypad({
+    super.key,
+    required this.onConfirm,
+    this.initialValue,
+    this.maxDigits = 2,
+  });
 
   final void Function(double value) onConfirm;
   final double? initialValue;
+  // 2 = "0.XX" format (default); 3 = "X.XX" format (BAC entry up to 9.99)
+  final int maxDigits;
 
   @override
   State<CustomKeypad> createState() => _CustomKeypadState();
@@ -30,10 +38,16 @@ class _CustomKeypadState extends State<CustomKeypad> {
     _buffer = _parseInitialValue(widget.initialValue);
   }
 
-  /// Parses an optional initial value (e.g. 0.45) into a digit buffer [4, 5].
+  /// Parses an optional initial value into a digit buffer.
+  /// maxDigits=2: 0.45 → [4, 5]; maxDigits=3: 1.50 → [1, 5, 0]
   List<int> _parseInitialValue(double? value) {
     if (value == null) return [];
-    // Extract the two decimal digits from a value like 0.45 → [4, 5]
+    if (widget.maxDigits == 3) {
+      final intPart = value.floor().clamp(0, 9);
+      final decPart = ((value - intPart) * 100).round().clamp(0, 99);
+      if (value == 0.0) return [];
+      return [intPart, decPart ~/ 10, decPart % 10];
+    }
     final centis = (value * 100).round().clamp(0, 99);
     final tens = centis ~/ 10;
     final units = centis % 10;
@@ -41,14 +55,20 @@ class _CustomKeypadState extends State<CustomKeypad> {
     return [tens, units];
   }
 
-  /// Formats the current buffer as the display string `0.XX`.
+  /// Formats the current buffer as the display string.
+  /// maxDigits=2: `0.XX`; maxDigits=3: `X.XX`
   String get _displayValue {
+    if (widget.maxDigits == 3) {
+      if (_buffer.isEmpty) return '0.00';
+      final digits = _buffer.map((d) => d.toString()).join().padRight(3, '0');
+      return '${digits[0]}.${digits.substring(1)}';
+    }
     final digits = _buffer.map((d) => d.toString()).join().padRight(2, '0');
     return '0.$digits';
   }
 
   void _onDigit(int digit) {
-    if (_buffer.length >= 2) return;
+    if (_buffer.length >= widget.maxDigits) return;
     HapticFeedback.lightImpact();
     setState(() {
       _buffer = [..._buffer, digit];
@@ -66,7 +86,13 @@ class _CustomKeypadState extends State<CustomKeypad> {
   void _onConfirm() {
     if (_buffer.isEmpty) return;
     HapticFeedback.mediumImpact();
-    final value = double.parse('0.${_buffer.join()}');
+    final double value;
+    if (widget.maxDigits == 3) {
+      final digits = _buffer.map((d) => d.toString()).join().padRight(3, '0');
+      value = double.parse('${digits[0]}.${digits.substring(1)}');
+    } else {
+      value = double.parse('0.${_buffer.join()}');
+    }
     widget.onConfirm(value);
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dgv/core/constants/dgt_strings.dart';
+import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/main_menu/presentation/widgets/fake_error_notification.dart';
@@ -9,13 +10,6 @@ import 'package:dgv/features/main_menu/presentation/widgets/fake_news_section.da
 import 'package:dgv/features/main_menu/providers/main_menu_provider.dart';
 import 'package:dgv/widgets/license_card.dart';
 import 'package:dgv/widgets/massive_button.dart';
-
-/// Route name stubs — replace with real route constants when routing is wired.
-const _kPlayerSelectionRoute = '/player-selection';
-const _kGameRoute = '/game';
-const _kPlayerRegistrationRoute = '/player-registration';
-const _kFakeNewsRoute = '/fake-news';
-const _kLicenseRoute = '/license';
 
 /// The main hub screen of Operación DGV.
 ///
@@ -91,7 +85,7 @@ class _MainMenuBody extends StatelessWidget {
             const SizedBox(height: 24),
             FakeNewsSection(
               articles: kFakeNewsArticles,
-              onViewAll: () => Navigator.pushNamed(context, _kFakeNewsRoute),
+              onViewAll: () => Navigator.pushNamed(context, AppRoutes.fakeNews),
             ),
             const SizedBox(height: 32),
           ]),
@@ -161,8 +155,8 @@ class _GameActionSection extends StatelessWidget {
         icon: state.isGameInProgress ? Icons.play_arrow : Icons.flag,
         onPressed: () {
           final route = state.isGameInProgress
-              ? _kGameRoute
-              : _kPlayerSelectionRoute;
+              ? AppRoutes.game
+              : AppRoutes.playerSelection;
           Navigator.pushNamed(context, route);
         },
       ),
@@ -190,7 +184,7 @@ class _MisVehiculosSection extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text(DGTStrings.addPlayer),
             onPressed: () =>
-                Navigator.pushNamed(context, _kPlayerRegistrationRoute),
+                Navigator.pushNamed(context, AppRoutes.playerRegistration),
           ),
         ),
         const SizedBox(height: 8),
@@ -261,7 +255,7 @@ class _PlayerList extends StatelessWidget {
           player: player,
           onTap: () => Navigator.pushNamed(
             context,
-            _kLicenseRoute,
+            AppRoutes.license,
             arguments: player.id,
           ),
         );
