@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 
 /// Displays a single group's countdown to next checkpoint.
-class GroupCountdownCard extends StatelessWidget {
+///
+/// Uses a local 1-second [Timer] so the MM:SS display updates without
+/// requiring the parent to emit a new provider state every second.
+class GroupCountdownCard extends StatefulWidget {
   const GroupCountdownCard({
     super.key,
     required this.group,
@@ -17,14 +22,35 @@ class GroupCountdownCard extends StatelessWidget {
   final bool isActive;
 
   @override
+  State<GroupCountdownCard> createState() => _GroupCountdownCardState();
+}
+
+class _GroupCountdownCardState extends State<GroupCountdownCard> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDue = group.isDue;
-    final bgColor = isActive
+    final isDue = widget.group.isDue;
+    final bgColor = widget.isActive
         ? DGTColors.warning
         : isDue
         ? DGTColors.red
         : DGTColors.surface;
-    final label = isDue ? '¡MEDIR AHORA!' : group.formattedTimeRemaining;
+    final label = isDue ? '¡MEDIR AHORA!' : widget.group.formattedTimeRemaining;
 
     return Card(
       color: bgColor,
@@ -40,7 +66,7 @@ class GroupCountdownCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Grupo $groupNumber  (${group.playerIds.length} conductores)',
+                'Grupo ${widget.groupNumber}  (${widget.group.playerIds.length} conductores)',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),

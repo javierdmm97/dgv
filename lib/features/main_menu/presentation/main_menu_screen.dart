@@ -11,6 +11,193 @@ import 'package:dgv/features/main_menu/providers/main_menu_provider.dart';
 import 'package:dgv/widgets/license_card.dart';
 import 'package:dgv/widgets/massive_button.dart';
 
+// ---------------------------------------------------------------------------
+// Drawer navigation
+// ---------------------------------------------------------------------------
+
+class _AppDrawer extends ConsumerWidget {
+  const _AppDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncState = ref.watch(mainMenuNotifierProvider);
+    final isGameInProgress = asyncState.value?.isGameInProgress ?? false;
+
+    return Drawer(
+      backgroundColor: DGTColors.surface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _DrawerHeader(),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _DrawerItem(
+                    icon: Icons.home_outlined,
+                    label: 'Inicio',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.popUntil(context, (r) => r.isFirst);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.directions_car_outlined,
+                    label: 'Mis Vehículos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.playerRegistration,
+                      );
+                    },
+                  ),
+                  if (isGameInProgress) ...[
+                    _DrawerItem(
+                      icon: Icons.local_police_outlined,
+                      label: 'Control Activo',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.game);
+                      },
+                    ),
+                    _DrawerItem(
+                      icon: Icons.emoji_events_outlined,
+                      label: 'Clasificación',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.leaderboard);
+                      },
+                    ),
+                  ],
+                  _DrawerItem(
+                    icon: Icons.newspaper_outlined,
+                    label: 'Actualidad DGV',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.fakeNews);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.settings_outlined, size: 18),
+                      label: const Text('Ajustes'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: DGTColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ajustes — Próximamente'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.help_outline, size: 18),
+                      label: const Text('Ayuda'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: DGTColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ayuda — Próximamente')),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: DGTColors.primary,
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Text(
+                'DGV',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Operación DGV',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const Text(
+            'Dirección General de Vitis',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: DGTColors.primary),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+      onTap: onTap,
+      horizontalTitleGap: 8,
+    );
+  }
+}
+
 /// The main hub screen of Operación DGV.
 ///
 /// Watches [mainMenuNotifierProvider] and handles all three [AsyncValue]
@@ -28,6 +215,7 @@ class MainMenuScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DGTColors.background,
+      endDrawer: const _AppDrawer(),
       body: asyncState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ErrorBody(error: error),
@@ -124,7 +312,7 @@ class _MainMenuHeader extends StatelessWidget {
               color: DGTColors.primary,
               iconSize: 32,
               tooltip: 'Menú',
-              onPressed: () {},
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ],
         ),
@@ -134,33 +322,78 @@ class _MainMenuHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _GameActionSection — Start / Resume button
+// _GameActionSection — Start / Resume button + reset
 // ---------------------------------------------------------------------------
 
-class _GameActionSection extends StatelessWidget {
+class _GameActionSection extends ConsumerWidget {
   const _GameActionSection({required this.state});
 
   final MainMenuState state;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final label = state.isGameInProgress
         ? DGTStrings.resumeGame
         : DGTStrings.startGame;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: MassiveButton(
-        text: label,
-        icon: state.isGameInProgress ? Icons.play_arrow : Icons.flag,
-        onPressed: () {
-          final route = state.isGameInProgress
-              ? AppRoutes.game
-              : AppRoutes.playerSelection;
-          Navigator.pushNamed(context, route);
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MassiveButton(
+            text: label,
+            icon: state.isGameInProgress ? Icons.play_arrow : Icons.flag,
+            onPressed: () {
+              final route = state.isGameInProgress
+                  ? AppRoutes.game
+                  : AppRoutes.playerSelection;
+              Navigator.pushNamed(context, route);
+            },
+          ),
+          if (state.isGameInProgress) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Nueva Partida'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DGTColors.red,
+                side: const BorderSide(color: DGTColors.red),
+                minimumSize: const Size.fromHeight(48),
+              ),
+              onPressed: () => _confirmReset(context, ref),
+            ),
+          ],
+        ],
       ),
     );
+  }
+
+  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Nueva Partida?'),
+        content: const Text(
+          'Se reiniciará el juego. Los conductores registrados no se borrarán.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: DGTColors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reiniciar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(mainMenuNotifierProvider.notifier).resetGame();
+    }
   }
 }
 

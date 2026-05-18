@@ -56,14 +56,24 @@ class _FakeErrorBar extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  'ERROR CRÍTICO DEL SISTEMA: Se ha detectado un nivel '
-                  'de diversión no autorizado. Por favor, contacte con '
-                  'la DGT inmediatamente.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: DGTColors.textOnPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Modo sin conexion',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: DGTColors.textOnPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'El estado Español te la ha vuelto a jugar',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: DGTColors.textOnPrimary.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(

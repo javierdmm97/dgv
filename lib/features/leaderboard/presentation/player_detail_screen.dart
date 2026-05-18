@@ -281,8 +281,12 @@ class _LineChart extends StatelessWidget {
                 0.5)
             .ceilToDouble();
 
-    final minX = spots.first.x;
-    final maxX = spots.last.x;
+    // Ensure a non-degenerate x-range so fl_chart renders a horizontal line
+    // rather than stacking all dots vertically when there is only one round.
+    final rawMinX = spots.first.x;
+    final rawMaxX = spots.last.x;
+    final minX = rawMinX;
+    final maxX = rawMinX == rawMaxX ? rawMinX + 1 : rawMaxX;
 
     return LineChart(
       LineChartData(
