@@ -275,6 +275,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Mark player as impounded in Hive
 - [ ] Prevent impounded players from next round
 - [ ] Write tests for all penalty scenarios
+- [ ] **Fix siren audio:** register `assets/sound/` in `pubspec.yaml` and uncomment `AudioPlayer` call in `SirenAlertOverlay` (asset exists, code is commented-out stub)
 
 **3.4 DGT Title System (Complete)**
 - [ ] Finalize title evaluator (`lib/core/utils/title_evaluator.dart`)
@@ -302,6 +303,13 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Load all players and their data
 - [ ] Navigate to appropriate screen based on game state
 - [ ] Write integration tests for crash recovery
+
+**3.7 Player Management (Edit & Delete)**
+- [ ] Add swipe-to-delete on `LicenseCard` in the player list
+- [ ] Add "Editar Conductor" screen (reuse `PlayerRegistrationScreen` in edit mode)
+- [ ] Wire `PlayerListNotifier.updatePlayer()` and `deletePlayer()` to UI
+- [ ] Confirmation dialog before delete
+- [ ] Write widget tests
 
 **Deliverables:**
 - ✅ Working OCR camera integration
@@ -379,6 +387,29 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Build release APK
 - [ ] Create GitHub release (v1.0.0)
 
+**4.7 Splash / Landing Screen**
+- [ ] Build a full-screen DGT-blue splash screen shown on cold launch
+- [ ] DGV logo centered on `DGTColors.primary` background
+- [ ] White city-skyline silhouette at the bottom (SVG asset)
+- [ ] Greeting message (e.g., "Bienvenido a Operación DGV")
+- [ ] "Acceder" `MassiveButton` that navigates to `MainMenuScreen`
+- [ ] Auto-skip after 3 s if user takes no action
+- [ ] Write widget tests
+
+**4.8 App Branding & Identity**
+- [ ] Replace in-app header text with `assets/dgv_logo.png` image widget
+- [ ] Configure `flutter_launcher_icons` with `assets/logo_app.png` (the "mi DGV" blue icon)
+- [ ] Run `dart run flutter_launcher_icons` and verify all mipmap densities
+- [ ] Apply branding consistently (leaderboard header, license card, feedback screen)
+
+**4.9 App Size Optimization**
+- [ ] Audit APK contents with `flutter build apk --analyze-size`
+- [ ] Enable `--split-per-abi` to reduce per-device download size
+- [ ] Replace large PNG assets with WebP using `cwebp` (target <200 KB per image)
+- [ ] Enable R8/ProGuard tree-shaking (already enabled in 0.3.1 — verify rules are tight)
+- [ ] Lazy-load `fl_chart` and `audioplayers` only when needed
+- [ ] Target: APK download size < 40 MB per ABI
+
 **Deliverables:**
 - ✅ Complete app with all features
 - ✅ Final report screen with statistics and graphs
@@ -408,6 +439,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Configurable checkpoint intervals
 - [ ] Custom BAC thresholds per player
 - [ ] Theme customization (colors, sounds)
+- [ ] OS push notifications for checkpoint alerts (requires `flutter_local_notifications` + platform permissions)
 
 ### v1.3.0 - Analytics & Insights
 - [ ] Historical game statistics
@@ -462,6 +494,11 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 | Widget Tests | ✅ Complete | 100% |
 | OCR Camera | ⏳ Planned | 0% |
 | Final Ceremony | ⏳ Planned | 0% |
+| Player Edit & Delete UI | ⏳ Planned (Phase 3.7) | 0% |
+| Siren Audio | ⏳ Planned (Phase 3.3) | 0% |
+| Splash / Landing Screen | ⏳ Planned (Phase 4.7) | 0% |
+| App Branding (logo + launcher icon) | ⏳ Planned (Phase 4.8) | 0% |
+| App Size Optimization | ⏳ Planned (Phase 4.9) | 0% |
 
 ---
 
@@ -513,16 +550,18 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-**Last Updated:** May 14, 2026  
+**Last Updated:** May 18, 2026  
 **Next Review:** End of Phase 3
 
-**Key Changes in This Update:**
-- ✅ Phase 2 fully completed (full game loop: registration → BAC entry → feedback → checkpoint → leaderboard)
-- ✅ 26 new files created, 5 existing files modified
-- ✅ Complete round-robin BAC entry flow with `BACEntryNotifier`
-- ✅ Full-screen feedback with color-coded results and auto-dismiss
-- ✅ Siren alert overlay (flash animation + audio)
-- ✅ Leaderboard with `fl_chart` BAC progression graph and optimal zone band
-- ✅ Fake license generation via `dart:ui` canvas pipeline
-- ✅ 225 tests passing, `flutter analyze` 0 issues
-- 📝 Phase 3 next: OCR camera integration, penalty system UI, grand prize title logic
+**Key Changes in This Update (May 18 — v0.3.2 hotfix):**
+- ✅ Driver list now updates reactively after adding a player (watch `playerListNotifierProvider`)
+- ✅ Main menu game state buttons update without app restart (watch `gameStateNotifierProvider`)
+- ✅ "Nueva Partida" reset button: clears game state + resets all player game data (readings, points, titles, impoundment)
+- ✅ Checkpoint timer MM:SS now updates in real time (`GroupCountdownCard` local `Timer.periodic`)
+- ✅ BAC graph no longer renders a vertical line when only one round of data exists
+- ✅ Menu icon opens a lateral `endDrawer` with full navigation
+- 📋 New Phase 3 task: **3.7 Player Management** (edit & delete drivers)
+- 📋 Phase 3.3 updated: siren audio fix scoped here (asset exists, code is stubbed)
+- 📋 New Phase 4 tasks: **4.7 Splash/Landing Screen**, **4.8 App Branding**, **4.9 App Size Optimization**
+- 📋 v1.2.0 updated: OS push notifications for checkpoint alerts
+- 📝 Phase 3 next: OCR camera integration, penalty system + siren audio, player management UI

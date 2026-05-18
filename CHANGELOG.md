@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2] - 2026-05-18
+
+### 🔧 Hotfix - Gameplay Blockers (device testing)
+
+### Fixed
+
+- **Main menu reactivity** — `MainMenuNotifier` now watches `gameStateNotifierProvider` (invalidates on every mutation) instead of `currentGameStateProvider` (read-once). The "Continuar Control" / "Nueva Partida" buttons now update immediately after starting or resetting a game without requiring an app restart
+- **Driver list reactivity** — `MainMenuNotifier` now watches `playerListNotifierProvider` instead of the read-only `playerListProvider`, so newly registered players appear instantly in the list
+- **BAC graph vertical line** — `PlayerDetailScreen` now guards against `minX == maxX` in the `fl_chart LineChart`; when a player only has Round 0 data all dots stacked at x=0 producing a vertical line instead of a proper timeline
+- **Checkpoint timer real-time display** — `GroupCountdownCard` was a `StatelessWidget` with no internal tick; converted to `StatefulWidget` with a `Timer.periodic(1s)` so the MM:SS countdown updates live without requiring provider state emissions every second
+
+### Added
+
+- **Nueva Partida (reset game) button** — shown in the main menu when a game is in progress; opens a confirmation dialog then resets checkpoint state, game state, and all per-player game data (readings, points, titles, impoundment flags, license image) while keeping player registration data intact
+- **Lateral navigation drawer** — menu icon (top-right) now opens an `endDrawer` with: DGV branding header, navigation items (Inicio, Mis Vehículos, Control Activo, Clasificación, Actualidad DGV), and footer (Ajustes / Ayuda placeholders)
+- **Subtitle in fake error notification** — second line of smaller text added under "Modo sin conexión"
+
+---
+
 ## [0.3.1] - 2026-05-18
 
 ### 🔧 Hotfix - Android Build & Asset Reorganization
