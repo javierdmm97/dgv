@@ -9,6 +9,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-05-14
+
+### 🎉 Phase 2 Completion - Core Gameplay
+
+This release delivers the full playable game loop: player selection → Round 0 baseline → BAC entry → real-time feedback → checkpoint timers with siren alerts → leaderboard with BAC progression graphs and fake license generation.
+
+### Added
+
+#### App Routing & Wiring
+- **Route constants** (`lib/core/constants/route_constants.dart`) — central `AppRoutes` class for all named routes
+- **App wiring** (`lib/app.dart`) — `onGenerateRoute` switch wiring all screens; `MainMenuScreen` as home
+
+#### Player Registration Feature
+- **RegistrationNotifier** (`lib/features/player_registration/providers/registration_provider.dart`) — multi-step form state with `RegistrationFormState` (Freezed); auto-generates `optimalBAC` from body size on submit; triggers async license generation
+- **PlayerRegistrationScreen** (`lib/features/player_registration/presentation/player_registration_screen.dart`) — 5-page `PageView` flow: name → surname → sex → body size → photo; auto-advances on selection pages; displays optimal BAC zone on photo page
+- **PlayerSelectionScreen** (`lib/features/player_registration/presentation/player_selection_screen.dart`) — `LicenseCard` + `Checkbox` list; `SegmentedButton` interval selector (30/45/60 min); enables start only when ≥1 player selected
+
+#### BAC Entry System
+- **BACEntryResult / RoundRobinArgs** (`lib/features/breathalyzer/providers/bac_entry_result.dart`) — plain Dart route-argument value objects
+- **BACEntryNotifier** (`lib/features/breathalyzer/providers/bac_entry_provider.dart`) — `submitBAC` orchestrates Widmark → points calculation → impoundment check → checkpoint recording; Round 0 saves baseline silently
+- **ManualEntryScreen** (`lib/features/breathalyzer/presentation/manual_entry_screen.dart`) — `CustomKeypad(maxDigits: 3)` for X.XX mg/L entry; player photo/initials avatar; submits via `BACEntryNotifier`
+- **RoundRobinScreen** (`lib/features/breathalyzer/presentation/round_robin_screen.dart`) — sequential player carousel; Round 0 advances silently; Round 1+ pushes `FeedbackScreen`; on completion calls `CheckpointNotifier.completeGroupMeasurement` or `GameStateNotifier.advanceRound`
+- **FeedbackScreen** (`lib/features/breathalyzer/presentation/feedback_screen.dart`) — full-screen color-coded result (green/yellow/red/dark); points delta in `displayLarge`; impoundment banner; awarded DGT title display; auto-dismiss after `AppConstants.feedbackDuration`; triggers `SirenAlertOverlay` on impoundment
+
+#### Checkpoint UI
+- **SirenAlertOverlay** (`lib/features/checkpoint/presentation/siren_alert_overlay.dart`) — `AnimationController` red/blue flash at 250ms for `AppConstants.sirenDuration`; audio via `audioplayers` in try/catch (degrades silently)
+- **GroupCountdownCard** (`lib/features/checkpoint/presentation/group_countdown_card.dart`) — renders per-group "Grupo N: MM:SS" countdown from `GroupCheckpoint.formattedTimeRemaining`; highlights active groups
+- **CheckpointScreen** (`lib/features/checkpoint/presentation/checkpoint_screen.dart`) — `ref.listen` detects `isCheckpointActive` transition to trigger `SirenAlertOverlay`; countdown body with `GroupCountdownCard` list; active checkpoint body with group banner + "Ir al Retén" button
+
+#### Leaderboard & Player Detail
+- **sortedLeaderboardProvider** (`lib/features/leaderboard/providers/leaderboard_provider.dart`) — `FutureProvider` watching `playerListProvider`; returns `List.unmodifiable` sorted descending by points
+- **LeaderboardScreen** (`lib/features/leaderboard/presentation/leaderboard_screen.dart`) — `RefreshIndicator` + `ListView`; gold/silver/bronze medal badges for top 3; `LicenseCard` per player; tap → player detail
+- **PlayerDetailScreen** (`lib/features/leaderboard/presentation/player_detail_screen.dart`) — player header with photo, points, impounded badge; earned DGT title chips; `fl_chart` `LineChart` with optimal zone band (green shading), color-coded dots per zone; empty state for no readings
+
+#### License Generation
+- **LicenseGenerator** (`lib/features/fake_id/services/license_generator.dart`) — `dart:ui` `PictureRecorder` + `Canvas` pipeline: loads `assets/carnet-de-conducir.png` template, circle-clips player photo (or draws initials avatar), overlays name/points/BAC/title emoji text, exports PNG to app documents directory
+- **LicenseUpdateService** (`lib/features/fake_id/services/license_update_service.dart`) — thin wrapper calling `LicenseGenerator.generate` then `PlayerRepository.update` with new license path
+
+#### Round Completion
+- **RoundCompletionService** (`lib/features/breathalyzer/providers/round_completion_service.dart`) — evaluates per-round DGT titles via `TitleEvaluator`, increments player `titleCounts`, persists updates, triggers license regeneration; wired into `CheckpointNotifier._completeCheckpoint`
+
+### Changed
+
+#### Bug Fixes & Improvements
+- **CustomKeypad** (`lib/widgets/custom_keypad.dart`) — added `maxDigits` parameter (default `2` for backward compat, `3` for BAC entry); buffer `[a,b,c]` displays as `a.bc`; updated `_onDigit`, `_displayValue`, `_parseInitialValue`, `_onConfirm`
+- **BACCalculator doc comment** (`lib/core/utils/bac_calculator.dart`) — fixed `±0.02` → `±0.2` in tolerance comments
+- **CheckpointNotifier** (`lib/core/providers/checkpoint_providers.dart`) — `_completeCheckpoint` now calls `RoundCompletionService.evaluateAndApply` and `GameStateNotifier.advanceRound`
+- **leaderboard_provider** — returns `List.unmodifiable` to prevent caller mutation
+- **CheckpointScreen AppBar** — shows "Control Sorpresa" (no round) when no game is active; "Control Sorpresa — Ronda N" only when a game is in progress
+
+#### Layout Fix
+- **ManualEntryScreen** — wrapped body in `SingleChildScrollView` to prevent column overflow on smaller viewport heights; replaced `Spacer` with fixed `SizedBox(height: 32)` gap
+
+### Testing
+
+#### New Unit Tests
+- **BAC calculator edge cases** (`test/unit/core/utils/bac_calculator_edge_cases_test.dart`) — body size ordering, Widmark formula proportionality, male vs female constants, rate calculation, extreme values, boundary conditions
+- **Points calculator edge cases** (`test/unit/core/utils/points_calculator_edge_cases_test.dart`) — average distance, clamping, spike priority
+- **BACEntryNotifier** (`test/unit/features/breathalyzer/bac_entry_provider_test.dart`) — Round 0 baseline (no points, no checkpoint call), Round 1 optimal zone (+2), impoundment override (−5), checkpoint recording
+- **sortedLeaderboardProvider** (`test/unit/features/leaderboard/leaderboard_provider_test.dart`) — sort order, empty list, single player, equal-points stability, unmodifiable result
+
+#### New Widget Tests
+- **ManualEntryScreen** (`test/widget/features/breathalyzer/manual_entry_screen_test.dart`) — AppBar title, player name, optimal BAC hint, initials avatar, `CustomKeypad(maxDigits: 3)`, background color
+- **FeedbackScreen** (`test/widget/features/breathalyzer/feedback_screen_test.dart`) — player name, points delta sign, impoundment banner, background color, Continuar button navigation
+- **LeaderboardScreen** (`test/widget/features/leaderboard/leaderboard_screen_test.dart`) — AppBar title, empty state, loading indicator, `LicenseCard` count, medal emoji placement (top 3 only)
+- **CheckpointScreen** (`test/widget/features/checkpoint/checkpoint_screen_test.dart`) — AppBar title states, no-game body, countdown body, active checkpoint banner, round number display, loading indicator
+
+### Quality
+- `flutter analyze` — 0 issues
+- `flutter test` — 225/225 tests passing
+- All lint rules resolved (`unnecessary_underscores`, `prefer_const_constructors`, `deprecated_member_use`)
+
+---
+
 ## [0.2.0] - 2026-05-14
 
 ### 🎉 Phase 1 Completion - UI, Providers, and Test Suite
