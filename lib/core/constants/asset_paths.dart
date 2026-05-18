@@ -8,27 +8,33 @@ class AssetPaths {
   static const String appLogo = 'assets/logo_app.png';
 
   // License
-  static const String licenseTemplate = 'assets/carnet-de-conducir.png';
+  static const String licenseFront = 'assets/license/front.png';
+  static const String licenseBack = 'assets/license/back.png';
 
   // Error Messages
-  static const String errorMessage = 'assets/msg_error.png';
+  static const String errorMessage = 'assets/msg_error.jpg';
 
-  // Pegatinas (Environmental Distinctives)
+  // Environmental Distinctives (Pegatinas)
   static const String pegatina0Emisiones =
-      'assets/pegatinas/pegatina_0_emisiones.png';
-  static const String pegatinab = 'assets/pegatinas/pegatina_b.png';
-  static const String pegatinac = 'assets/pegatinas/pegatina_c.png';
-  static const String pegatinaEco = 'assets/pegatinas/pegatina_eco.png';
-  static const String sinPegatina = 'assets/pegatinas/sin_pegatina.png';
+      'assets/environmentalDistinctives/pegatina_0_emisiones.png';
+  static const String pegatinab =
+      'assets/environmentalDistinctives/pegatina_b.png';
+  static const String pegatinac =
+      'assets/environmentalDistinctives/pegatina_c.png';
+  static const String pegatinaEco =
+      'assets/environmentalDistinctives/pegatina_eco.png';
+  static const String sinPegatina =
+      'assets/environmentalDistinctives/sin_pegatina.png';
 
   // Titles
-  static const String titleCocheHibrido = 'assets/titles/coche_hibrido.png';
-  static const String titleItvPasada = 'assets/titles/itv_pasada.png';
+  static const String titleCocheHibrido =
+      'assets/titles/coche_hibrido_dgv.png';
+  static const String titleItvPasada = 'assets/titles/itv_pasada_dgv.png';
   static const String titleMultaExceso =
-      'assets/titles/multa_exceso_velocidad.png';
-  static const String titlePlacaL = 'assets/titles/Placa L.png';
+      'assets/titles/multa_exceso_velocidad_dgv.png';
+  static const String titlePlacaL = 'assets/titles/placa_l_dgv.png';
   static const String titleVelocidadCrucero =
-      'assets/titles/velocidad_de_crucero.png';
+      'assets/titles/velocidad_de_crucero_dgv.png';
 
   // Plantillas (Example Screens)
   static const String plantillaEjemplo1 =

@@ -534,6 +534,7 @@ Example:
 
 ### Fixed
 - Points calculation for negative BAC deltas (#52)
+- Updated asset paths and images for v2 (#)
 ```
 
 When releasing a version:
