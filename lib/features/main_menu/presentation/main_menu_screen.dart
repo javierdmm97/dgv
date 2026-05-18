@@ -98,7 +98,9 @@ class _AppDrawer extends ConsumerWidget {
                       onPressed: () {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ajustes — Próximamente')),
+                          const SnackBar(
+                            content: Text('Ajustes — Próximamente'),
+                          ),
                         );
                       },
                     ),
@@ -145,7 +147,14 @@ class _DrawerHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
-              child: Text('DGV', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+              child: Text(
+                'DGV',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -182,10 +191,7 @@ class _DrawerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: DGTColors.primary),
-      title: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
       horizontalTitleGap: 8,
     );
