@@ -76,25 +76,25 @@ class BACCalculator {
     }
   }
 
-  /// Check if BAC is in the "sweet spot" (±0.02 tolerance)
+  /// Check if BAC is in the "sweet spot" (±0.2 mg/L tolerance)
   static bool isInOptimalZone(double currentBAC, double optimalBAC) {
     return (currentBAC - optimalBAC).abs() <=
         AppConstants.optimalToleranceClose;
   }
 
-  /// Check if BAC is close to optimal (±0.02-0.05)
+  /// Check if BAC is close to optimal (±0.2–0.4 mg/L from target)
   static bool isCloseToOptimal(double currentBAC, double optimalBAC) {
     final diff = (currentBAC - optimalBAC).abs();
     return diff > AppConstants.optimalToleranceClose &&
         diff <= AppConstants.optimalToleranceFar;
   }
 
-  /// Check if player crossed the optimal line (>+0.05)
+  /// Check if player crossed the optimal line (>+0.4 mg/L over target)
   static bool crossedOptimalLine(double currentBAC, double optimalBAC) {
     return currentBAC > (optimalBAC + AppConstants.optimalToleranceFar);
   }
 
-  /// Check if BAC is too low (<-0.05 from optimal)
+  /// Check if BAC is too low (<-0.4 mg/L from optimal)
   static bool isTooLow(double currentBAC, double optimalBAC) {
     return currentBAC < (optimalBAC - AppConstants.optimalToleranceFar);
   }

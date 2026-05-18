@@ -4,8 +4,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/models/player_profile.dart';
-import 'package:dgv/core/utils/checkpoint_calculator.dart';
+import 'package:dgv/core/providers/game_state_providers.dart';
+import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/providers/repository_providers.dart';
+import 'package:dgv/core/utils/checkpoint_calculator.dart';
+import 'package:dgv/features/breathalyzer/providers/round_completion_service.dart';
 
 part 'checkpoint_providers.g.dart';
 
@@ -113,6 +116,26 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     final repo = ref.read(checkpointRepositoryProvider);
     await repo.save(updatedState);
     state = AsyncData(updatedState);
+
+    // When all groups are done, evaluate titles and advance game round.
+    if (!otherGroupsDue) {
+      await _onRoundComplete(updatedState.currentRound);
+    }
+  }
+
+  Future<void> _onRoundComplete(int completedRound) async {
+    final players = await ref.read(playerListProvider.future);
+    final playerRepo = ref.read(playerRepositoryProvider);
+
+    unawaited(
+      RoundCompletionService.evaluateAndApply(
+        players: players,
+        round: completedRound,
+        repo: playerRepo,
+      ).then((_) => ref.invalidate(playerListNotifierProvider)),
+    );
+
+    await ref.read(gameStateNotifierProvider.notifier).advanceRound();
   }
 
   /// Record a BAC measurement for a single player within the active group window.
