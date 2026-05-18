@@ -27,8 +27,7 @@ class AssetPaths {
       'assets/environmentalDistinctives/sin_pegatina.png';
 
   // Titles
-  static const String titleCocheHibrido =
-      'assets/titles/coche_hibrido_dgv.png';
+  static const String titleCocheHibrido = 'assets/titles/coche_hibrido_dgv.png';
   static const String titleItvPasada = 'assets/titles/itv_pasada_dgv.png';
   static const String titleMultaExceso =
       'assets/titles/multa_exceso_velocidad_dgv.png';
