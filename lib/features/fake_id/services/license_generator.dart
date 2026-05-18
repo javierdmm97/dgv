@@ -30,7 +30,7 @@ class LicenseGenerator {
 
   /// Generates a license PNG for [player] and returns the absolute file path.
   static Future<String> generate(PlayerProfile player) async {
-    final templateImage = await _loadAssetImage(AssetPaths.licenseTemplate);
+    final templateImage = await _loadAssetImage(AssetPaths.licenseFront);
 
     ui.Image? playerPhoto;
     if (player.photoPath.isNotEmpty) {
