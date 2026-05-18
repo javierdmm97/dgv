@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1] - 2026-05-18
+
+### 🔧 Hotfix - Android Build & Asset Reorganization
+
+### Fixed
+
+- Removed unused `image_gallery_saver` dependency that caused AGP namespace error blocking CI builds
+- Added ProGuard/R8 keep rules for Google ML Kit Text Recognition to fix R8 minification failure in release builds
+- Enabled `isMinifyEnabled` in release build type with proper ProGuard configuration
+- Added `permissions: contents: write` to GitHub Actions release workflow
+
+### Changed
+
+- Reorganized assets into proper subfolders: `assets/license/`, `assets/environmentalDistinctives/`
+- Replaced oversized title images with optimized DGV-branded versions
+- Updated `asset_paths.dart` constants to reflect new asset folder structure
+- Replaced `assets/msg_error.png` with `assets/msg_error.jpg`
+- Removed `assets/carnet-de-conducir.png` (replaced by `assets/license/front.png` and `assets/license/back.png`)
+
+---
+
 ## [0.3.0] - 2026-05-14
 
 ### 🎉 Phase 2 Completion - Core Gameplay
