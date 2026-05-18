@@ -6,7 +6,7 @@ part of 'leaderboard_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sortedLeaderboardHash() => r'6e5038c8a4b14cf65a2408994c3e9a71f231eca6';
+String _$sortedLeaderboardHash() => r'0c8e16164e03cb8c52fe5ffcc7d87a0a46c19890';
 
 /// Players sorted descending by points for leaderboard display.
 ///

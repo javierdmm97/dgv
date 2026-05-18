@@ -6,7 +6,7 @@ part of 'bac_entry_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$bACEntryNotifierHash() => r'2ba9b3f5bd89b5f29ab8a9a24531cfc9b9a0a130';
+String _$bACEntryNotifierHash() => r'1aed41224f7324f128915d6a9250e1e752dad05b';
 
 /// Processes a single BAC entry for a player.
 ///
