@@ -196,23 +196,34 @@ flutter build appbundle --release       # Android App Bundle
 The app uses **breathalyzer readings in mg/L** (milligrams per liter of exhaled air), which is the standard DGT measurement format. This is different from blood alcohol concentration (BAC) percentages.
 
 ### "Sweet Spot" System (Price is Right Mechanic)
-Each player has a personalized **optimal breathalyzer reading zone** based on body size:
-- **Small (S):** 2.5 mg/L optimal (equivalent to ~6-7 beers sustained)
-- **Medium (M):** 2.0 mg/L optimal (equivalent to ~7-8 beers sustained)
-- **Large (L):** 1.8 mg/L optimal (equivalent to ~8-9 beers sustained)
-- **Tolerance zones:**
-  - **In the zone:** ±0.2 mg/L (the "sweet spot")
-  - **Close to optimal:** ±0.4 mg/L
+The optimal BrAC target **grows each round** as players consume more drinks. It is derived from official DGT BrAC tables (midpoint of published ranges), calibrated per sex and body size. Round N ≈ N drinks consumed.
 
-### Points System (Hybrid)
-- Everyone starts with **15 points**
-- **Gain points** for staying in your zone:
-  - In the zone (±0.2 mg/L): +2 points
-  - Close to optimal (±0.4 mg/L): +1 point
-- **Lose points** for dangerous behavior:
-  - Over the line (beyond +0.4 mg/L): -3 points + lose Grand Prize eligibility
-  - Spike too fast (>0.8 mg/L per hour): -2 points
-  - Impoundment (≥3.5 mg/L): -5 points + sit out next round
+**Body size groups (from DGT):**
+- Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
+- Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
+
+**Example progression (men, medium — 70–90 kg):**
+| Round | Optimal BrAC | "In zone" band |
+|-------|-------------|----------------|
+| 1 | 0.13 mg/L | 0.00–0.33 |
+| 3 | 0.38 mg/L | 0.18–0.58 |
+| 5 | 0.62 mg/L | 0.42–0.82 |
+| 8 | 0.99 mg/L | 0.79–1.19 |
+
+**Tolerance zones (applied to the per-round target):**
+- **In the zone:** ±0.2 mg/L from optimal → **+4 points**
+- **Close to optimal:** ±0.4 mg/L from optimal → **+2 points**
+
+### Points System (Simplified)
+- Everyone starts with **15 points** (hard cap — cannot exceed)
+- **Scale:** -4 | -2 | 0 | +2 | +4 per round:
+  - In the zone (±0.2 mg/L): **+4 points**
+  - Close to optimal (±0.4 mg/L): **+2 points**
+  - Neutral: **0 points**
+  - Too low (>0.4 mg/L below optimal): **-2 points** ("Policía de la Diversión 🚔")
+  - Over the line (>0.4 mg/L above optimal): **-4 points** → issues a **Fine** 🚗
+- **No impoundment** — players are never excluded from rounds
+- **Fine:** shown as `assets/fine.png` full-screen; tracks money lost for a separate next-day game
 
 ### Round System
 - **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
@@ -224,31 +235,31 @@ Uses the **Widmark formula** with sex and body size:
 - `r = 0.68` for men, `0.55` for women
 - Body sizes: S (55kg), M (70kg), L (90kg)
 
-### DGT Titles (Per-Round Awards)
-Awarded **every checkpoint** based on player behavior:
-- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
-- 🔴 **Multa por Exceso** - Highest reading spike from last round
-- 🔰 **L de Prácticas** - Lowest reading in the round
-- 🔋 **Vehículo Híbrido** - Reading dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01 mg/L)
+### DGT Titles (Per-Round Awards — Visual/Cosmetic Only)
+Awarded **every checkpoint** based on player behavior. Titles are cosmetic — they accumulate on the license card but don't determine winners:
+- 🟢 **Velocidad de Crucero** - Closest to their optimal zone this round
+- 🔴 **Multa por Exceso** - Highest BAC spike from last round
+- 🔰 **L de Prácticas** - Lowest BAC reading in the round
+- 🔋 **Vehículo Híbrido** - [TBD — replacement title pending team decision]
+- 🔧 **ITV Passed** - Lost points last round but back in zone ("Redemption")
 
-Players accumulate these titles throughout the night (tracked with counters).
+Players accumulate these titles throughout the night (tracked with counters on the license).
 
 ### Environmental Distinctive Badges
-At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
+At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) — **as a joke, because they are the least eco-friendly** 🏭💨.
 
-### Grand Prizes (Final Ceremony)
-Three separate grand prizes awarded at the end:
-1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
-2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
-3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
+### Winners & Leaderboard
+The **Leaderboard is the only source of truth**. The top 3 players (🥇🥈🥉) are the winners:
+1. **Primary:** Most points at game end
+2. **Tiebreaker:** Perfection score — who stayed closest to their optimal zone line throughout the game (lower deviation = better)
 
 ### Quick Example
 ```
 Player: Medium (M), Optimal: 2.0 mg/L
 Round 0: Reading 0.8 mg/L → "Reading recorded" (no feedback)
-Round 1: Reading 2.0 mg/L → "+2 points: In the zone!" (green screen)
-Round 2: Reading 2.8 mg/L → "-3 points: Over the line!" (red screen)
+Round 1: Reading 2.0 mg/L → "+4 points: ¡En la zona!" (green screen)
+Round 2: Reading 2.8 mg/L → "-4 points: ¡Te has pasado! + Fine 🚗" (red screen)
+Round 3: Reading 1.0 mg/L → "-2 points: Policía de la Diversión 🚔" (blue screen)
 ```
 
 ---
@@ -304,8 +315,9 @@ Drunk-proof UX **cannot be validated in simulators**. Always test on real device
 
 ## 👥 Contributors
 
-- Developer 1: [Javier]
-- Developer 2: [Kristian]
+- Developer A: [Javier] — Core infrastructure, architecture, Firebase
+- Developer B: [Kristian] — UI/UX, screens, animations
+- Developer C: [Josema] — Firebase backend & Web frontend (Phase 4)
 
 ---
 

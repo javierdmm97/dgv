@@ -31,37 +31,37 @@ class FakeNewsArticle {
 const List<FakeNewsArticle> kFakeNewsArticles = [
   FakeNewsArticle(
     id: 'fn_001',
-    title: 'La DGV recomienda beber agua entre copas',
+    title: 'La DGV recomienda el consumo de puros al volante',
     summary:
-        'El organismo publica una guía de buenas prácticas para conductores responsables.',
+        'El organismo publica una guía de buenas prácticas para la fumasión.',
     body:
         'La Dirección General de Vitis ha publicado hoy una revolucionaria guía '
-        'en la que recomienda alternar bebidas alcohólicas con agua. '
-        '"Es fundamental mantenerse hidratado para una experiencia óptima", '
+        'en la que recomienda el consumo excesivo de puros. '
+        '"Es fundamental mantenerse fumado para una experiencia óptima tabaquera", '
         'declaró el portavoz de la institución. La guía incluye tablas de '
-        'referencia y consejos prácticos para cada complexión corporal.',
-    date: '15 Jun 2025',
+        'comparación de diferentes puros cubanos y consejos para el corte del puro.',
+    date: '3 Jun 2026',
     imagePath: '',
   ),
   FakeNewsArticle(
     id: 'fn_002',
-    title: 'Nuevo radar detecta niveles de diversión',
+    title: 'Nuevo radar detecta a Yisus a mas de 200 km/h entrando a Casa Vitis',
     summary:
-        'La tecnología DGV-Scan mide en tiempo real el índice de buen rollo de los conductores.',
+        'La tecnología DGV-Scan pilla al madrileño ebrio sobrepasando el limite de velocidad.',
     body:
-        'La DGV ha presentado el DGV-Scan, un dispositivo capaz de medir el '
-        'nivel de diversión de cualquier conductor en menos de dos segundos. '
-        '"Si el índice baja de 7, el sistema emite una alerta automática", '
-        'explicó la directora de innovación. El aparato ya está operativo '
-        'en varios controles piloto de la capital.',
-    date: '10 Jun 2025',
+        'La DGV ha impuesto carcel preventiva para el conductor y la retirada del carnet '
+        'con una multa de 4 cervezas a lo largo del dia de hoy. '
+        '"Se me habia olvidado los ingredientes de la carbonara", '
+        'declaró el susodicho tras su detención. El cubocoche ya esta incautado '
+        'y las cervezas de la multa enfriandose.',
+    date: '5 Jun 2026',
     imagePath: '',
   ),
   FakeNewsArticle(
     id: 'fn_003',
-    title: 'Multa de 200€ por no disfrutar lo suficiente',
+    title: '4 consejos para la subasta de la semana',
     summary:
-        'La nueva normativa obliga a los conductores a mantener un mínimo de alegría.',
+        'Si no te quieres quedar sin premio atento a nuestros Briconsejos',
     body:
         'El Boletín Oficial del Estado ha publicado hoy la Orden DGV/2025/42, '
         'que establece una sanción de 200 euros para aquellos conductores cuyo '
@@ -73,9 +73,9 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
   ),
   FakeNewsArticle(
     id: 'fn_004',
-    title: 'Campaña especial: "Si bebes, bebe con cabeza"',
+    title: 'Campaña especial: "Si bebes, bebela fria"',
     summary:
-        'La DGV lanza su campaña más ambiciosa para promover el consumo responsable.',
+        'La DGV lanza su campaña más ambiciosa para promover el consumo de cerveza fria.',
     body:
         'Con el lema "Si bebes, bebe con cabeza", la DGV ha iniciado una '
         'campaña de concienciación que incluye anuncios en televisión, '
@@ -87,9 +87,9 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
   ),
   FakeNewsArticle(
     id: 'fn_005',
-    title: 'Récord histórico de conductores responsables',
+    title: 'Récord histórico de conductores irresponsables',
     summary:
-        'El último control DGV registra el mayor porcentaje de tasas óptimas de la historia.',
+        'El último control DGV registra el mayor porcentaje de tasa de alcohol de la historia.',
     body:
         'El pasado fin de semana se registró un hito histórico: el 94% de los '
         'conductores sometidos a control DGV presentaron tasas dentro de la '
