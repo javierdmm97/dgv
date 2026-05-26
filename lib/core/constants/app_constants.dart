@@ -7,25 +7,24 @@ class AppConstants {
   static const int maxPoints = 15;
   static const int minPoints = 0;
 
-  // BAC Thresholds (breathalyzer readings in mg/L - based on DGT data)
-  // DGT Reference (3 beers): Men 70kg = 0.8, Men 80kg = 0.7, Women 50kg = 1.5, Women 60kg = 1.2
-  // Party context: 10-12 beers over 6-8 hours with metabolism
-  // Expected peak readings: Men 2.0-3.0 mg/L, Women 3.5-5.0 mg/L
-  static const double optimalToleranceClose =
-      0.2; // ±0.2 mg/L for "in the zone"
-  static const double optimalToleranceFar =
-      0.4; // ±0.4 mg/L for "close to optimal"
-  static const double impoundmentThreshold =
-      3.5; // >= 3.5 mg/L = impounded (sit out next round)
-  static const double dangerousSpikeRate =
-      0.8; // >0.8 mg/L per hour = dangerous spike (3 beers/hour)
+  // BAC Zone Thresholds — proportional to per-round optimal (mg/L)
+  // Party Mode: Optimized for high-energy party state (0.35-0.48 mg/L peak)
+  // Zones scale automatically with the Widmark-derived optimal for each sex/bodySize/round.
+
+  // All rounds use consistent party-oriented thresholds
+  static const double zoneSweetSpotPct = 0.10; // ±10% of optimal → +2
+  static const double zoneClosePct = 0.20; // ±20% of optimal → +1
+  static const double zoneNeutralPct = 0.40; // ±40% of optimal → 0
+  static const double zoneFarPct = 0.80; // ±80% of optimal → -1
+  // Above 80% over optimal triggers fine (-4)
 
   // Points Changes
-  static const int pointsInOptimalZone = 2; // +2 for being in sweet spot
-  static const int pointsCloseToOptimal = 1; // +1 for being close
-  static const int pointsCrossedOptimalLine = -3; // -3 for crossing the line
-  static const int pointsDangerousSpike = -2; // -2 for spiking too fast
-  static const int pointsImpounded = -5; // -5 for impoundment
+  static const int pointsInOptimalZone = 2; // +2 sweet spot
+  static const int pointsCloseToOptimal = 1; // +1 close
+  static const int pointsNeutralZone = 0; // 0 neutral
+  static const int pointsFarZone = -1; // -1 far from optimal
+  static const int pointsVeryFarBelow = -2; // -2 way below optimal
+  static const int pointsFine = -4; // -4 way above optimal → fine
 
   // Optimal BAC by Body Size (breathalyzer readings in mg/L - based on DGT data)
   // These are "sweet spot" targets for sustained drinking over 6-8 hours

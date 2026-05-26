@@ -1,20 +1,20 @@
 import '../models/dgt_title.dart';
 import '../models/player_profile.dart';
+import 'bac_calculator.dart';
 import 'points_calculator.dart';
 
 /// DGT Title evaluation logic (per-round awards)
 class TitleEvaluator {
   TitleEvaluator._();
 
-  /// Evaluate and award titles for the current round
-  /// Returns a map of player IDs to awarded titles
+  /// Evaluate and award titles for the current round.
+  /// Returns a map of player IDs to awarded titles.
   static Map<String, DGTTitle> evaluateRound(
     List<PlayerProfile> players,
     int currentRound,
   ) {
     final awards = <String, DGTTitle>{};
 
-    // Filter players with readings for this round
     final playersWithReadings = players
         .where((p) => p.latestReadingForRound(currentRound) != null)
         .toList();
@@ -45,17 +45,14 @@ class TitleEvaluator {
       awards[lowestBACPlayer.id] = DGTTitle.lDePracticas;
     }
 
-    // 🔋 Vehículo Híbrido: BAC dropped (drank water)
-    final hybridPlayers = _findHybridVehicles(
-      playersWithReadings,
-      currentRound,
-    );
+    // 🔋 Vehículo Híbrido: TBD — stubbed until replacement is defined
+    final hybridPlayers = _findHybridVehicles(playersWithReadings);
     for (final player in hybridPlayers) {
       awards[player.id] = DGTTitle.vehiculoHibrido;
     }
 
-    // 🛠️ ITV Passed: Same reading twice in a row (±0.01)
-    final itvPlayers = _findITVPassed(playersWithReadings, currentRound);
+    // 🛠️ ITV Passed: Lost points last round AND back in zone this round
+    final itvPlayers = _findITVPassed(playersWithReadings);
     for (final player in itvPlayers) {
       awards[player.id] = DGTTitle.itvPassed;
     }
@@ -63,7 +60,7 @@ class TitleEvaluator {
     return awards;
   }
 
-  /// Find player closest to their optimal zone
+  /// Find player closest to their per-round optimal zone.
   static PlayerProfile? _findClosestToOptimal(
     List<PlayerProfile> players,
     int currentRound,
@@ -75,7 +72,12 @@ class TitleEvaluator {
       final reading = player.latestReadingForRound(currentRound);
       if (reading == null) continue;
 
-      final distance = (reading.bac - player.optimalBAC).abs();
+      final optimal = BACCalculator.calculateOptimalBrAC(
+        currentRound,
+        player.sex,
+        player.bodySize,
+      );
+      final distance = (reading.bac - optimal).abs();
       if (distance < minDistance) {
         minDistance = distance;
         closest = player;
@@ -85,12 +87,12 @@ class TitleEvaluator {
     return closest;
   }
 
-  /// Find player with highest BAC spike from previous round
+  /// Find player with highest BAC spike from previous round.
   static PlayerProfile? _findHighestSpike(
     List<PlayerProfile> players,
     int currentRound,
   ) {
-    if (currentRound <= 1) return null; // Need at least 2 rounds
+    if (currentRound <= 1) return null;
 
     PlayerProfile? highestSpike;
     double maxSpike = 0.0;
@@ -111,7 +113,7 @@ class TitleEvaluator {
     return highestSpike;
   }
 
-  /// Find player with lowest BAC in the round
+  /// Find player with lowest BAC in the round.
   static PlayerProfile? _findLowestBAC(
     List<PlayerProfile> players,
     int currentRound,
@@ -132,97 +134,85 @@ class TitleEvaluator {
     return lowest;
   }
 
-  /// Find players whose BAC dropped (drank water)
-  static List<PlayerProfile> _findHybridVehicles(
-    List<PlayerProfile> players,
-    int currentRound,
-  ) {
-    if (currentRound <= 1) return []; // Need at least 2 rounds
-
-    final hybrids = <PlayerProfile>[];
-
-    for (final player in players) {
-      final currentReading = player.latestReadingForRound(currentRound);
-      final previousReading = player.latestReadingForRound(currentRound - 1);
-
-      if (currentReading == null || previousReading == null) continue;
-
-      // BAC dropped
-      if (currentReading.bac < previousReading.bac) {
-        hybrids.add(player);
-      }
-    }
-
-    return hybrids;
+  /// Vehículo Híbrido: replacement title is TBD — returns empty until defined.
+  static List<PlayerProfile> _findHybridVehicles(List<PlayerProfile> players) {
+    // vehiculoHibrido title replacement is TBD — returning empty until defined
+    return [];
   }
 
-  /// Find players with same reading twice in a row (±0.01)
-  static List<PlayerProfile> _findITVPassed(
-    List<PlayerProfile> players,
-    int currentRound,
-  ) {
-    if (currentRound <= 1) return []; // Need at least 2 rounds
+  /// ITV Passed: player had negative points last round AND is back in zone.
+  static List<PlayerProfile> _findITVPassed(List<PlayerProfile> players) {
+    return players.where((p) {
+      final activeReadings = p.readings.where((r) => r.roundNumber > 0).toList()
+        ..sort((a, b) => a.roundNumber.compareTo(b.roundNumber));
+      if (activeReadings.length < 2) return false;
 
-    final itvPassed = <PlayerProfile>[];
+      final lastReading = activeReadings[activeReadings.length - 1];
+      final prevReading = activeReadings[activeReadings.length - 2];
 
-    for (final player in players) {
-      final currentReading = player.latestReadingForRound(currentRound);
-      final previousReading = player.latestReadingForRound(currentRound - 1);
-
-      if (currentReading == null || previousReading == null) continue;
-
-      // Same reading (±0.01 tolerance)
-      final diff = (currentReading.bac - previousReading.bac).abs();
-      if (diff <= 0.01) {
-        itvPassed.add(player);
-      }
-    }
-
-    return itvPassed;
-  }
-
-  /// Calculate grand prize winners at the end
-  static Map<String, String> calculateGrandPrizes(List<PlayerProfile> players) {
-    final prizes = <String, String>{};
-
-    if (players.isEmpty) return prizes;
-
-    // 🏆 El Conductor Perfecto: Highest points + never crossed optimal line
-    final eligibleForPerfect = players
-        .where((p) => !p.crossedOptimalLine)
-        .toList();
-
-    if (eligibleForPerfect.isNotEmpty) {
-      final perfectDriver = eligibleForPerfect.reduce(
-        (a, b) => a.points > b.points ? a : b,
+      final prevOptimal = BACCalculator.calculateOptimalBrAC(
+        prevReading.roundNumber,
+        p.sex,
+        p.bodySize,
       );
-      prizes['conductor_perfecto'] = perfectDriver.id;
-    }
+      final wasOutOfZone =
+          !BACCalculator.isInOptimalZone(
+            prevReading.bac,
+            prevOptimal,
+            roundNumber: prevReading.roundNumber,
+          ) &&
+          !BACCalculator.isCloseToOptimal(
+            prevReading.bac,
+            prevOptimal,
+            roundNumber: prevReading.roundNumber,
+          );
 
-    // 🎯 Precisión Absoluta: Closest average to optimal zone
-    final mostPrecise = players.reduce((a, b) {
-      final aAvg = PointsCalculator.calculateAverageDistanceFromOptimal(
+      final lastOptimal = BACCalculator.calculateOptimalBrAC(
+        lastReading.roundNumber,
+        p.sex,
+        p.bodySize,
+      );
+      final nowInZone = BACCalculator.isInOptimalZone(
+        lastReading.bac,
+        lastOptimal,
+        roundNumber: lastReading.roundNumber,
+      );
+
+      return wasOutOfZone && nowInZone;
+    }).toList();
+  }
+
+  /// Sort players for leaderboard: primary = points desc, tiebreaker = perfection score asc.
+  static List<PlayerProfile> calculateLeaderboard(List<PlayerProfile> players) {
+    final sorted = [...players];
+    sorted.sort((a, b) {
+      if (a.points != b.points) return b.points.compareTo(a.points);
+      final aScore = PointsCalculator.calculatePerfectionScore(
         a.readings,
-        a.optimalBAC,
+        a.sex,
+        a.bodySize,
       );
-      final bAvg = PointsCalculator.calculateAverageDistanceFromOptimal(
+      final bScore = PointsCalculator.calculatePerfectionScore(
         b.readings,
-        b.optimalBAC,
+        b.sex,
+        b.bodySize,
       );
-      return aAvg < bAvg ? a : b;
+      return aScore.compareTo(bScore);
     });
-    prizes['precision_absoluta'] = mostPrecise.id;
-
-    // 👑 Coleccionista de Títulos: Most DGT titles accumulated
-    final collector = players.reduce((a, b) {
-      return a.totalTitles > b.totalTitles ? a : b;
-    });
-    prizes['coleccionista_titulos'] = collector.id;
-
-    return prizes;
+    return sorted;
   }
 
-  /// Get top 5 highest BAC players for Environmental Distinctive badges
+  /// Returns the player with most accumulated DGT titles.
+  static PlayerProfile? getMostTitlesPlayer(List<PlayerProfile> players) {
+    if (players.isEmpty) return null;
+    return players.reduce((a, b) {
+      final aTotal = a.titleCounts.values.fold(0, (s, c) => s + c);
+      final bTotal = b.titleCounts.values.fold(0, (s, c) => s + c);
+      return aTotal >= bTotal ? a : b;
+    });
+  }
+
+  /// Get top 5 highest BAC players for Environmental Distinctive badges.
   static List<PlayerProfile> getEnvironmentalDistinctives(
     List<PlayerProfile> players,
   ) {
@@ -230,7 +220,7 @@ class TitleEvaluator {
       ..sort((a, b) {
         final aMax = a.maxBAC;
         final bMax = b.maxBAC;
-        return bMax.compareTo(aMax); // Descending
+        return bMax.compareTo(aMax);
       });
 
     return sorted.take(5).toList();

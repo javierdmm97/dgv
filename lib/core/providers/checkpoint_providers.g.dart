@@ -68,7 +68,7 @@ final activeGroupProgressProvider = AutoDisposeProvider<(int, int)>.internal(
 // ignore: unused_element
 typedef ActiveGroupProgressRef = AutoDisposeProviderRef<(int, int)>;
 String _$checkpointNotifierHash() =>
-    r'1dba34c631321533bc62260b8d4f9eafb80fee72';
+    r'7d7f7292a37cc5d27b624a20ee41ec0bb63aaceb';
 
 /// Central provider for per-group checkpoint timer management.
 ///

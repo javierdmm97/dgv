@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/dgt_title.dart';
+import 'package:dgv/core/utils/bac_calculator.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
@@ -124,24 +125,13 @@ class _PlayerHeader extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (player.isImpounded) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
+                  if (player.fineCount > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '🚗 ${player.fineCount} multa${player.fineCount == 1 ? '' : 's'} · ${player.moneyLost} €',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: DGTColors.red,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'INMOVILIZADO',
-                        style: TextStyle(
-                          color: DGTColors.textOnPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -264,19 +254,31 @@ class _LineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spots = player.readings
+    final chartReadings = [...player.readings]
+      ..sort((a, b) => a.roundNumber.compareTo(b.roundNumber));
+    final spots = chartReadings
         .map((r) => FlSpot(r.roundNumber.toDouble(), r.bac))
         .toList();
-
-    final optimal = player.optimalBAC;
-    final bandTop = optimal + AppConstants.optimalToleranceClose;
-    final bandBottom = optimal - AppConstants.optimalToleranceClose;
+    final optimalSpots = chartReadings.map((r) {
+      final optimal = BACCalculator.calculateOptimalBrAC(
+        r.roundNumber,
+        player.sex,
+        player.bodySize,
+      );
+      return FlSpot(r.roundNumber.toDouble(), optimal);
+    }).toList();
+    final optimalUpperSpots = optimalSpots
+        .map((s) => FlSpot(s.x, s.y * (1 + AppConstants.zoneSweetSpotPct)))
+        .toList();
+    final optimalLowerSpots = optimalSpots.map((s) {
+      final lower = s.y * (1 - AppConstants.zoneSweetSpotPct);
+      return FlSpot(s.x, lower < 0 ? 0 : lower);
+    }).toList();
 
     final maxY =
         ([
                   ...spots.map((s) => s.y),
-                  bandTop,
-                  AppConstants.impoundmentThreshold,
+                  ...optimalUpperSpots.map((s) => s.y),
                 ].reduce((a, b) => a > b ? a : b) +
                 0.5)
             .ceilToDouble();
@@ -344,36 +346,31 @@ class _LineChart extends StatelessWidget {
             sideTitles: SideTitles(showTitles: false),
           ),
         ),
-        extraLinesData: ExtraLinesData(
-          horizontalLines: [
-            HorizontalLine(
-              y: optimal,
-              color: DGTColors.green.withValues(alpha: 0.8),
-              strokeWidth: 2,
-              dashArray: [6, 4],
-              label: HorizontalLineLabel(
-                show: true,
-                alignment: Alignment.topRight,
-                labelResolver: (_) => 'Óptimo',
-                style: const TextStyle(
-                  color: DGTColors.green,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-        rangeAnnotations: RangeAnnotations(
-          horizontalRangeAnnotations: [
-            HorizontalRangeAnnotation(
-              y1: bandBottom.clamp(0, maxY),
-              y2: bandTop.clamp(0, maxY),
-              color: DGTColors.green.withValues(alpha: 0.15),
-            ),
-          ],
-        ),
         lineBarsData: [
+          LineChartBarData(
+            spots: optimalUpperSpots,
+            isCurved: true,
+            color: DGTColors.green.withValues(alpha: 0.25),
+            barWidth: 1,
+            dashArray: [4, 4],
+            dotData: const FlDotData(show: false),
+          ),
+          LineChartBarData(
+            spots: optimalLowerSpots,
+            isCurved: true,
+            color: DGTColors.green.withValues(alpha: 0.25),
+            barWidth: 1,
+            dashArray: [4, 4],
+            dotData: const FlDotData(show: false),
+          ),
+          LineChartBarData(
+            spots: optimalSpots,
+            isCurved: true,
+            color: DGTColors.green.withValues(alpha: 0.8),
+            barWidth: 2,
+            dashArray: [6, 4],
+            dotData: const FlDotData(show: false),
+          ),
           LineChartBarData(
             spots: spots,
             isCurved: true,
@@ -381,12 +378,19 @@ class _LineChart extends StatelessWidget {
             barWidth: 3,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, pct, bar, idx) => FlDotCirclePainter(
-                radius: 5,
-                color: _dotColor(spot.y, optimal),
-                strokeWidth: 2,
-                strokeColor: DGTColors.surface,
-              ),
+              getDotPainter: (spot, pct, bar, idx) {
+                final roundOptimal = BACCalculator.calculateOptimalBrAC(
+                  spot.x.toInt(),
+                  player.sex,
+                  player.bodySize,
+                );
+                return FlDotCirclePainter(
+                  radius: 5,
+                  color: _dotColor(spot.y, roundOptimal),
+                  strokeWidth: 2,
+                  strokeColor: DGTColors.surface,
+                );
+              },
             ),
             belowBarData: BarAreaData(
               show: true,
@@ -399,9 +403,11 @@ class _LineChart extends StatelessWidget {
   }
 
   Color _dotColor(double bac, double optimal) {
-    final diff = (bac - optimal).abs();
-    if (diff <= AppConstants.optimalToleranceClose) return DGTColors.green;
-    if (diff <= AppConstants.optimalToleranceFar) return DGTColors.orange;
+    if (optimal <= 0) return DGTColors.orange;
+    final pct = (bac - optimal).abs() / optimal;
+    if (pct <= AppConstants.zoneSweetSpotPct) return DGTColors.green;
+    if (pct <= AppConstants.zoneClosePct) return DGTColors.yellow;
+    if (pct <= AppConstants.zoneNeutralPct) return DGTColors.orange;
     return DGTColors.red;
   }
 }

@@ -61,10 +61,7 @@ class _TitleIcon extends StatelessWidget {
       return image;
     }
 
-    return ColorFiltered(
-      colorFilter: ColorFilter.mode(greyColor, BlendMode.srcIn),
-      child: image,
-    );
+    return Opacity(opacity: 0.3, child: image);
   }
 }
 

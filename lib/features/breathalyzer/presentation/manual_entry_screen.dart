@@ -81,14 +81,6 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
-              Center(
-                child: Text(
-                  'Óptimo: ${player.optimalBAC} mg/L',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: DGTColors.textSecondary,
-                  ),
-                ),
-              ),
               const SizedBox(height: 32),
               if (_isSubmitting)
                 const Center(child: CircularProgressIndicator())

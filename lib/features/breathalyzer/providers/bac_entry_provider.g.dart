@@ -6,12 +6,12 @@ part of 'bac_entry_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$bACEntryNotifierHash() => r'1aed41224f7324f128915d6a9250e1e752dad05b';
+String _$bACEntryNotifierHash() => r'a4aa10bb0bac6ce2e00a13f5c9b9812a148cab9b';
 
 /// Processes a single BAC entry for a player.
 ///
-/// For Round 0: records baseline with no points change.
-/// For Round 1+: calculates points, checks impoundment, updates Hive.
+/// Round 0: records baseline with no points change.
+/// Round 1+: calculates points, checks fine condition, updates Hive.
 ///
 /// Copied from [BACEntryNotifier].
 @ProviderFor(BACEntryNotifier)

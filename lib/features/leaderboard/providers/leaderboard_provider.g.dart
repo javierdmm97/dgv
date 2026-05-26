@@ -6,14 +6,16 @@ part of 'leaderboard_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sortedLeaderboardHash() => r'0c8e16164e03cb8c52fe5ffcc7d87a0a46c19890';
+String _$sortedLeaderboardHash() => r'f912f33d5492d73241b6401fca6972e78922f301';
 
-/// Players sorted descending by points for leaderboard display.
+/// Players sorted for leaderboard: primary = points desc, tiebreaker = perfection score asc.
+///
+/// Uses ref.watch so the leaderboard rebuilds immediately when any player changes.
 ///
 /// Copied from [sortedLeaderboard].
 @ProviderFor(sortedLeaderboard)
 final sortedLeaderboardProvider =
-    AutoDisposeFutureProvider<List<PlayerProfile>>.internal(
+    AutoDisposeProvider<List<PlayerProfile>>.internal(
       sortedLeaderboard,
       name: r'sortedLeaderboardProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -25,7 +27,6 @@ final sortedLeaderboardProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef SortedLeaderboardRef =
-    AutoDisposeFutureProviderRef<List<PlayerProfile>>;
+typedef SortedLeaderboardRef = AutoDisposeProviderRef<List<PlayerProfile>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

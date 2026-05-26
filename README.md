@@ -196,59 +196,73 @@ flutter build appbundle --release       # Android App Bundle
 The app uses **breathalyzer readings in mg/L** (milligrams per liter of exhaled air), which is the standard DGT measurement format. This is different from blood alcohol concentration (BAC) percentages.
 
 ### "Sweet Spot" System (Price is Right Mechanic)
-Each player has a personalized **optimal breathalyzer reading zone** based on body size:
-- **Small (S):** 2.5 mg/L optimal (equivalent to ~6-7 beers sustained)
-- **Medium (M):** 2.0 mg/L optimal (equivalent to ~7-8 beers sustained)
-- **Large (L):** 1.8 mg/L optimal (equivalent to ~8-9 beers sustained)
-- **Tolerance zones:**
-  - **In the zone:** ±0.2 mg/L (the "sweet spot")
-  - **Close to optimal:** ±0.4 mg/L
+The optimal BrAC target **grows each round** using hardcoded party-mode targets calibrated per sex and body size, peaking at round 6 and winding down after. Targets model a realistic 6-hour party arc (gradual build-up → peak euphoria → wind-down).
 
-### Points System (Hybrid)
-- Everyone starts with **15 points**
-- **Gain points** for staying in your zone:
-  - In the zone (±0.2 mg/L): +2 points
-  - Close to optimal (±0.4 mg/L): +1 point
-- **Lose points** for dangerous behavior:
-  - Over the line (beyond +0.4 mg/L): -3 points + lose Grand Prize eligibility
-  - Spike too fast (>0.8 mg/L per hour): -2 points
-  - Impoundment (≥3.5 mg/L): -5 points + sit out next round
+**Body size groups:**
+- Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
+- Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
+
+**Example progression (men, medium — 70–90 kg):**
+| Round | Optimal BrAC | Sweet spot (±10%) |
+|-------|-------------|-------------------|
+| 1 | 0.11 mg/L | 0.10–0.12 |
+| 3 | 0.34 mg/L | 0.30–0.37 |
+| 5 | 0.56 mg/L | 0.50–0.61 |
+| 6 (peak) | 0.67 mg/L | 0.60–0.74 |
+| 8 | 0.52 mg/L | 0.47–0.57 |
+
+**Tolerance zones — all proportional to the per-round optimal:**
+| Zone | Threshold | Score | Feedback |
+|------|-----------|-------|----------|
+| Sweet spot | ±10% of optimal | **+2** | ¡En la zona! |
+| Close | ±20% of optimal | **+1** | Cerca del óptimo |
+| Neutral | ±40% of optimal | **0** | Sin cambios |
+| Far | ±80% of optimal | **-1** | Alejándote del objetivo |
+| Way below | >80% below optimal | **-2** | Policía de la Diversión 🚔 |
+| Way above | >80% above optimal | **-4 + Fine** | ¡Te has pasado! 🚗 |
+
+### Points System
+- Everyone starts with **15 points** (hard cap — cannot exceed)
+- **Scale:** -2 / -1 / 0 / +1 / +2 per round; **-4 only for fines** (way above optimal)
+- **No impoundment** — players are never excluded from rounds
+- **Fine:** shown as `assets/fine.png` full-screen; tracks `fineCount` and `moneyLost` (100 per fine, used in a separate next-day game)
 
 ### Round System
 - **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
 - **Round 1+:** Full feedback after each measurement (points, titles, warnings)
 
-### BAC Calculation
-Uses the **Widmark formula** with sex and body size:
-- `BAC = (Alcohol in grams / (Body weight × r)) × 100`
-- `r = 0.68` for men, `0.55` for women
-- Body sizes: S (55kg), M (70kg), L (90kg)
+### BrAC Calculation
+Uses **hardcoded party-mode targets** per sex and body size:
+- Targets model a 6-hour party arc: steady build-up (rounds 1–6) then wind-down (rounds 7–10)
+- Peak BrAC at round 6; rounds 11+ use round 10 value
+- Body sizes: S, M, L with representative weights per sex
 
-### DGT Titles (Per-Round Awards)
-Awarded **every checkpoint** based on player behavior:
-- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
-- 🔴 **Multa por Exceso** - Highest reading spike from last round
-- 🔰 **L de Prácticas** - Lowest reading in the round
-- 🔋 **Vehículo Híbrido** - Reading dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01 mg/L)
+### DGT Titles (Per-Round Awards — Visual/Cosmetic Only)
+Awarded **every checkpoint** based on player behavior. Titles are cosmetic — they accumulate on the license card but don't determine winners:
+- 🟢 **Velocidad de Crucero** - Closest to their optimal zone this round
+- 🔴 **Multa por Exceso** - Highest BAC spike from last round
+- 🔰 **L de Prácticas** - Lowest BAC reading in the round
+- 🔋 **Vehículo Híbrido** - [TBD — replacement title pending team decision]
+- 🔧 **ITV Passed** - Lost points last round but back in zone ("Redemption")
 
-Players accumulate these titles throughout the night (tracked with counters).
+Players accumulate these titles throughout the night (tracked with counters on the license).
 
 ### Environmental Distinctive Badges
-At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
+At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) — **as a joke, because they are the least eco-friendly** 🏭💨.
 
-### Grand Prizes (Final Ceremony)
-Three separate grand prizes awarded at the end:
-1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
-2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
-3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
+### Winners & Leaderboard
+The **Leaderboard is the only source of truth**. The top 3 players (🥇🥈🥉) are the winners:
+1. **Primary:** Most points at game end
+2. **Tiebreaker:** Perfection score — who stayed closest to their optimal zone line throughout the game (lower deviation = better)
 
 ### Quick Example
 ```
-Player: Medium (M), Optimal: 2.0 mg/L
-Round 0: Reading 0.8 mg/L → "Reading recorded" (no feedback)
-Round 1: Reading 2.0 mg/L → "+2 points: In the zone!" (green screen)
-Round 2: Reading 2.8 mg/L → "-3 points: Over the line!" (red screen)
+Player: Male, Medium (70–90 kg)
+Round 0: Optimal 0.00  → Reading 0.05 mg/L → "Reading recorded" (baseline, no feedback)
+Round 1: Optimal 0.11  → Reading 0.11 mg/L → "+2: ¡En la zona!" (green)
+Round 2: Optimal 0.22  → Reading 0.45 mg/L → "-4: ¡Te has pasado! + Multa 🚗" (red)
+Round 3: Optimal 0.34  → Reading 0.05 mg/L → "-2: Policía de la Diversión 🚔" (blue)
+Round 4: Optimal 0.45  → Reading 0.38 mg/L → "+1: Cerca del óptimo" (yellow)
 ```
 
 ---
@@ -304,8 +318,9 @@ Drunk-proof UX **cannot be validated in simulators**. Always test on real device
 
 ## 👥 Contributors
 
-- Developer 1: [Javier]
-- Developer 2: [Kristian]
+- Developer A: [Javier] — Core infrastructure, architecture, Firebase
+- Developer B: [Kristian] — UI/UX, screens, animations
+- Developer C: [Josema] — Firebase backend & Web frontend (Phase 4)
 
 ---
 

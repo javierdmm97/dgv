@@ -8,6 +8,7 @@ import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/providers/repository_providers.dart';
 import 'package:dgv/core/utils/checkpoint_calculator.dart';
+import 'package:dgv/core/services/notification_service.dart';
 import 'package:dgv/features/breathalyzer/providers/round_completion_service.dart';
 
 part 'checkpoint_providers.g.dart';
@@ -168,6 +169,31 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     }
   }
 
+  /// Skip immediately to the next checkpoint (debug builds only).
+  void skipToNextCheckpoint() {
+    final current = state.value;
+    if (current == null) return;
+
+    // Force the earliest upcoming group to become due now.
+    final earliestGroup = current.groups.reduce((a, b) {
+      final aNext =
+          a.nextCheckpoint ??
+          a.lastMeasurement.add(Duration(minutes: a.intervalMinutes));
+      final bNext =
+          b.nextCheckpoint ??
+          b.lastMeasurement.add(Duration(minutes: b.intervalMinutes));
+      return aNext.isBefore(bNext) ? a : b;
+    });
+    final forceDueAt = DateTime.now().subtract(const Duration(seconds: 1));
+    final forcedGroups = current.groups.map((group) {
+      if (group.groupIndex != earliestGroup.groupIndex) return group;
+      return group.copyWith(nextCheckpoint: forceDueAt);
+    }).toList();
+
+    state = AsyncData(current.copyWith(groups: forcedGroups));
+    _tick();
+  }
+
   /// Cancel the ticker, delete Hive state, and reset to null.
   Future<void> reset() async {
     _ticker?.cancel();
@@ -217,11 +243,13 @@ class CheckpointNotifier extends _$CheckpointNotifier {
 
     // Only activate if not already active (avoid overwriting active group).
     int? newActiveIndex = current.activeGroupIndex;
+    bool triggerNotification = false;
     if (anyDue && !current.isCheckpointActive) {
       // Pick the lowest-index due group.
       newActiveIndex = dueGroups
           .map((g) => g.groupIndex)
           .reduce((a, b) => a < b ? a : b);
+      triggerNotification = true;
     } else if (!anyDue) {
       newActiveIndex = null;
     }
@@ -236,6 +264,11 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     if (updatedState == current) return;
 
     state = AsyncData(updatedState);
+
+    if (triggerNotification && newActiveIndex != null) {
+      final groupLabel = 'Grupo ${newActiveIndex + 1}';
+      unawaited(NotificationService.showCheckpointAlert(groupLabel));
+    }
 
     // Persist asynchronously — fire-and-forget is acceptable here since the
     // in-memory state is already updated and the next tick will re-persist.

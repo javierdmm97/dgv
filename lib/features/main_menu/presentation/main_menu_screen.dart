@@ -114,9 +114,7 @@ class _AppDrawer extends ConsumerWidget {
                       ),
                       onPressed: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ayuda — Próximamente')),
-                        );
+                        Navigator.pushNamed(context, AppRoutes.ayuda);
                       },
                     ),
                   ),

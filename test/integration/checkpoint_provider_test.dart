@@ -32,7 +32,6 @@ PlayerProfile _makePlayer(String id) => PlayerProfile(
   photoPath: '',
   sex: Sex.male,
   bodySize: BodySize.medium,
-  optimalBAC: 2.0,
   licenseImagePath: '',
 );
 

@@ -14,6 +14,8 @@ import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
 import 'package:dgv/features/checkpoint/presentation/checkpoint_screen.dart';
 import 'package:dgv/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:dgv/features/leaderboard/presentation/player_detail_screen.dart';
+import 'package:dgv/features/main_menu/presentation/ayuda_screen.dart';
+import 'package:dgv/features/scoring/presentation/fine_screen.dart';
 
 /// Main app widget
 class DGVApp extends ConsumerWidget {
@@ -83,6 +85,20 @@ class DGVApp extends ConsumerWidget {
       case AppRoutes.leaderboard:
         return MaterialPageRoute<void>(
           builder: (_) => const LeaderboardScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.fine:
+        final result = settings.arguments as BACEntryResult;
+        return MaterialPageRoute<void>(
+          builder: (_) => FineScreen(result: result),
+          fullscreenDialog: true,
+          settings: settings,
+        );
+
+      case AppRoutes.ayuda:
+        return MaterialPageRoute<void>(
+          builder: (_) => const AyudaScreen(),
           settings: settings,
         );
 

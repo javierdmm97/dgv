@@ -25,8 +25,7 @@ class LicenseGenerator {
 
   static const Offset _nameOffset = Offset(200, 90);
   static const Offset _pointsOffset = Offset(200, 125);
-  static const Offset _optimalOffset = Offset(200, 155);
-  static const Offset _titlesOffset = Offset(200, 185);
+  static const Offset _titlesOffset = Offset(200, 155);
 
   /// Generates a license PNG for [player] and returns the absolute file path.
   static Future<String> generate(PlayerProfile player) async {
@@ -133,14 +132,6 @@ class LicenseGenerator {
       color: DGTColors.primary,
     );
 
-    _drawText(
-      canvas,
-      'Zona óptima: ${player.optimalBAC.toStringAsFixed(1)} mg/L',
-      _optimalOffset,
-      fontSize: 13,
-      color: DGTColors.textSecondary,
-    );
-
     final earned = player.titleCounts.entries
         .where((e) => e.value > 0)
         .map((e) => e.key.emoji)
@@ -149,10 +140,10 @@ class LicenseGenerator {
       _drawText(canvas, earned, _titlesOffset, fontSize: 20);
     }
 
-    if (player.isImpounded) {
+    if (player.fineCount > 0) {
       _drawText(
         canvas,
-        'INMOVILIZADO',
+        '🚗 ${player.fineCount} multa${player.fineCount == 1 ? '' : 's'}',
         const Offset(200, 220),
         fontSize: 14,
         bold: true,

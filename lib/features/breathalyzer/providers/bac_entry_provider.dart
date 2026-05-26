@@ -2,9 +2,7 @@ import 'package:flutter/material.dart' show Color;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/bac_reading.dart';
-import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/checkpoint_providers.dart';
 import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
@@ -18,8 +16,8 @@ part 'bac_entry_provider.g.dart';
 
 /// Processes a single BAC entry for a player.
 ///
-/// For Round 0: records baseline with no points change.
-/// For Round 1+: calculates points, checks impoundment, updates Hive.
+/// Round 0: records baseline with no points change.
+/// Round 1+: calculates points, checks fine condition, updates Hive.
 @riverpod
 class BACEntryNotifier extends _$BACEntryNotifier {
   @override
@@ -59,7 +57,6 @@ class BACEntryNotifier extends _$BACEntryNotifier {
         bac: bac,
         roundNumber: 0,
         pointsChange: 0,
-        isImpounded: false,
         feedbackMessage: 'Lectura registrada',
         feedbackColor: DGTColors.background,
       );
@@ -68,30 +65,30 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     // -----------------------------------------------------------------------
     // Round 1+ — full scoring
     // -----------------------------------------------------------------------
-    final previousReading = player.latestReadingForRound(currentRound - 1);
-    final previousBAC = previousReading?.bac ?? 0.0;
-    final timeDelta = previousReading != null
-        ? now.difference(previousReading.timestamp)
-        : const Duration(minutes: AppConstants.defaultIntervalMinutes);
+    final optimal = BACCalculator.calculateOptimalBrAC(
+      currentRound,
+      player.sex,
+      player.bodySize,
+    );
 
-    // Impoundment takes priority
-    final impounded = PointsCalculator.isImpounded(bac);
-    int pointsChange;
+    final pointsChange = PointsCalculator.calculatePointsChange(
+      currentBAC: bac,
+      optimalBAC: optimal,
+      roundNumber: currentRound,
+    );
+
     bool crossedLine = player.crossedOptimalLine;
-
-    if (impounded) {
-      pointsChange = PointsCalculator.getImpoundmentPenalty();
-    } else {
-      pointsChange = PointsCalculator.calculatePointsChange(
-        currentBAC: bac,
-        optimalBAC: player.optimalBAC,
-        previousBAC: previousBAC,
-        timeDelta: timeDelta,
-      );
-      if (BACCalculator.crossedOptimalLine(bac, player.optimalBAC)) {
-        crossedLine = true;
-      }
+    if (BACCalculator.crossedOptimalLine(
+      bac,
+      optimal,
+      roundNumber: currentRound,
+    )) {
+      crossedLine = true;
     }
+
+    final issueFine = PointsCalculator.shouldIssueFine(pointsChange);
+    final newFineCount = player.fineCount + (issueFine ? 1 : 0);
+    final newMoneyLost = player.moneyLost + (issueFine ? 100 : 0);
 
     final newPoints = PointsCalculator.calculateTotalPoints(
       player.points,
@@ -114,8 +111,9 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     final updatedPlayer = player.copyWith(
       points: newPoints,
       readings: [...player.readings, reading],
-      isImpounded: impounded,
       crossedOptimalLine: crossedLine,
+      fineCount: newFineCount,
+      moneyLost: newMoneyLost,
     );
 
     await repo.update(updatedPlayer);
@@ -132,22 +130,26 @@ class BACEntryNotifier extends _$BACEntryNotifier {
       bac: bac,
       roundNumber: currentRound,
       pointsChange: pointsChange,
-      isImpounded: impounded,
       feedbackMessage: feedbackMsg,
       feedbackColor: feedbackColor,
+      fineCount: newFineCount,
+      moneyLost: newMoneyLost,
     );
   }
 }
 
-// Maps the FeedbackColor enum to an actual Flutter Color.
 Color _colorFromEnum(FeedbackColor c) {
   switch (c) {
     case FeedbackColor.green:
       return DGTColors.green;
     case FeedbackColor.yellow:
       return DGTColors.yellow;
+    case FeedbackColor.orange:
+      return DGTColors.orange;
     case FeedbackColor.red:
       return DGTColors.red;
+    case FeedbackColor.blue:
+      return DGTColors.primary;
     case FeedbackColor.neutral:
       return DGTColors.background;
   }

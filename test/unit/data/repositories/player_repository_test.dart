@@ -72,7 +72,6 @@ PlayerProfile _makePlayer({
   photoPath: '',
   sex: Sex.male,
   bodySize: BodySize.medium,
-  optimalBAC: 2.0,
   licenseImagePath: '',
   readings: const [],
   titleCounts: const {},
@@ -215,7 +214,6 @@ void main() {
           expect(retrieved!.id, equals(player.id));
           expect(retrieved.name, equals(player.name));
           expect(retrieved.points, equals(player.points));
-          expect(retrieved.optimalBAC, equals(player.optimalBAC));
         }
       });
     });

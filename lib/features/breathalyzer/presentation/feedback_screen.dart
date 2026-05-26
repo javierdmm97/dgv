@@ -64,10 +64,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 const SizedBox(height: 16),
                 _TitleAward(title: result.awardedTitle!),
               ],
-              if (result.isImpounded) ...[
-                const SizedBox(height: 16),
-                const _ImpoundedBanner(),
-              ],
               const Spacer(),
               MassiveButton(text: 'Continuar', onPressed: _close),
             ],
@@ -181,31 +177,6 @@ class _TitleAward extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ImpoundedBanner extends StatelessWidget {
-  const _ImpoundedBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: DGTColors.red,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: DGTColors.textOnPrimary, width: 2),
-      ),
-      child: Text(
-        '🚫 VEHÍCULO INMOVILIZADO',
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: DGTColors.textOnPrimary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-        ),
-        textAlign: TextAlign.center,
       ),
     );
   }

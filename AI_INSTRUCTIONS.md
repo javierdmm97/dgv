@@ -1,7 +1,7 @@
 # 🚔 Operación DGV - AI System Instructions
 
-**Version:** 1.0  
-**Last Updated:** May 4, 2026  
+**Version:** 1.2  
+**Last Updated:** May 25, 2026  
 **Project:** Party Breathalyzer Tracker with DGT Theme
 
 ---
@@ -287,150 +287,156 @@ class PlayerProfile with _$PlayerProfile {
     @HiveField(6) @Default(15) int points,       // Starting points
     @HiveField(7) @Default([]) List<BACReading> readings,
     @HiveField(8) @Default({}) Map<DGTTitle, int> titleCounts, // Track title accumulation
-    @HiveField(9) @Default(false) bool crossedOptimalLine, // Lost Grand Prize eligibility
-    @HiveField(10) @Default(false) bool isImpounded,  // "Vehículo Inmovilizado"
-    @HiveField(11) required double optimalBAC,   // Personalized optimal zone
+    @HiveField(9) @Default(false) bool crossedOptimalLine, // Penalización acumulada por exceso
+    @HiveField(10) @Default(0) int fineCount,      // Number of fines received (-4 pts each)
+    @HiveField(11) @Default(0) int moneyLost,      // Money lost (next-day game, 100 per fine)
     @HiveField(12) required String licenseImagePath, // Auto-generated license (updated throughout game)
+    // NOTE: optimalBAC is NO LONGER stored on the player — it is computed per-round via
+    // BACCalculator.calculateOptimalBrAC(roundNumber, sex, bodySize) using DGT BrAC tables.
   }) = _PlayerProfile;
 }
 
 enum Sex { male, female }
 enum BodySize { small, medium, large }
 
+// PHASE 2.5 NOTE: vehiculoHibrido replacement title is TBD (dropped reading logic removed as BAC drops
+// are physically impossible within a 5-hour party window).
+// itvPassed now means: lost points last round AND back in the zone this round ("Redemption").
 enum DGTTitle {
-  velocidadDeCrucero,  // 🟢 Closest to optimal zone
-  multaPorExceso,      // 🔴 Highest BAC spike
-  lDePracticas,        // 🔰 Lowest BAC in round
-  vehiculoHibrido,     // 🔋 BAC dropped (water)
-  itvPassed,           // 🛠️ Same reading twice
+  velocidadDeCrucero,  // 🟢 Closest to their optimal zone this round
+  multaPorExceso,      // 🔴 Highest BAC spike from last round
+  lDePracticas,        // 🔰 Lowest BAC reading in the round
+  vehiculoHibrido,     // 🔋 [TBD — replacement title, pending definition]
+  itvPassed,           // 🔧 Lost points last round but now back in zone ("Redemption")
 }
 ```
 
-### BAC Calculation (Widmark Formula)
+### BrAC Calculation (Party-Mode Targets)
+
+**Critical architecture note (Phase 2.5):**
+The app measures **BrAC** (Breath Alcohol Concentration, mg/L exhaled air) directly from the breathalyzer — NOT blood alcohol. The "sweet spot" is **NOT a fixed value**. It grows each round using hardcoded party-mode targets that model a realistic 6-hour party arc: steady build-up (rounds 1–6), peak at round 6, then wind-down (rounds 7–10). Rounds 11+ use the round 10 value.
+
+Zone thresholds are **proportional to the per-round optimal** (% of optimal), so they scale correctly across all profiles and rounds. Constants live in `AppConstants` (`zoneSweetSpotPct = 0.10`, `zoneClosePct = 0.20`, `zoneNeutralPct = 0.40`, `zoneFarPct = 0.80`).
+
+**Body size weight groups:**
+- Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
+- Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
+
 ```dart
 // core/utils/bac_calculator.dart
 class BACCalculator {
-  /// Calculate theoretical BAC based on drinks consumed
-  /// Formula: BAC = (Alcohol consumed in grams / (Body weight in grams × r)) × 100
-  /// r = 0.68 for men, 0.55 for women
-  static double calculateBAC({
-    required double alcoholGrams,
-    required Sex sex,
-    required BodySize bodySize,
-  }) {
-    final bodyWeight = _getBodyWeight(bodySize);
-    final r = sex == Sex.male ? 0.68 : 0.55;
-    return (alcoholGrams / (bodyWeight * 1000 * r)) * 100;
-  }
+  // Party-mode optimal BrAC targets for rounds 1–10 (mg/L).
+  // Calibrated for a 6-hour party arc with peak at round 6, then wind-down.
+  static const Map<Sex, Map<BodySize, List<double>>> _partyModeTargets = {
+    Sex.male: {
+      BodySize.small:  [0.105, 0.210, 0.315, 0.420, 0.525, 0.630, 0.555, 0.480, 0.405, 0.330],
+      BodySize.medium: [0.111, 0.223, 0.335, 0.446, 0.558, 0.670, 0.595, 0.520, 0.445, 0.370],
+      BodySize.large:  [0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 0.675, 0.600, 0.525, 0.450],
+    },
+    Sex.female: {
+      BodySize.small:  [0.086, 0.173, 0.260, 0.346, 0.433, 0.520, 0.445, 0.370, 0.295, 0.220],
+      BodySize.medium: [0.108, 0.216, 0.325, 0.433, 0.541, 0.650, 0.575, 0.500, 0.425, 0.350],
+      BodySize.large:  [0.118, 0.236, 0.355, 0.473, 0.591, 0.710, 0.635, 0.560, 0.485, 0.410],
+    },
+  };
 
-  static double _getBodyWeight(BodySize size) {
-    switch (size) {
-      case BodySize.small: return 55.0;   // kg
-      case BodySize.medium: return 70.0;
-      case BodySize.large: return 90.0;
-    }
-  }
-  
-  /// Calculate optimal BAC zone based on body size (in mg/L)
-  /// Small: 2.5 mg/L, Medium: 2.0 mg/L, Large: 1.8 mg/L
-  /// Based on DGT data extrapolated for party context (6-8 beers sustained)
-  static double calculateOptimalBAC(BodySize size) {
-    switch (size) {
-      case BodySize.small: return 2.5;   // ~6-7 beers sustained
-      case BodySize.medium: return 2.0;  // ~7-8 beers sustained
-      case BodySize.large: return 1.8;   // ~8-9 beers sustained
-    }
-  }
-  
-  /// Check if BAC is in the "sweet spot" (±0.2 mg/L tolerance)
-  static bool isInOptimalZone(double currentBAC, double optimalBAC) {
-    return (currentBAC - optimalBAC).abs() <= 0.2;
-  }
-  
-  /// Check if BAC is close to optimal (±0.2-0.4 mg/L)
-  static bool isCloseToOptimal(double currentBAC, double optimalBAC) {
-    final diff = (currentBAC - optimalBAC).abs();
-    return diff > 0.2 && diff <= 0.4;
-  }
-  
-  /// Check if player crossed the optimal line (>+0.4 mg/L)
-  static bool crossedOptimalLine(double currentBAC, double optimalBAC) {
-    return currentBAC > (optimalBAC + 0.4);
-  }
+  /// Optimal BrAC for round N. Round 0 = 0.0 (baseline). Rounds 11+ use round 10 value.
+  static double calculateOptimalBrAC(int roundNumber, Sex sex, BodySize bodySize) { ... }
+
+  /// True when currentBrAC is within ±10% of optimal (+2).
+  static bool isInOptimalZone(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
+
+  /// True when currentBrAC is within ±20% of optimal (+1).
+  static bool isCloseToOptimal(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
+
+  /// True when currentBrAC is within ±40% of optimal (0).
+  static bool isNeutralZone(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
+
+  /// True when currentBrAC is within ±80% of optimal (-1).
+  static bool isFarFromOptimal(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
+
+  /// True when currentBrAC exceeds optimal by >80% (-4, triggers fine).
+  static bool crossedOptimalLine(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
 }
 ```
 
-### Points Deduction Logic (Hybrid System)
+**Example progression (men, medium — 70–90 kg):**
+| Round | Optimal BrAC | Sweet spot (±10%) |
+|-------|-------------|-------------------|
+| 0 | 0.00 (baseline) | — |
+| 1 | 0.11 mg/L | 0.10–0.12 |
+| 3 | 0.34 mg/L | 0.30–0.37 |
+| 5 | 0.56 mg/L | 0.50–0.61 |
+| 6 (peak) | 0.67 mg/L | 0.60–0.74 |
+| 8 | 0.52 mg/L | 0.47–0.57 |
+| 10 | 0.37 mg/L | 0.33–0.41 |
+
+### Points System (Simplified — Phase 2.5)
+
+**Scale:** +2 / +1 / 0 / -1 / -2 / -4 per round. -4 reserved exclusively for fines. Max points cap: 15 (cannot exceed).
+
+| Zone | Condition | Points | Feedback |
+|------|-----------|--------|----------|
+| 🟢 Sweet Spot | ±10% of optimal | **+2** | ¡En la zona! |
+| 🟡 Close | ±20% of optimal | **+1** | Cerca del óptimo |
+| ⬛ Neutral | ±40% of optimal | **0** | Sin cambios |
+| 🟠 Far | ±80% of optimal | **-1** | Alejándote del objetivo |
+| 🔵 Way Below | >80% below optimal | **-2** | Policía de la Diversión 🚔 |
+| 🔴 Way Above | >80% above optimal | **-4** → triggers **Fine** | ¡Te has pasado! 🚗 |
+
+**Fine Rule:** A -4 measurement issues one Fine:
+- Track `fineCount++` and `moneyLost += 100` on `PlayerProfile`
+- Show `assets/fine.png` full-screen
+- No impoundment, no sitting out — game continues normally
+
 ```dart
 // core/utils/points_calculator.dart
 class PointsCalculator {
-  /// Calculate points change based on BAC relative to optimal zone
-  /// Returns positive for gains, negative for penalties
-  /// All thresholds in mg/L (breathalyzer readings)
+  /// Scale: +2 / +1 / 0 / -1 / -2 / -4 (fine)
+  /// Zones are proportional to the per-round optimal BrAC.
   static int calculatePointsChange({
     required double currentBAC,
     required double optimalBAC,
-    required double previousBAC,
-    required Duration timeDelta,
+    required int roundNumber,
   }) {
-    // Check if in optimal zone (±0.2 mg/L)
-    if (BACCalculator.isInOptimalZone(currentBAC, optimalBAC)) {
-      return 2; // +2 points for being in the sweet spot
-    }
-    
-    // Check if close to optimal (±0.4 mg/L)
-    if (BACCalculator.isCloseToOptimal(currentBAC, optimalBAC)) {
-      return 1; // +1 point for being close
-    }
-    
-    // Check if crossed the optimal line (>+0.4 mg/L)
-    if (BACCalculator.crossedOptimalLine(currentBAC, optimalBAC)) {
-      return -3; // -3 points + lose Grand Prize eligibility
-    }
-    
-    // Check if too low (<-0.4 mg/L from optimal)
-    if (currentBAC < (optimalBAC - 0.4)) {
-      return 0; // No points (not drinking enough)
-    }
-    
-    // Check for dangerous spike (>0.8 mg/L per hour)
-    final delta = currentBAC - previousBAC;
-    final ratePerHour = delta / (timeDelta.inMinutes / 60.0);
-    if (ratePerHour > 0.8) {
-      return -2; // -2 points for spiking too fast
-    }
-    
-    return 0; // Default: no change
+    if (BACCalculator.isInOptimalZone(currentBAC, optimalBAC, roundNumber: roundNumber)) return 2;
+    if (BACCalculator.isCloseToOptimal(currentBAC, optimalBAC, roundNumber: roundNumber)) return 1;
+    if (BACCalculator.isNeutralZone(currentBAC, optimalBAC, roundNumber: roundNumber)) return 0;
+    if (BACCalculator.isFarFromOptimal(currentBAC, optimalBAC, roundNumber: roundNumber)) return -1;
+    if (BACCalculator.crossedOptimalLine(currentBAC, optimalBAC, roundNumber: roundNumber)) return -4;
+    return -2; // beyond far threshold below optimal ("Policía de la Diversión")
   }
-  
-  /// Check if player exceeded maximum BAC threshold (impoundment)
-  /// Threshold: ≥3.5 mg/L
-  static bool isImpounded(double currentBAC) {
-    return currentBAC >= 3.5; // -5 points + sit out next round
-  }
-  
-  /// Calculate average distance from optimal zone across all readings
+
+  static bool shouldIssueFine(int pointsChange) => pointsChange <= -4;
+
+  static int calculateTotalPoints(int currentPoints, int pointsChange) =>
+      (currentPoints + pointsChange).clamp(0, 15);
+
+  /// Average distance from per-round optimal (excludes round 0).
   static double calculateAverageDistanceFromOptimal(
-    List<BACReading> readings,
-    double optimalBAC,
-  ) {
-    if (readings.isEmpty) return double.infinity;
-    
-    final distances = readings.map((r) => (r.bac - optimalBAC).abs());
-    return distances.reduce((a, b) => a + b) / readings.length;
-  }
+    List<BACReading> readings, Sex sex, BodySize bodySize,
+  ) { ... }
+
+  /// Perfection score for leaderboard tiebreaker: avg deviation + variance (lower = better).
+  static double calculatePerfectionScore(
+    List<BACReading> readings, Sex sex, BodySize bodySize,
+  ) { ... }
 }
 ```
 
 ### DGT Title Evaluation (Per-Round Awards)
+
+**Phase 2.5 Note:** DGT Titles are now **visual/cosmetic only** — they accumulate on the license throughout the game and are shown at the end, but they do not determine winners. The Leaderboard (points) is the sole source of truth for ranking.
+
 ```dart
 // core/utils/title_evaluator.dart
+// Titles are VISUAL ONLY — cosmetic accumulation on license cards.
 enum DGTTitle {
-  velocidadDeCrucero,  // 🟢 Closest to optimal zone
-  multaPorExceso,      // 🔴 Highest BAC spike
-  lDePracticas,        // 🔰 Lowest BAC in round
-  vehiculoHibrido,     // 🔋 BAC dropped (water)
-  itvPassed,           // 🛠️ Same reading twice
+  velocidadDeCrucero,  // 🟢 Closest to their optimal zone this round
+  multaPorExceso,      // 🔴 Highest BAC spike from last round
+  lDePracticas,        // 🔰 Lowest BAC reading in the round
+  vehiculoHibrido,     // 🔋 [TBD — pending replacement definition]
+  itvPassed,           // 🔧 Lost points last round but now back in zone ("Redemption")
 }
 
 class TitleEvaluator {
@@ -495,37 +501,29 @@ class TitleEvaluator {
     // Implementation: Find players with same reading twice (±0.01)
   }
   
-  /// Calculate grand prize winners at the end
-  static Map<String, String> calculateGrandPrizes(List<PlayerProfile> players) {
-    final prizes = <String, String>{};
-    
-    // 🏆 El Conductor Perfecto: Highest points + never crossed optimal line
-    final perfectDriver = players
-        .where((p) => !p.crossedOptimalLine)
-        .reduce((a, b) => a.points > b.points ? a : b);
-    prizes['conductor_perfecto'] = perfectDriver.id;
-    
-    // 🎯 Precisión Absoluta: Closest average to optimal zone
-    final mostPrecise = players.reduce((a, b) {
-      final aAvg = PointsCalculator.calculateAverageDistanceFromOptimal(
-        a.readings, a.optimalBAC,
-      );
-      final bAvg = PointsCalculator.calculateAverageDistanceFromOptimal(
-        b.readings, b.optimalBAC,
-      );
-      return aAvg < bAvg ? a : b;
+  /// Calculate leaderboard with tiebreaker for top 3.
+  /// Primary sort: points (descending).
+  /// Tiebreaker: perfection score (ascending = closer to per-round optimal line).
+  static List<PlayerProfile> calculateLeaderboard(List<PlayerProfile> players) {
+    final sorted = [...players];
+    sorted.sort((a, b) {
+      if (a.points != b.points) return b.points.compareTo(a.points);
+      // Tiebreaker: lower perfection score = stayed closer to optimal line each round
+      final aScore = PointsCalculator.calculatePerfectionScore(a.readings, a.sex, a.bodySize);
+      final bScore = PointsCalculator.calculatePerfectionScore(b.readings, b.sex, b.bodySize);
+      return aScore.compareTo(bScore);
     });
-    prizes['precision_absoluta'] = mostPrecise.id;
-    
-    // 👑 Coleccionista de Títulos: Most DGT titles accumulated
-    final collector = players.reduce((a, b) {
+    return sorted;
+  }
+  
+  /// Get the player who collected the most DGT titles (shown at end as a joke).
+  static PlayerProfile? getMostTitlesPlayer(List<PlayerProfile> players) {
+    if (players.isEmpty) return null;
+    return players.reduce((a, b) {
       final aTotal = a.titleCounts.values.fold(0, (sum, count) => sum + count);
       final bTotal = b.titleCounts.values.fold(0, (sum, count) => sum + count);
-      return aTotal > bTotal ? a : b;
+      return aTotal >= bTotal ? a : b;
     });
-    prizes['coleccionista_titulos'] = collector.id;
-    
-    return prizes;
   }
   
   /// Get top 5 highest BAC players for Environmental Distinctive badges
@@ -600,6 +598,16 @@ class TitleEvaluator {
   - Scrollable list
   - Tap article → show full fake article
 
+- **Ayuda (Help) Button:**
+  - Accessible from the navigation drawer (end drawer) or a visible button in the main menu
+  - Shows a full-screen or dialog joke screen with:
+    - Title: **"¿Necesitas Ayuda?"**
+    - Main message: **"Espabila y tómate una bien fría."**
+    - Sub-message (DGT joke slogan): **"Si bebes, conduce."** *(reversed intentionally — satirical)*
+    - Image: TBD — placeholder for a satirical DGT-themed illustration
+  - "Cerrar" button to dismiss
+  - Drunk-proof: oversized text, MassiveButton to close
+
 **State Management:**
 - Check Hive for existing game state on app launch
 - Show appropriate buttons based on game state
@@ -625,9 +633,11 @@ class GameState extends _$GameState {
 1. Name input (custom keyboard)
 2. Surname input (custom keyboard)
 3. Sex selection (Male/Female buttons)
-4. Body size selection (S/M/L visual buttons with weight indicators)
+4. Body size selection (S/M/L visual buttons with weight ranges per sex):
+   - Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
+   - Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
 5. Photo capture (camera with countdown timer for license ID)
-6. Confirmation screen (shows calculated optimal BAC zone)
+6. Confirmation screen (shows BrAC target progression: round 1 → round 5 → round 10)
 
 **License Generation:**
 - **Immediately after photo capture:** Generate fake license ID
@@ -682,7 +692,7 @@ class GameState extends _$GameState {
 
 #### C. Round-Robin ("El Retén")
 - Full-screen player carousel (show photo + name)
-- Auto-advance every 10 seconds
+- **No auto-advance** — player manually moves to next after confirming each entry
 - Tap player → open data entry for that player
 - Progress indicator (e.g., "3/8 players logged")
 
@@ -964,47 +974,60 @@ class CheckpointTimer extends _$CheckpointTimer {
 - Update leaderboard
 - Show next checkpoint countdown
 
-### 6. Penalty & Reward System
+### 6. Penalty & Fine System (Phase 2.5)
 **Automatic Points Changes (Round 1+ only):**
 - After each BAC entry, calculate position relative to optimal zone
 - Apply points change using `PointsCalculator.calculatePointsChange()`
+- Enforce max cap: points cannot exceed 15
 - Update player's points in Hive
 - Show full-screen feedback notification:
-  - "+2 points: In the zone!" (green background)
-  - "+1 point: Close to optimal" (yellow background)
-  - "-3 points: Over the line!" (red background)
-  - "-2 points: Dangerous spike!" (red background)
-- Mark `crossedOptimalLine = true` if player exceeds optimal + 0.05
-- Update license image with new points value
+  - "+4 points: ¡En la zona!" (green background)
+  - "+2 points: Cerca del óptimo" (yellow background)
+  - "0 points: Sin cambios" (neutral)
+  - "-2 points: Policía de la Diversión 🚔" (blue background — too low)
+  - "-4 points: ¡Te has pasado!" (red background → triggers Fine)
+- Mark `crossedOptimalLine = true` when player exceeds optimal + 0.4 mg/L
 
-**Impoundment ("Vehículo Inmovilizado"):**
-- Trigger when `currentBAC >= 3.5` mg/L
-- Show fake error message (assets/msg_error.png) full-screen
-- Play error buzzer sound
-- Mark player as `isImpounded = true`
-- Deduct 5 points
-- Player cannot participate in next round
-- Show "IMPOUNDED" badge on license
+**Fine System ("La Multa") — replaces Impoundment:**
+- Triggered when a measurement gives -4 points
+- Show `assets/fine.png` full-screen (DGT fine image)
+- Track on PlayerProfile: `fineCount++`, `moneyLost += 100`
+- Money lost is informational only (used in a separate next-day game)
+- Player continues normally — no sitting out
+- No impoundment, no "IMPOUNDED" badge
 
-**Per-Round Title Awards:**
+**"Policía de la Diversión" Rule:**
+- If BAC is >0.4 mg/L below optimal, player loses 2 points
+- Encourages pacing — being too low is penalized
+- Message: "La Policía de la Diversión te ha pillado bebiendo poco 🚔"
+
+**Debug Skip Button:**
+- A debug button must be available (hidden or in dev menu) to trigger the next checkpoint measurement immediately without waiting the full timer interval
+- Useful for testing the full game loop without waiting 30–60 minutes
+
+**Per-Round Title Awards (Visual Only):**
 - After all players log BAC for a checkpoint, evaluate titles
-- Award 5 titles per round (Velocidad de Crucero, Multa por Exceso, etc.)
+- Award up to 5 titles per round (Velocidad de Crucero, Multa por Exceso, etc.)
+- Titles are cosmetic — they accumulate on licenses throughout the game
 - Increment title counters in player profiles
 - Show title award animation with logo
 - Update license image with new title badge
 - Display title badges on leaderboard
 
 ### 7. Leaderboard Display
-**Sort Order:** Descending by points
+**Sort Order:** Descending by points. Tiebreaker = perfection score (lower = better, calculated via `PointsCalculator.calculatePerfectionScore()`).
+
+**Winners:** Only the **top 3** are considered winners. Show medals: 🥇 🥈 🥉.
 
 **Card Layout:**
 ```
 ┌─────────────────────────────────┐
-│ 🏆 1st Place                    │
+│ 🥇 1st Place                    │
 │ [Photo] Juan García             │
-│ 12 points | 1.8 mg/L            │
-│ Optimal: 2.0 mg/L (±0.2)        │
-│ 🟢×3 🔴×1 🔰×0 🔋×2 🛠️×1       │
+│ 12 puntos | BAC: 1.8 mg/L       │
+│ Óptimo: 2.0 mg/L (±0.2)        │
+│ 🟢×3 🔴×1 🔰×0 🔋×2 🔧×1       │
+│ Multas: 0 | Precisión: 0.14     │
 │ [Tap to view license]           │
 └─────────────────────────────────┘
 ```
@@ -1014,6 +1037,11 @@ class CheckpointTimer extends _$CheckpointTimer {
 - Show current license image with all badges
 - Display BAC progression graph
 - Show detailed stats
+
+**Leaderboard Reactivity Bug (Fixed in Phase 2.5):**
+- Leaderboard must update immediately when any player's data changes
+- Use `ref.watch` on the player list provider, not one-time reads
+- Do NOT require app restart or screen navigation to see updates
 
 **Graph:** Line chart showing:
 - BAC progression over time (use `fl_chart` package)
@@ -1039,7 +1067,7 @@ class CheckpointTimer extends _$CheckpointTimer {
 - Update points value
 - Add new title badges to reserved slots (🟢×3, 🔴×1, etc.)
 - Add Environmental Distinctive badge (if in top 5 at end)
-- Add "IMPOUNDED" badge (if applicable)
+- Add Fine count indicator (if player received fines)
 - Save updated license image
 - Replace old image in storage
 
@@ -1069,43 +1097,38 @@ class LicenseTemplate {
 
 **Export:** Save as PNG to gallery using `image_gallery_saver`
 
-### 9. Final Ceremony ("La Multa")
+### 9. Final Ceremony ("La Ceremonia Final")
+
+**Phase 2.5 note:** Grand Prizes (El Conductor Perfecto, Precisión Absoluta, Coleccionista de Títulos) are removed as separate awards. The Leaderboard is the sole source of truth for winners. The ceremony focuses on the top 3 leaderboard reveal, Environmental Distinctives, and the DGT title collector as a cosmetic joke.
+
 **Trigger:**
-- "Finish Game" button on main menu (only visible if game in progress)
+- "Finish Game" button — moved to **Phase 3** (accessible from game flow / main menu when game is in progress)
 - Shows confirmation dialog before proceeding
 
 **Flow:**
-1. **Final Report Screen:**
-   - Show summary statistics for all players
-   - Display BAC progression graphs
-   - Show final leaderboard
-   - "Continue to Ceremony" button
+1. **Final Leaderboard Screen:**
+   - Show final sorted leaderboard (primary: points descending; tiebreaker: perfection score ascending)
+   - Highlight top 3 with medals 🥇🥈🥉 and confetti
+   - Show each player's points, fine count, BAC progression summary
+   - "Continue to Environmental Distinctives" button
 
-2. **Grand Prize Reveals (Envelope Animations):**
-   - 🏆 **El Conductor Perfecto** (Highest points + never crossed line)
-     - Envelope animation → reveal license with winner's photo
-     - Confetti animation
-   - 🎯 **Precisión Absoluta** (Closest average to optimal zone)
-     - Envelope animation → reveal license with winner's photo
-     - Confetti animation
-   - 👑 **Coleccionista de Títulos** (Most DGT titles accumulated)
-     - Envelope animation → reveal license with winner's photo
-     - Confetti animation
-
-3. **Environmental Distinctive Reveal:**
-   - Show top 5 highest BAC players
-   - Display as satirical eco-style badges
-   - Show each player's license with environmental badge
+2. **Environmental Distinctive Reveal (Envelope Animations):**
+   - Show top 5 **highest** BAC players — they receive the badge as a **satirical joke** (like a DGT F/G pollution label — least eco-friendly)
+   - Envelope animation for each → reveals their DGT license with the environmental badge
+   - Framing: "Los más contaminantes de la noche 🏭💨"
    - Update licenses with environmental badges
 
+3. **DGT Title Collector (Cosmetic Joke):**
+   - Show which player accumulated the most DGT titles overall ("El Coleccionista de Títulos 👑")
+   - Cosmetic only — possibly earns money for the next-day game
+   - Simple reveal screen, no envelope animation required
+
 4. **Final Actions:**
-   - Share button → export all licenses as images
    - "Return to Menu" → clear game state, return to main menu
-   - "View All Licenses" → gallery view of all final licenses
+   - "View All Licenses" → gallery view of all final licenses with badges
 
 **Fake Error Message Easter Egg:**
 - 10% chance to show fake error (assets/msg_error.png) during ceremony as a joke
-- Also shown when player hits impoundment threshold
 
 ---
 
@@ -1414,17 +1437,24 @@ dev_dependencies:
 
 ## 📞 Communication Protocol (Between Developers)
 
+**Team:** 3 developers as of Phase 2.5.
+- **Developer A (Javier):** Core infrastructure, architecture decisions, Firebase integration
+- **Developer B (Kristian):** UI/UX, screens, animations, Flutter frontend
+- **Developer C (Josema):** Phase 4 — Firebase backend + Web frontend
+
 ### When to Sync
 - Before starting work on a new feature
 - After completing a major component
 - When encountering architectural decisions
 - Before merging to `develop`
+- When Firebase schema changes (Developer C must be consulted)
 
 ### What to Communicate
 - "I'm working on [feature]"
 - "I've pushed [component], ready for review"
 - "I need [data model/API] from you to proceed"
 - "I'm blocked on [issue], can you help?"
+- **Developer C sync point:** Before Phase 4 begins, align on Firestore schema and offline-first strategy
 
 ### Code Review Checklist
 - [ ] Follows folder structure
@@ -1460,40 +1490,70 @@ dev_dependencies:
 
 ## 🏁 Project Milestones
 
-### Phase 1: Foundation (Week 1)
-- [ ] Project setup (packages, folder structure)
-- [ ] Core theme and constants
-- [ ] Main menu (persistent home screen)
-- [ ] Fake News screen (joke feature)
-- [ ] Fake Error screen (joke feature)
-- [ ] Player registration flow (name + surname)
-- [ ] License generation system (template + placeholders)
-- [ ] Hive storage implementation (persistent state)
+### ✅ Phase 1: Foundation (Week 1) - COMPLETED
+- [x] Project setup (packages, folder structure)
+- [x] Core theme and constants
+- [x] Main menu (persistent home screen)
+- [x] Fake News / Fake Error screens
+- [x] Player registration flow
+- [x] License generation system
+- [x] Hive storage implementation
 
-### Phase 2: Core Gameplay (Week 2)
-- [ ] Round 0 (baseline measurement, no feedback)
-- [ ] Manual BAC entry with custom keypad
-- [ ] Points calculation logic (hybrid system)
-- [ ] Real-time feedback system (Round 1+)
-- [ ] License update system (after each round)
-- [ ] Checkpoint timer system (with persistence)
-- [ ] Basic leaderboard (tap to view license)
+### ✅ Phase 2: Core Gameplay (Week 2) - COMPLETED
+- [x] Round 0 (baseline measurement, no feedback)
+- [x] Manual BAC entry with custom keypad
+- [x] Points calculation logic
+- [x] Real-time feedback system (Round 1+)
+- [x] License update system
+- [x] Checkpoint timer system (with persistence)
+- [x] Leaderboard with BAC graphs
 
-### Phase 3: Advanced Features (Week 3)
-- [ ] OCR camera integration
-- [ ] Round-robin "El Retén" flow
-- [ ] Penalty system with audio/visual alerts
-- [ ] DGT title evaluation (per-round awards)
+### ✅ Phase 2.5: Mechanics Revision (Pre-Phase 3) - COMPLETED (2026-05-25)
+- [x] Replace impoundment with Fine system (fine.png, fineCount, moneyLost)
+- [x] Proportional 5-tier points scale: -2 / -1 / 0 / +1 / +2 (fine = -4, zones are % of per-round optimal)
+- [x] "Policía de la Diversión" penalty (>80% below optimal → -2 pts)
+- [x] Fix leaderboard reactivity (real-time updates without reload)
+- [x] Update title logic: ITV Passed → "Redemption" (lost pts → back in zone)
+- [x] Remove Vehículo Híbrido logic (TBD replacement title)
+- [x] Remove Round-Robin auto-advance (manual progression only)
+- [x] Add debug button to skip timer (gated behind `kDebugMode`)
+- [x] OS push notifications for checkpoint alerts (`flutter_local_notifications`)
+  - Sound: `assets/sound/policia_control.mp3`
+- [x] Update tiebreaker logic (perfection score — avg + variance of deviation from per-round optimal)
+- [x] DGT Titles now cosmetic-only (no impact on winners)
+
+### 🚀 Phase 3: Advanced Features (Week 3)
+- [ ] OCR camera integration ("El Radar")
+- [ ] Complete Round-Robin "El Retén" flow audit
+- [ ] DGT title evaluation finalized (cosmetic, per-round)
 - [ ] License viewing (full-screen, tap from leaderboard)
 - [ ] Game state recovery (resume after crash)
+- [ ] Player management (edit & delete)
+- [ ] "Finish Game" button (triggers Final Ceremony)
+- [ ] Siren audio fix (`assets/sound/` in pubspec.yaml)
 
-### Phase 4: Polish (Week 4)
-- [ ] Final report screen (statistics + graphs)
-- [ ] Final ceremony animations (3 Grand Prizes + Environmental Distinctives)
-- [ ] License export to gallery
-- [ ] Comprehensive testing
-- [ ] Performance optimization
-- [ ] APK distribution via Firebase
+### 🔥 Phase 4: Firebase & Web Frontend
+- [ ] Firebase Firestore integration (Players + Notifications tables)
+  - Offline-first: app works without internet, writes to Firebase when available
+- [ ] Firebase Player sync (points history, BAC history, fines, photo, name/id)
+- [ ] Notification system: custom notifications + predefined events (fines, streaks, MOAB)
+- [ ] Web frontend (leaderboard display + notifications ticker)
+  - Real-time leaderboard with top 3 medals
+  - Notification ticker (30s/1min per message with countdown bar)
+  - Sound effects on leaderboard update / new notification
+  - End-of-game summary (top 3, Environmental Distinctives, most titles)
+- [ ] Send notification UI in app (custom text, predefined templates)
+
+### 🎨 Phase 5: Polish & Release (formerly Phase 4)
+- [ ] Final ceremony screen (top 3 reveal + Environmental Distinctives envelopes)
+- [ ] Splash / landing screen
+- [ ] App branding (logo + launcher icon)
+- [ ] BAC Progression graphs audit (may already be implemented)
+- [ ] Comprehensive testing (80%+ coverage)
+- [ ] Performance optimization (60fps animations)
+- [ ] App size optimization
+- [ ] APK distribution via Firebase App Distribution
+- [ ] Visual style mod (roundness → boxy, font selection)
 
 ---
 

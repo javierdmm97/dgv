@@ -9,6 +9,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.5] - 2026-05-26
+
+### Phase 2.5 — Mechanics Revision (COMPLETED)
+
+### Changed
+
+**BrAC Calculator — Proportional Zone Detection**
+- The "sweet spot" is no longer a **fixed value** (2.0/2.5/1.8 mg/L) stored per player
+- Optimal BrAC is now a **per-round progressive target** using hardcoded party-mode targets that model a 6-hour arc (build-up → peak at round 6 → wind-down); rounds 11+ use the round 10 value
+- Removed `optimalBAC` field from `PlayerProfile` (now computed as `BACCalculator.calculateOptimalBrAC(roundNumber, sex, bodySize)`)
+- Zone detection replaced with **proportional thresholds** (% of the per-round optimal) so bands scale correctly across all profiles and rounds — previously fixed ±0.2/±0.4 mg/L bands produced nonsensically wide zones at early rounds
+- Added `BACCalculator.isNeutralZone()` and `BACCalculator.isFarFromOptimal()` for the two new scoring tiers
+- BAC progression graph (player detail) now shows a proportional optimal band
+
+**Points System Overhaul**
+- Scoring scale changed to **-2 / -1 / 0 / +1 / +2** per round (5 tiers, symmetric around optimal)
+- **-4** reserved exclusively for fines (>80% above optimal — was wrongly triggered at just +0.4 mg/L)
+- Zone thresholds proportional to the per-round optimal BrAC:
+  - Sweet spot (±10%): **+2** — ¡En la zona!
+  - Close (±20%): **+1** — Cerca del óptimo
+  - Neutral (±40%): **0** — Sin cambios
+  - Far (±80%): **-1** — Alejándote del objetivo
+  - Way below (>80% below): **-2** — Policía de la Diversión
+  - Way above (>80% above): **-4 Fine** — ¡Te has pasado!
+- Max points cap enforced at 15 (no over-gain)
+- Removed: spike-rate penalty, `timeDelta` parameter from `calculatePointsChange()`
+- Added `FeedbackColor.orange` for the -1 "far" zone feedback
+
+**Fine System (replaces Impoundment)**
+- Removed all "Vehículo Inmovilizado" (impoundment) logic; players are **never excluded** from rounds
+- A -4 measurement issues a **Fine**: shows `assets/fine.png` full-screen
+- `PlayerProfile` gains two new Hive fields: `fineCount` (int) and `moneyLost` (int, 100 per fine — informational only for a separate next-day game)
+- Removed: `isImpounded` field from `PlayerProfile`
+
+**DGT Titles (cosmetic only)**
+- Titles no longer affect winners or ranking — purely visual/cosmetic license accumulation
+- `itvPassed`: new trigger — player was out of zone last round but is back in zone this round ("Redemption")
+- `vehiculoHibrido`: logic removed (BAC drops are physically improbable in a 5h party window); replacement title TBD
+- Grand Prizes removed as separate awards — Leaderboard is the sole source of truth
+
+**Winners & Leaderboard**
+- Winners are the **top 3 of the Leaderboard only**
+- Tiebreaker: **perfection score** — average + variance of deviation from per-round optimal line (lower = better)
+- Leaderboard reactivity fix: updates reflect immediately without app restart
+
+**Round-Robin ("El Retén")**
+- Removed auto-advance timer (every 10 s) — player manually advances after confirming each entry
+
+**Planning & Architecture**
+- Added **Phase 4: Firebase & Web Frontend** (Developer C — Josema — lead)
+- Renamed old Phase 4 → **Phase 5: Polish & Release**
+
+### Added
+- **Debug skip button** in checkpoint screen (gated behind `kDebugMode`)
+- **OS push notifications** for checkpoint group alerts (`flutter_local_notifications`, sound: `assets/sound/policia_control.mp3`)
+- **Fine screen** (`lib/features/scoring/presentation/fine_screen.dart`): `assets/fine.png` shown full-screen on fine
+- **Ayuda screen** (`lib/features/main_menu/presentation/ayuda_screen.dart`): satirical DGT help page accessible from the main menu
+- `PointsCalculator.shouldIssueFine()` helper
+- `TitleEvaluator.getMostTitlesPlayer()` for end-of-game cosmetic reveal
+- `AppConstants` zone percentage constants (`zoneSweetSpotPct`, `zoneClosePct`, `zoneNeutralPct`, `zoneFarPct`)
+- `NotificationService` for OS push notification integration
+
+### Testing
+- Updated unit tests for `BACCalculator` (proportional zones, party-mode targets, edge cases)
+- Updated unit tests for `PointsCalculator` (new 5-tier scale, fine threshold, perfection score)
+- Updated unit tests for `TitleEvaluator` (ITV Passed redemption logic, cosmetic-only titles)
+- Updated widget tests for feedback screen, manual entry, leaderboard, and title badge
+- Added widget tests for `PlayerDetailScreen` (`test/widget/features/leaderboard/player_detail_screen_test.dart`)
+
+---
+
 ## [0.3.2] - 2026-05-18
 
 ### 🔧 Hotfix - Gameplay Blockers (device testing)

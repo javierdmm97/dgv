@@ -27,8 +27,8 @@ _$PlayerProfileImpl _$$PlayerProfileImplFromJson(Map<String, dynamic> json) =>
           ) ??
           const {},
       crossedOptimalLine: json['crossedOptimalLine'] as bool? ?? false,
-      isImpounded: json['isImpounded'] as bool? ?? false,
-      optimalBAC: (json['optimalBAC'] as num).toDouble(),
+      fineCount: (json['fineCount'] as num?)?.toInt() ?? 0,
+      moneyLost: (json['moneyLost'] as num?)?.toInt() ?? 0,
       licenseImagePath: json['licenseImagePath'] as String,
       createdAt: json['createdAt'] == null
           ? null
@@ -49,8 +49,8 @@ Map<String, dynamic> _$$PlayerProfileImplToJson(_$PlayerProfileImpl instance) =>
         (k, e) => MapEntry(_$DGTTitleEnumMap[k]!, e),
       ),
       'crossedOptimalLine': instance.crossedOptimalLine,
-      'isImpounded': instance.isImpounded,
-      'optimalBAC': instance.optimalBAC,
+      'fineCount': instance.fineCount,
+      'moneyLost': instance.moneyLost,
       'licenseImagePath': instance.licenseImagePath,
       'createdAt': instance.createdAt?.toIso8601String(),
     };

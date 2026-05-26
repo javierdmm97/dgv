@@ -16,14 +16,13 @@ PlayerProfile _makePlayer(String id, String name, {int points = 10}) {
     sex: Sex.male,
     bodySize: BodySize.medium,
     points: points,
-    optimalBAC: 2.0,
     licenseImagePath: '',
   );
 }
 
 Widget _wrap(List<PlayerProfile> players) {
   return ProviderScope(
-    overrides: [sortedLeaderboardProvider.overrideWith((ref) async => players)],
+    overrides: [sortedLeaderboardProvider.overrideWith((ref) => players)],
     child: MaterialApp(
       theme: ThemeData.light(),
       home: const LeaderboardScreen(),
@@ -35,20 +34,12 @@ void main() {
   group('LeaderboardScreen', () {
     testWidgets('shows AppBar with title', (tester) async {
       await tester.pumpWidget(_wrap([]));
-      await tester.pumpAndSettle();
       expect(find.text('Carnet por Puntos'), findsOneWidget);
     });
 
     testWidgets('shows empty state when no players', (tester) async {
       await tester.pumpWidget(_wrap([]));
-      await tester.pumpAndSettle();
       expect(find.text('Sin conductores registrados.'), findsOneWidget);
-    });
-
-    testWidgets('shows loading indicator initially', (tester) async {
-      await tester.pumpWidget(_wrap([]));
-      // Before async completes
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
     testWidgets('renders a LicenseCard for each player', (tester) async {
@@ -57,7 +48,6 @@ void main() {
         _makePlayer('b', 'Bob', points: 10),
       ];
       await tester.pumpWidget(_wrap(players));
-      await tester.pumpAndSettle();
 
       expect(find.byType(LicenseCard), findsNWidgets(2));
     });
@@ -70,7 +60,6 @@ void main() {
         _makePlayer('d', 'Diana', points: 5),
       ];
       await tester.pumpWidget(_wrap(players));
-      await tester.pumpAndSettle();
 
       expect(find.text('🥇'), findsOneWidget);
       expect(find.text('🥈'), findsOneWidget);
@@ -85,7 +74,6 @@ void main() {
         _makePlayer('d', 'Diana', points: 5),
       ];
       await tester.pumpWidget(_wrap(players));
-      await tester.pumpAndSettle();
 
       // Only 3 medals even with 4 players
       expect(find.text('🥇'), findsOneWidget);
@@ -96,7 +84,6 @@ void main() {
     testWidgets('single player shows only gold medal', (tester) async {
       final players = [_makePlayer('a', 'Alice', points: 15)];
       await tester.pumpWidget(_wrap(players));
-      await tester.pumpAndSettle();
 
       expect(find.text('🥇'), findsOneWidget);
       expect(find.text('🥈'), findsNothing);

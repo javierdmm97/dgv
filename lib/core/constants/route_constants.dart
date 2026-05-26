@@ -18,5 +18,10 @@ class AppRoutes {
   /// Requires `arguments: BACEntryResult` — pushed fullscreenDialog: true
   static const feedback = '/feedback';
 
+  /// Requires `arguments: BACEntryResult` — shown before feedback when fined
+  static const fine = '/fine';
+
   static const leaderboard = '/leaderboard';
+
+  static const ayuda = '/ayuda';
 }

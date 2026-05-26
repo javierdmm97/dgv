@@ -5,7 +5,7 @@ import 'dgt_title.dart';
 part 'player_profile.freezed.dart';
 part 'player_profile.g.dart';
 
-/// Player sex for Widmark formula
+/// Player sex for BrAC table lookup
 enum Sex {
   @JsonValue('male')
   male,
@@ -13,7 +13,7 @@ enum Sex {
   female,
 }
 
-/// Body size for optimal BAC calculation
+/// Body size for optimal BrAC calculation
 enum BodySize {
   @JsonValue('small')
   small,
@@ -37,8 +37,8 @@ class PlayerProfile with _$PlayerProfile {
     @Default([]) List<BACReading> readings,
     @Default({}) Map<DGTTitle, int> titleCounts,
     @Default(false) bool crossedOptimalLine,
-    @Default(false) bool isImpounded,
-    required double optimalBAC,
+    @Default(0) int fineCount,
+    @Default(0) int moneyLost,
     required String licenseImagePath,
     @Default(null) DateTime? createdAt,
   }) = _PlayerProfile;
