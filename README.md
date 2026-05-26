@@ -102,6 +102,7 @@ lib/
     ├── scoring/             # Fine screen ✅
     ├── leaderboard/         # Leaderboard, player detail, BAC graph ✅
     ├── fake_id/             # License generator & update service ✅
+    │                        # front.png + back.png template rendering (Phase 3)
     └── achievements/        # DGT titles & awards (Phase 3)
 ```
 
@@ -137,11 +138,12 @@ lib/
 23. **OCR Camera ("El Radar")** - ML Kit text recognition with confidence scoring
 24. **Graph Zone Visualization** - Round-aware zone bands on BAC graph
 25. **Keypad Confirmation** - Confirm step before submitting BAC reading
-26. **License Viewing** - Full-screen pinch-to-zoom license view from leaderboard
-27. **Game State Recovery** - Resume after crash from Hive
-28. **Player Edit & Delete** - Swipe-to-delete + edit screen
-29. **"Finish Game" Button** - Enabled after Round 5, triggers Final Ceremony
-30. **BAC Curve Calibration** - Settings multiplier (0.80–1.20×) for optimal targets
+26. **License Viewing** - Full-screen pinch-to-zoom license view from leaderboard, swipeable front/back sides
+27. **License Back Side** - Back template (`assets/license/back.png`) records round-by-round BrAC readings, points changes, fine log, and perfection score
+28. **Game State Recovery** - Resume after crash from Hive
+29. **Player Edit & Delete** - Swipe-to-delete + edit screen
+30. **"Finish Game" Button** - Enabled after Round 5, triggers Final Ceremony
+31. **BAC Curve Calibration** - Settings multiplier (0.80–1.20×) for optimal targets
 
 ### 🔥 Phase 4 (Planned — Developer C)
 31. **Firebase Sync** - Offline-first player data sync after each round
@@ -265,6 +267,26 @@ Awarded **every checkpoint** based on player behavior. Titles are cosmetic — t
 - 🔧 **ITV Passed** - Lost points last round but back in zone ("Redemption")
 
 Players accumulate these titles throughout the night (tracked with counters on the license).
+
+### Fake DGT License (Two-Sided)
+
+Each player gets a two-sided DGT-style license rendered via `dart:ui` Canvas onto PNG templates:
+
+**Front side** (`assets/license/front.png`) — identity + game status:
+- Circular photo crop (or initials fallback)
+- Name, surname, sex, body size
+- Current points
+- DGT title badges (actual PNGs from `assets/titles/`) with `×N` counters
+- Fine indicator (`🚗 N multas`) when applicable
+- Environmental badge slot (filled at end-of-game)
+
+**Back side** (`assets/license/back.png`) — measurement history:
+- Round-by-round table: Round N → BrAC reading → points change
+- Fine log: Fine N — Ronda N — 100€
+- Total money lost
+- Perfection score
+
+Both sides are regenerated after every round via `LicenseUpdateService`. Viewed in-app via a swipeable `PageView` with `InteractiveViewer` for pinch-to-zoom.
 
 ### Environmental Distinctive Badges
 At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) — **as a joke, because they are the least eco-friendly** 🏭💨.
