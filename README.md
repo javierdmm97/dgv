@@ -196,7 +196,7 @@ flutter build appbundle --release       # Android App Bundle
 The app uses **breathalyzer readings in mg/L** (milligrams per liter of exhaled air), which is the standard DGT measurement format. This is different from blood alcohol concentration (BAC) percentages.
 
 ### "Sweet Spot" System (Price is Right Mechanic)
-The optimal BrAC target **grows each round** as players consume more drinks. It is computed on-the-fly using the **Widmark formula** with hourly tercio schedules calibrated per sex and body size.
+The optimal BrAC target **grows each round** using hardcoded party-mode targets calibrated per sex and body size, peaking at round 6 and winding down after. Targets model a realistic 6-hour party arc (gradual build-up → peak euphoria → wind-down).
 
 **Body size groups:**
 - Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
@@ -205,10 +205,11 @@ The optimal BrAC target **grows each round** as players consume more drinks. It 
 **Example progression (men, medium — 70–90 kg):**
 | Round | Optimal BrAC | Sweet spot (±10%) |
 |-------|-------------|-------------------|
-| 1 | 0.13 mg/L | 0.11–0.14 |
-| 3 | 0.29 mg/L | 0.26–0.32 |
-| 5 | 0.37 mg/L | 0.33–0.41 |
-| 8 | 0.35 mg/L | 0.31–0.38 |
+| 1 | 0.11 mg/L | 0.10–0.12 |
+| 3 | 0.34 mg/L | 0.30–0.37 |
+| 5 | 0.56 mg/L | 0.50–0.61 |
+| 6 (peak) | 0.67 mg/L | 0.60–0.74 |
+| 8 | 0.52 mg/L | 0.47–0.57 |
 
 **Tolerance zones — all proportional to the per-round optimal:**
 | Zone | Threshold | Score | Feedback |
@@ -230,10 +231,10 @@ The optimal BrAC target **grows each round** as players consume more drinks. It 
 - **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
 - **Round 1+:** Full feedback after each measurement (points, titles, warnings)
 
-### BAC Calculation
-Uses the **Widmark formula** with sex and body size:
-- Optimal BrAC grows per round based on hourly tercio intake schedules
-- `r = 0.68` for men, `0.55` for women
+### BrAC Calculation
+Uses **hardcoded party-mode targets** per sex and body size:
+- Targets model a 6-hour party arc: steady build-up (rounds 1–6) then wind-down (rounds 7–10)
+- Peak BrAC at round 6; rounds 11+ use round 10 value
 - Body sizes: S, M, L with representative weights per sex
 
 ### DGT Titles (Per-Round Awards — Visual/Cosmetic Only)
@@ -257,11 +258,11 @@ The **Leaderboard is the only source of truth**. The top 3 players (🥇🥈🥉
 ### Quick Example
 ```
 Player: Male, Medium (70–90 kg)
-Round 0: Reading 0.05 mg/L  → "Reading recorded" (no feedback, baseline)
-Round 1: Optimal 0.13       → Reading 0.13 mg/L → "+2: ¡En la zona!" (green)
-Round 2: Optimal 0.26       → Reading 0.35 mg/L → "-4: ¡Te has pasado! + Fine 🚗" (red)
-Round 3: Optimal 0.29       → Reading 0.05 mg/L → "-2: Policía de la Diversión 🚔" (blue)
-Round 4: Optimal 0.32       → Reading 0.28 mg/L → "+1: Cerca del óptimo" (yellow)
+Round 0: Optimal 0.00  → Reading 0.05 mg/L → "Reading recorded" (baseline, no feedback)
+Round 1: Optimal 0.11  → Reading 0.11 mg/L → "+2: ¡En la zona!" (green)
+Round 2: Optimal 0.22  → Reading 0.45 mg/L → "-4: ¡Te has pasado! + Multa 🚗" (red)
+Round 3: Optimal 0.34  → Reading 0.05 mg/L → "-2: Policía de la Diversión 🚔" (blue)
+Round 4: Optimal 0.45  → Reading 0.38 mg/L → "+1: Cerca del óptimo" (yellow)
 ```
 
 ---

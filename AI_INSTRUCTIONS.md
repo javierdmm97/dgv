@@ -311,165 +311,116 @@ enum DGTTitle {
 }
 ```
 
-### BrAC Calculation (DGT Official Tables)
+### BrAC Calculation (Party-Mode Targets)
 
 **Critical architecture note (Phase 2.5):**
-The app measures **BrAC** (Breath Alcohol Concentration, mg/L exhaled air) directly from the breathalyzer — NOT blood alcohol. The "sweet spot" is **NOT a fixed value**. It grows each round because players consume more drinks as the night progresses. Round N ≈ N drinks consumed.
+The app measures **BrAC** (Breath Alcohol Concentration, mg/L exhaled air) directly from the breathalyzer — NOT blood alcohol. The "sweet spot" is **NOT a fixed value**. It grows each round using hardcoded party-mode targets that model a realistic 6-hour party arc: steady build-up (rounds 1–6), peak at round 6, then wind-down (rounds 7–10). Rounds 11+ use the round 10 value.
 
-The optimal BrAC target at round N is derived from **official DGT BrAC tables** (midpoint of the published range), indexed by sex and body size. The Widmark formula is no longer used.
+Zone thresholds are **proportional to the per-round optimal** (% of optimal), so they scale correctly across all profiles and rounds. Constants live in `AppConstants` (`zoneSweetSpotPct = 0.10`, `zoneClosePct = 0.20`, `zoneNeutralPct = 0.40`, `zoneFarPct = 0.80`).
 
-**Body size weight groups (from DGT):**
+**Body size weight groups:**
 - Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
 - Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
 
 ```dart
-// core/utils/bac_calculator.dart  (class kept as BACCalculator for backwards compat)
+// core/utils/bac_calculator.dart
 class BACCalculator {
-  // DGT official BrAC table — midpoints (mg/L) per drink count, per sex/body-size.
-  // Row index = drinks consumed (index 0 = 1 drink, index 9 = 10 drinks).
-  // Source: DGT official breathalyser equivalence tables.
-  //
-  // MEN: Small(60-70 kg), Medium(70-90 kg), Large(90-110 kg)
-  static const Map<BodySize, List<double>> _menBrACTable = {
-    BodySize.small:  [0.15, 0.30, 0.46, 0.61, 0.76, 0.90, 1.05, 1.21, 1.36, 1.51],
-    BodySize.medium: [0.13, 0.25, 0.38, 0.50, 0.62, 0.74, 0.87, 0.99, 1.11, 1.24],
-    BodySize.large:  [0.10, 0.20, 0.30, 0.40, 0.49, 0.59, 0.69, 0.79, 0.89, 0.98],
+  // Party-mode optimal BrAC targets for rounds 1–10 (mg/L).
+  // Calibrated for a 6-hour party arc with peak at round 6, then wind-down.
+  static const Map<Sex, Map<BodySize, List<double>>> _partyModeTargets = {
+    Sex.male: {
+      BodySize.small:  [0.105, 0.210, 0.315, 0.420, 0.525, 0.630, 0.555, 0.480, 0.405, 0.330],
+      BodySize.medium: [0.111, 0.223, 0.335, 0.446, 0.558, 0.670, 0.595, 0.520, 0.445, 0.370],
+      BodySize.large:  [0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 0.675, 0.600, 0.525, 0.450],
+    },
+    Sex.female: {
+      BodySize.small:  [0.086, 0.173, 0.260, 0.346, 0.433, 0.520, 0.445, 0.370, 0.295, 0.220],
+      BodySize.medium: [0.108, 0.216, 0.325, 0.433, 0.541, 0.650, 0.575, 0.500, 0.425, 0.350],
+      BodySize.large:  [0.118, 0.236, 0.355, 0.473, 0.591, 0.710, 0.635, 0.560, 0.485, 0.410],
+    },
   };
 
-  // WOMEN: Small(40-50 kg), Medium(50-70 kg), Large(70-90 kg)
-  static const Map<BodySize, List<double>> _womenBrACTable = {
-    BodySize.small:  [0.27, 0.54, 0.81, 1.08, 1.35, 1.62, 1.89, 2.16, 2.43, 2.70],
-    BodySize.medium: [0.21, 0.42, 0.62, 0.83, 1.03, 1.24, 1.44, 1.65, 1.86, 2.06],
-    BodySize.large:  [0.16, 0.31, 0.46, 0.62, 0.77, 0.92, 1.07, 1.22, 1.38, 1.53],
-  };
+  /// Optimal BrAC for round N. Round 0 = 0.0 (baseline). Rounds 11+ use round 10 value.
+  static double calculateOptimalBrAC(int roundNumber, Sex sex, BodySize bodySize) { ... }
 
-  /// Optimal BrAC for round N — assumes 1 drink consumed per round.
-  /// Round 0 (baseline) always returns 0.0.
-  /// Rounds > 10 are capped at round 10 (table maximum).
-  static double calculateOptimalBrAC(int roundNumber, Sex sex, BodySize bodySize) {
-    if (roundNumber <= 0) return 0.0;
-    final drinks = roundNumber.clamp(1, 10);
-    final table = sex == Sex.male ? _menBrACTable : _womenBrACTable;
-    return table[bodySize]![drinks - 1];
-  }
+  /// True when currentBrAC is within ±10% of optimal (+2).
+  static bool isInOptimalZone(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
 
-  /// Check if BrAC is in the "sweet spot" (within ±0.2 mg/L of the round's optimal)
-  static bool isInOptimalZone(double currentBrAC, double optimalBrAC) {
-    return (currentBrAC - optimalBrAC).abs() <= 0.2;
-  }
+  /// True when currentBrAC is within ±20% of optimal (+1).
+  static bool isCloseToOptimal(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
 
-  /// Check if BrAC is close to optimal (±0.2–0.4 mg/L)
-  static bool isCloseToOptimal(double currentBrAC, double optimalBrAC) {
-    final diff = (currentBrAC - optimalBrAC).abs();
-    return diff > 0.2 && diff <= 0.4;
-  }
+  /// True when currentBrAC is within ±40% of optimal (0).
+  static bool isNeutralZone(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
 
-  /// Check if player has gone over the optimal line (>+0.4 mg/L above optimal)
-  static bool crossedOptimalLine(double currentBrAC, double optimalBrAC) {
-    return currentBrAC > (optimalBrAC + 0.4);
-  }
+  /// True when currentBrAC is within ±80% of optimal (-1).
+  static bool isFarFromOptimal(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
+
+  /// True when currentBrAC exceeds optimal by >80% (-4, triggers fine).
+  static bool crossedOptimalLine(double currentBrAC, double optimalBrAC, {int roundNumber = 3}) { ... }
 }
 ```
 
-**Example progression (men, medium body):**
-| Round | Expected BrAC | "In Zone" band |
-|-------|--------------|----------------|
+**Example progression (men, medium — 70–90 kg):**
+| Round | Optimal BrAC | Sweet spot (±10%) |
+|-------|-------------|-------------------|
 | 0 | 0.00 (baseline) | — |
-| 1 | 0.13 mg/L | 0.00–0.33 |
-| 3 | 0.38 mg/L | 0.18–0.58 |
-| 5 | 0.62 mg/L | 0.42–0.82 |
-| 8 | 0.99 mg/L | 0.79–1.19 |
-| 10 | 1.24 mg/L | 1.04–1.44 |
+| 1 | 0.11 mg/L | 0.10–0.12 |
+| 3 | 0.34 mg/L | 0.30–0.37 |
+| 5 | 0.56 mg/L | 0.50–0.61 |
+| 6 (peak) | 0.67 mg/L | 0.60–0.74 |
+| 8 | 0.52 mg/L | 0.47–0.57 |
+| 10 | 0.37 mg/L | 0.33–0.41 |
 
 ### Points System (Simplified — Phase 2.5)
 
-**Scale:** -4 | -2 | 0 | +2 | +4 per round. Max points cap: 15.
+**Scale:** +2 / +1 / 0 / -1 / -2 / -4 per round. -4 reserved exclusively for fines. Max points cap: 15 (cannot exceed).
 
-| Zone | Condition | Points |
-|------|-----------|--------|
-| 🟢 Sweet Spot | ±0.2 mg/L from optimal | **+4** |
-| 🟡 Close | ±0.4 mg/L from optimal | **+2** |
-| ⬛ Neutral | — (neither condition applies) | **0** |
-| 🔵 Too Low | >0.4 mg/L below optimal ("Policía de la Diversión") | **-2** |
-| 🔴 Over the Line | >0.4 mg/L above optimal | **-4** → also triggers **Fine** |
+| Zone | Condition | Points | Feedback |
+|------|-----------|--------|----------|
+| 🟢 Sweet Spot | ±10% of optimal | **+2** | ¡En la zona! |
+| 🟡 Close | ±20% of optimal | **+1** | Cerca del óptimo |
+| ⬛ Neutral | ±40% of optimal | **0** | Sin cambios |
+| 🟠 Far | ±80% of optimal | **-1** | Alejándote del objetivo |
+| 🔵 Way Below | >80% below optimal | **-2** | Policía de la Diversión 🚔 |
+| 🔴 Way Above | >80% above optimal | **-4** → triggers **Fine** | ¡Te has pasado! 🚗 |
 
 **Fine Rule:** A -4 measurement issues one Fine:
-- Deduct an additional `-4` points (already included in the -4 delta above — do not double-apply)
 - Track `fineCount++` and `moneyLost += 100` on `PlayerProfile`
 - Show `assets/fine.png` full-screen
 - No impoundment, no sitting out — game continues normally
 
-**"Policía de la Diversión":** Being well below the sweet spot (>0.4 mg/L under optimal) costs -2 points. Encourages players to pace up, not just coast low.
-
 ```dart
 // core/utils/points_calculator.dart
 class PointsCalculator {
-  /// Simplified point system: -4 | -2 | 0 | +2 | +4
-  /// All thresholds in mg/L (breathalyzer readings)
+  /// Scale: +2 / +1 / 0 / -1 / -2 / -4 (fine)
+  /// Zones are proportional to the per-round optimal BrAC.
   static int calculatePointsChange({
     required double currentBAC,
     required double optimalBAC,
+    required int roundNumber,
   }) {
-    // +4: Sweet spot (±0.2 mg/L)
-    if (BACCalculator.isInOptimalZone(currentBAC, optimalBAC)) {
-      return 4;
-    }
-    
-    // +2: Close to optimal (±0.4 mg/L)
-    if (BACCalculator.isCloseToOptimal(currentBAC, optimalBAC)) {
-      return 2;
-    }
-    
-    // -4: Over the line (>+0.4 mg/L above optimal) → also triggers Fine
-    if (BACCalculator.crossedOptimalLine(currentBAC, optimalBAC)) {
-      return -4;
-    }
-    
-    // -2: "Policía de la Diversión" — too far below optimal
-    if (currentBAC < (optimalBAC - 0.4)) {
-      return -2;
-    }
-    
-    return 0; // Neutral
-  }
-  
-  /// A fine is triggered when a measurement results in -4 points
-  static bool shouldIssueFine(int pointsChange) => pointsChange <= -4;
-  
-  /// Average distance from the per-round optimal across all rounds (excludes round 0).
-  /// Each reading is compared against the optimal BrAC for THAT round (from DGT table).
-  static double calculateAverageDistanceFromOptimal(
-    List<BACReading> readings,
-    Sex sex,
-    BodySize bodySize,
-  ) {
-    final activeReadings = readings.where((r) => r.roundNumber > 0).toList();
-    if (activeReadings.isEmpty) return double.infinity;
-    final distances = activeReadings.map((r) {
-      final optimal = BACCalculator.calculateOptimalBrAC(r.roundNumber, sex, bodySize);
-      return (r.bac - optimal).abs();
-    });
-    return distances.reduce((a, b) => a + b) / activeReadings.length;
+    if (BACCalculator.isInOptimalZone(currentBAC, optimalBAC, roundNumber: roundNumber)) return 2;
+    if (BACCalculator.isCloseToOptimal(currentBAC, optimalBAC, roundNumber: roundNumber)) return 1;
+    if (BACCalculator.isNeutralZone(currentBAC, optimalBAC, roundNumber: roundNumber)) return 0;
+    if (BACCalculator.isFarFromOptimal(currentBAC, optimalBAC, roundNumber: roundNumber)) return -1;
+    if (BACCalculator.crossedOptimalLine(currentBAC, optimalBAC, roundNumber: roundNumber)) return -4;
+    return -2; // beyond far threshold below optimal ("Policía de la Diversión")
   }
 
-  /// Perfection score for tiebreaking: lower = better. Combines average distance
-  /// from the per-round optimal with its variance (penalises inconsistency).
+  static bool shouldIssueFine(int pointsChange) => pointsChange <= -4;
+
+  static int calculateTotalPoints(int currentPoints, int pointsChange) =>
+      (currentPoints + pointsChange).clamp(0, 15);
+
+  /// Average distance from per-round optimal (excludes round 0).
+  static double calculateAverageDistanceFromOptimal(
+    List<BACReading> readings, Sex sex, BodySize bodySize,
+  ) { ... }
+
+  /// Perfection score for leaderboard tiebreaker: avg deviation + variance (lower = better).
   static double calculatePerfectionScore(
-    List<BACReading> readings,
-    Sex sex,
-    BodySize bodySize,
-  ) {
-    if (readings.isEmpty) return double.infinity;
-    final avg = calculateAverageDistanceFromOptimal(readings, sex, bodySize);
-    final activeReadings = readings.where((r) => r.roundNumber > 0).toList();
-    if (activeReadings.isEmpty) return double.infinity;
-    final variance = activeReadings.map((r) {
-      final optimal = BACCalculator.calculateOptimalBrAC(r.roundNumber, sex, bodySize);
-      final diff = (r.bac - optimal).abs() - avg;
-      return diff * diff;
-    }).reduce((a, b) => a + b) / activeReadings.length;
-    return avg + variance;
-  }
+    List<BACReading> readings, Sex sex, BodySize bodySize,
+  ) { ... }
 }
 ```
 
