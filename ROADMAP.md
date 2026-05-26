@@ -185,7 +185,9 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [x] Removed `Timer`-based auto-advance from `RoundRobinScreen`
 - [x] Player manually advances after confirming each BAC entry
 
-**Deliverables:** All complete — 0 analyzer issues, all tests passing
+**Deliverables:** All complete — 0 analyzer issues, 221 tests passing
+
+**Completed:** May 25, 2026
 
 ---
 
@@ -462,7 +464,7 @@ notifications/{id}
 - **Phase 0:** ✅ 100% Complete
 - **Phase 1:** ✅ 100% Complete
 - **Phase 2:** ✅ 100% Complete
-- **Phase 2.5:** 🚧 In Progress (mechanics revision)
+- **Phase 2.5:** ✅ 100% Complete (mechanics revision — merged to main)
 - **Phase 3:** ⏳ Planned
 - **Phase 4:** ⏳ Planned (Firebase & Web — Developer C)
 - **Phase 5:** ⏳ Planned (Polish & Release)
@@ -489,12 +491,12 @@ notifications/{id}
 | Leaderboard | ✅ Complete | 100% |
 | BAC Graphs | ✅ Complete | 100% |
 | Fake License Generation | ✅ Complete | 100% |
-| Points System (Simplified) | 🚧 Phase 2.5 | 0% |
-| Fine System (replaces impoundment) | 🚧 Phase 2.5 | 0% |
-| DGT Title Logic Update | 🚧 Phase 2.5 | 0% |
-| Leaderboard Reactivity Fix | 🚧 Phase 2.5 | 0% |
-| OS Push Notifications | 🚧 Phase 2.5 | 0% |
-| Debug Skip Button | 🚧 Phase 2.5 | 0% |
+| Points System (Simplified) | ✅ Complete | 100% |
+| Fine System (replaces impoundment) | ✅ Complete | 100% |
+| DGT Title Logic Update | ✅ Complete | 100% |
+| Leaderboard Reactivity Fix | ✅ Complete | 100% |
+| OS Push Notifications | ✅ Complete | 100% |
+| Debug Skip Button | ✅ Complete | 100% |
 | OCR Camera | ⏳ Phase 3 | 0% |
 | License Viewing | ⏳ Phase 3 | 0% |
 | Game State Recovery | ⏳ Phase 3 | 0% |
@@ -511,17 +513,17 @@ notifications/{id}
 
 ## 🤝 Collaboration Strategy
 
-### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-2 COMPLETE
+### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-2.5 COMPLETE
 - ✅ All dependencies and project setup
 - ✅ Complete theme system, constants, domain models
 - ✅ All business logic utilities, data layer, Riverpod providers
-- 🚧 **Phase 2.5:** Points/fine system overhaul, model changes, tiebreaker logic
+- ✅ **Phase 2.5:** Points/fine system overhaul, model changes, tiebreaker logic
 - 🔜 **Phase 4 support:** Firebase architecture decisions, offline-first strategy
 
-### Developer B — Kristian (UI & Screens) - ✅ PHASES 1-2 COMPLETE
+### Developer B — Kristian (UI & Screens) - ✅ PHASES 1-2.5 COMPLETE
 - ✅ All screens, custom widgets, animations
 - ✅ Checkpoint timer UI, leaderboard, player detail, license generation
-- 🚧 **Phase 2.5:** Fine UI (fine.png screen), debug button, notification UI
+- ✅ **Phase 2.5:** Fine UI (fine.png screen), debug button, notification UI, Ayuda screen
 - 🔜 **Phase 3:** OCR screen, license viewing, final ceremony screen
 - 🔜 **Phase 5:** Splash screen, app branding, visual style mod
 
@@ -550,17 +552,11 @@ notifications/{id}
 
 ---
 
-**Last Updated:** May 25, 2026  
-**Next Review:** End of Phase 2.5
+**Last Updated:** May 26, 2026  
+**Next Review:** End of Phase 3
 
-**Key Changes in This Update (May 25 — Phase 2.5 planning):**
-- 🆕 Added **Phase 2.5** (mechanics revision: points simplification, fines, title logic, notifications)
-- 🆕 Added **Phase 4** (Firebase + Web Frontend, Developer C lead)
-- 📋 Renamed old **Phase 4 → Phase 5** (Polish & Release)
-- 🗑️ Removed 3 Grand Prizes as separate awards — Leaderboard is the sole source of truth
-- 🗑️ Removed impoundment system — replaced with Fine system
-- 🗑️ Removed Round-Robin auto-advance — manual progression only
-- 🗑️ Removed from Future Enhancements: social sharing, QR join, cross-device sync, avatar upload, configurable intervals, theme customization, BAC thresholds per player, achievement system, cross-game leaderboard, iOS, Bluetooth, WebSockets
-- 📋 Moved OS push notifications from Future → Phase 2.5 (critical)
-- 📋 Moved "Finish Game" button from Phase 4 → Phase 3
-- 👥 Added **Developer C (Josema)** for Phase 4 — Firebase & Web Frontend
+**Key Changes in This Update (May 26):**
+- ✅ Phase 2.5 marked as **COMPLETED** — all mechanics revision tasks done, 221 tests passing
+- ✅ All Phase 2.5 feature rows updated to 100% in progress table
+- ✅ Collaboration section updated to reflect Phases 1–2.5 complete for both developers
+- ✅ `AyudaScreen` confirmed implemented (Help screen with satirical DGT joke)
