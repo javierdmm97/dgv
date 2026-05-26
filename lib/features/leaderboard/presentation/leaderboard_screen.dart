@@ -14,7 +14,7 @@ class LeaderboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPlayers = ref.watch(sortedLeaderboardProvider);
+    final players = ref.watch(sortedLeaderboardProvider);
 
     return Scaffold(
       backgroundColor: DGTColors.background,
@@ -23,16 +23,9 @@ class LeaderboardScreen extends ConsumerWidget {
         backgroundColor: DGTColors.primary,
         foregroundColor: DGTColors.textOnPrimary,
       ),
-      body: asyncPlayers.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (players) => RefreshIndicator(
-          onRefresh: () => ref.refresh(sortedLeaderboardProvider.future),
-          child: players.isEmpty
-              ? const _EmptyState()
-              : _PlayerList(players: players),
-        ),
-      ),
+      body: players.isEmpty
+          ? const _EmptyState()
+          : _PlayerList(players: players),
     );
   }
 }

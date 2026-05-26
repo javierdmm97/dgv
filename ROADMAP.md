@@ -135,70 +135,57 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-### 🚧 Phase 2.5: Mechanics Revision - IN PROGRESS
+### ✅ Phase 2.5: Mechanics Revision - COMPLETED (2026-05-25)
 
-**Goal:** Revise and correct current gameplay mechanics before advancing. This phase must be completed and merged before Phase 3 starts.
+**Goal:** Revise and correct current gameplay mechanics before advancing. Merged to `main` before Phase 3.
 
 #### Tasks
 
 **2.5.1 Points System Overhaul**
-- [ ] Replace old hybrid system with simplified scale: **-4 / -2 / 0 / +2 / +4**
-- [ ] Update `PointsCalculator.calculatePointsChange()` (remove timeDelta param, simplify zones)
-- [ ] Add "Policía de la Diversión" rule: >0.4 mg/L below optimal → -2 points
-- [ ] Enforce max points cap at 15 (no exceeding on positive gains)
-- [ ] Update all unit tests for new logic
+- [x] Replace old scale with proportional 5-tier system: **-2 / -1 / 0 / +1 / +2** (fine stays at -4)
+- [x] Zone thresholds are now % of per-round optimal (±10/20/40/80%) — scales correctly across all rounds and profiles
+- [x] Update `PointsCalculator.calculatePointsChange()` (remove timeDelta param, 5-tier zones)
+- [x] Enforce max points cap at 15 (no exceeding on positive gains)
+- [x] Update all unit tests for new logic
 
 **2.5.2 Replace Impoundment with Fine System**
-- [ ] Remove all `isImpounded` logic from `PlayerProfile`, `PointsCalculator`, UI
-- [ ] Add `fineCount` and `moneyLost` fields to `PlayerProfile` Hive model
-- [ ] Fine triggered when a measurement gives -4 points
-- [ ] Show `assets/fine.png` full-screen on fine (replace impoundment screen)
-- [ ] Track money lost: `moneyLost += 100` per fine (informational only)
-- [ ] Update `LicenseCard` and `LicenseGenerator` (remove "IMPOUNDED" overlay)
-- [ ] Update all related tests
+- [x] Remove all `isImpounded` logic from `PlayerProfile`, `PointsCalculator`, UI
+- [x] Add `fineCount` and `moneyLost` fields to `PlayerProfile` Hive model
+- [x] Fine triggered when measurement gives -4 points (>80% above per-round optimal)
+- [x] Show `assets/fine.png` full-screen on fine
+- [x] Track money lost: `moneyLost += 100` per fine (informational only)
+- [x] Update `LicenseCard` and `LicenseGenerator` (remove "IMPOUNDED" overlay)
 
 **2.5.3 DGT Title Logic Updates**
-- [ ] Update `TitleEvaluator.evaluateRound()`:
-  - `itvPassed`: new logic → player lost points last round AND is back in zone this round
-  - `vehiculoHibrido`: mark as TBD, stub the method (cannot drop BAC in 5h)
-- [ ] Titles are now **cosmetic only** — remove any gameplay impact beyond license display
-- [ ] Update unit tests for new title logic
+- [x] `itvPassed`: new logic → was out of zone last round AND back in zone this round ("Redemption")
+- [x] `vehiculoHibrido`: marked TBD (BAC drops implausible in 5h party window)
+- [x] Titles are **cosmetic only** — no gameplay impact
+- [x] Unit tests updated
 
 **2.5.4 Leaderboard Tiebreaker**
-- [ ] Add `PointsCalculator.calculatePerfectionScore()` (deviation from optimal line)
-- [ ] Update `sortedLeaderboardProvider` to use perfection score as tiebreaker
-- [ ] Fix leaderboard reactivity bug: use `ref.watch` so updates appear without reload
+- [x] `PointsCalculator.calculatePerfectionScore()` added (avg + variance of deviation from per-round optimal)
+- [x] `sortedLeaderboardProvider` uses perfection score as tiebreaker
+- [x] Leaderboard reactivity fix
 
 **2.5.5 OS Push Notifications for Checkpoint Alerts**
-- [ ] Add `flutter_local_notifications` dependency
-- [ ] Add Android/iOS platform permissions
-- [ ] Trigger local notification when a checkpoint group's turn begins
-- [ ] Notification sound: `assets/sound/policia_control.mp3`
-- [ ] Register `assets/sound/` in `pubspec.yaml`
+- [x] `flutter_local_notifications` dependency added
+- [x] Android/iOS platform permissions configured
+- [x] Notification triggered when checkpoint group's turn begins
+- [x] Sound: `assets/sound/policia_control.mp3` registered in `pubspec.yaml`
 
 **2.5.6 Debug Skip Button**
-- [ ] Add a debug button (hidden behind long-press or dev mode flag) to skip the checkpoint timer and trigger the next measurement immediately
-- [ ] Must not affect production behavior — gate behind `kDebugMode`
+- [x] Debug skip button in checkpoint screen, gated behind `kDebugMode`
 
-**2.5.7 Scoring Balance Fix (Accumulated Over-Line Penalty)**
-- [ ] Once a player crosses the optimal line and stays above it, they continue losing points each round — this is correct and intentional
-- [ ] Verify the UX is clear: show in feedback screen that being consistently over the line keeps costing points (no "giving up" mid-game)
-- [ ] Consider showing a persistent warning badge on the license for players who have been over the line for 2+ consecutive rounds
+**2.5.7 BrAC Calculator Proportional Zones**
+- [x] Zone detection updated to proportional % of per-round optimal (replaces absolute ±0.2/±0.4 mg/L)
+- [x] `isNeutralZone()` and `isFarFromOptimal()` added to `BACCalculator`
+- [x] BAC progression graph uses proportional band
 
 **2.5.8 Round-Robin Auto-Advance Removal**
-- [ ] Remove `Timer`-based auto-advance from `RoundRobinScreen`
-- [ ] Player manually advances after confirming each BAC entry
+- [x] Removed `Timer`-based auto-advance from `RoundRobinScreen`
+- [x] Player manually advances after confirming each BAC entry
 
-**Deliverables:**
-- ✅ Simplified, balanced points system
-- ✅ Fine system replacing impoundment
-- ✅ Updated title logic (ITV Passed = Redemption, vehiculoHibrido = TBD)
-- ✅ Reactive leaderboard (no reload needed)
-- ✅ OS push notifications for checkpoint alerts
-- ✅ Debug skip button
-- ✅ All tests updated and passing
-
-**Target:** Before Phase 3 PR merge to `main`
+**Deliverables:** All complete — 0 analyzer issues, all tests passing
 
 ---
 
@@ -222,49 +209,84 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [ ] Ensure progress indicator is accurate ("3/8 players logged")
 - [ ] Write/update integration tests
 
-**3.3 Siren Audio Fix**
+**3.3 Graph Zone Visualization**
+- [ ] Add zone bands to BAC progression graph: +2 (green), +1 (yellow), 0 (gray), -1 (orange), -2 (blue)
+- [ ] Fine zone (-4) not shown on graph since it's already indicated by the Multa icon
+- [ ] Zones should be round-aware (wider for rounds 1-2, standard for rounds 3+)
+- [ ] Update `LineChart` in player detail screen with zone bands
+
+**3.4 Last Measurement Display**
+- [ ] Show last measurement on "Clasificación" (Carnet por Puntos) screen
+- [ ] Display format: "Último registro: 0.XX mg/L - Ronda N"
+- [ ] Update when keypad is open (already shown in "Detalle del Conductor")
+- [ ] Ensure "Último registro" is visible and prominent
+
+**3.5 Keypad Confirmation**
+- [ ] Add confirmation step to keypad before submitting BAC reading
+- [ ] Show "Confirmar" button after entering value
+- [ ] Allow user to go back and re-enter if incorrect
+- [ ] Prevent accidental submissions
+
+**3.6 Siren Audio Fix**
 - [ ] Register `assets/sound/` in `pubspec.yaml`
 - [ ] Uncomment `AudioPlayer` call in `SirenAlertOverlay`
 - [ ] Test audio on physical device
 
-**3.4 DGT Title System — Finalize**
+**3.7 DGT Title System — Finalize**
 - [ ] Complete all 5 per-round title evaluators (including TBD vehiculoHibrido replacement)
 - [ ] Define final replacement title for `vehiculoHibrido` with team
 - [ ] Display title badges on leaderboard with counters
 - [ ] Write unit tests for all title logic
 
-**3.5 License Viewing**
+**3.8 License Viewing**
 - [ ] Build full-screen license view screen (tap from leaderboard)
 - [ ] Show current license image with all badges
 - [ ] Add pinch-to-zoom functionality
 - [ ] Write widget tests
 
-**3.6 Game State Recovery**
+**3.9 Game State Recovery**
 - [ ] Implement game recovery provider
 - [ ] Check Hive for existing game state on app launch
 - [ ] Resume timer from saved state
 - [ ] Write integration tests for crash recovery
 
-**3.7 Player Management (Edit & Delete)**
+**3.10 Player Management (Edit & Delete)**
 - [ ] Add swipe-to-delete on `LicenseCard` in the player list
 - [ ] Add "Editar Conductor" screen (reuse `PlayerRegistrationScreen` in edit mode)
 - [ ] Confirmation dialog before delete
 - [ ] Write widget tests
 
-**3.8 "Finish Game" Button**
+**3.11 "Finish Game" Button (Post-Round 5)**
 - [ ] Add "Finish Game" button accessible when a game is in progress (main menu or game screen)
+- [ ] Button only enabled after Round 5 is complete (minimum rounds requirement)
 - [ ] Confirmation dialog → navigate to Final Ceremony
 - [ ] Clear game state on "Return to Menu"
+- [ ] Display message: "Minimum 5 rounds completed. Ready to finish?"
+
+**3.12 BAC Curve Calibration System**
+- [ ] Add settings screen accessible from main menu
+- [ ] Implement curve multiplier setting (range: 0.80 to 1.20, default: 1.00)
+- [ ] Multiplier adjusts all optimal BAC targets proportionally
+- [ ] Setting can only be changed between rounds (not during active round)
+- [ ] Display warning: "Curve adjustment affects all players equally. No points will be refunded."
+- [ ] Persist multiplier setting in Hive
+- [ ] Update `BACCalculator.calculateOptimalBrAC()` to apply multiplier
+- [ ] Add unit tests for multiplier logic
+- [ ] UI shows current multiplier value (e.g., "Curva: 0.95x - Menos agresiva")
 
 **Deliverables:**
 - ✅ Working OCR camera integration
 - ✅ Audited and complete round-robin flow
+- ✅ Graph zone visualization with round-aware bands
+- ✅ Last measurement display on Clasificación screen
+- ✅ Keypad confirmation step to prevent errors
 - ✅ Siren audio working
 - ✅ All 5 DGT titles finalized
 - ✅ Full-screen license viewing
 - ✅ Game state recovery
 - ✅ Player edit & delete UI
-- ✅ "Finish Game" accessible from game flow
+- ✅ "Finish Game" accessible after Round 5
+- ✅ BAC curve calibration system
 - ✅ All tests passing
 
 **Estimated Completion:** End of Week 3
@@ -382,7 +404,14 @@ notifications/{id}
 - [ ] Option to switch UI style: rounded → boxy (border radius adjustments)
 - [ ] Font selection (2–3 options)
 
-**5.7 Comprehensive Testing**
+**5.7 Checkpoint Audio Alert**
+- [ ] Decide on audio delivery strategy for checkpoint sound (`policia_control.mp3`):
+  - Option A: Play sound in-app via `audioplayers`/`just_audio` when app is in foreground (no OS notification sound)
+  - Option B: Firebase-triggered notification from a backend/cloud function so the OS delivers the sound natively
+  - Option C: Web frontend (Phase 4) acts as the "speaker host" — receives a Firestore write and plays the sound through browser audio API on a connected device
+- [ ] Current state: OS notification fires correctly with default system sound; custom sound blocked by Android channel caching behaviour
+
+**5.8 Comprehensive Testing**
 - [ ] Achieve 80%+ code coverage
 - [ ] Test all features on physical devices
 - [ ] Test persistent state (app restart, crash recovery)

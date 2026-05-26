@@ -16,7 +16,6 @@ PlayerProfile _player({String photoPath = ''}) {
     sex: Sex.female,
     bodySize: BodySize.small,
     points: 12,
-    optimalBAC: 2.5,
     licenseImagePath: '',
   );
 }
@@ -37,11 +36,6 @@ void main() {
     testWidgets('shows player full name in body', (tester) async {
       await tester.pumpWidget(_wrap(ManualEntryScreen(player: _player())));
       expect(find.text('Ana López'), findsOneWidget);
-    });
-
-    testWidgets('shows optimal BAC hint', (tester) async {
-      await tester.pumpWidget(_wrap(ManualEntryScreen(player: _player())));
-      expect(find.text('Óptimo: 2.5 mg/L'), findsOneWidget);
     });
 
     testWidgets('shows initials avatar when no photo', (tester) async {

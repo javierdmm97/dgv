@@ -45,7 +45,8 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
   ),
   FakeNewsArticle(
     id: 'fn_002',
-    title: 'Nuevo radar detecta a Yisus a mas de 200 km/h entrando a Casa Vitis',
+    title:
+        'Nuevo radar detecta a Yisus a mas de 200 km/h entrando a Casa Vitis',
     summary:
         'La tecnología DGV-Scan pilla al madrileño ebrio sobrepasando el limite de velocidad.',
     body:
@@ -60,8 +61,7 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
   FakeNewsArticle(
     id: 'fn_003',
     title: '4 consejos para la subasta de la semana',
-    summary:
-        'Si no te quieres quedar sin premio atento a nuestros Briconsejos',
+    summary: 'Si no te quieres quedar sin premio atento a nuestros Briconsejos',
     body:
         'El Boletín Oficial del Estado ha publicado hoy la Orden DGV/2025/42, '
         'que establece una sanción de 200 euros para aquellos conductores cuyo '

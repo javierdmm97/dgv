@@ -12,18 +12,21 @@ Widget _wrap(Widget child) {
 
 BACEntryResult _makeResult({
   int pointsChange = 2,
-  bool isImpounded = false,
   double bac = 2.0,
   Color? color,
+  int fineCount = 0,
 }) {
+  final message = pointsChange == -4
+      ? '¡Te has pasado! — Multa emitida'
+      : '¡En la zona óptima!';
   return BACEntryResult(
     playerId: 'p1',
     playerName: 'Juan García',
     bac: bac,
     roundNumber: 1,
     pointsChange: pointsChange,
-    isImpounded: isImpounded,
-    feedbackMessage: '¡En la zona óptima!',
+    fineCount: fineCount,
+    feedbackMessage: message,
     feedbackColor: color ?? DGTColors.green,
   );
 }
@@ -63,24 +66,21 @@ void main() {
       expect(find.text('Lectura: 2.15 mg/L'), findsOneWidget);
     });
 
-    testWidgets('shows impounded banner when isImpounded is true', (
-      tester,
-    ) async {
+    testWidgets('shows fine message when fineCount > 0', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          FeedbackScreen(
-            result: _makeResult(isImpounded: true, pointsChange: -5),
-          ),
+          FeedbackScreen(result: _makeResult(fineCount: 1, pointsChange: -4)),
         ),
       );
-      expect(find.textContaining('INMOVILIZADO'), findsOneWidget);
+      // The feedback message should contain "Multa" for -4 points
+      expect(find.textContaining('Multa'), findsOneWidget);
     });
 
-    testWidgets('does not show impounded banner when isImpounded is false', (
+    testWidgets('does not show fine message when fineCount is 0', (
       tester,
     ) async {
       await tester.pumpWidget(_wrap(FeedbackScreen(result: _makeResult())));
-      expect(find.textContaining('INMOVILIZADO'), findsNothing);
+      expect(find.textContaining('Multa'), findsNothing);
     });
 
     testWidgets('shows Continuar button', (tester) async {

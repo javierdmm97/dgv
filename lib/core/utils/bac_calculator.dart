@@ -1,126 +1,172 @@
 import '../constants/app_constants.dart';
 import '../models/player_profile.dart';
 
-/// BAC Calculator for breathalyzer readings (BrAC in mg/L)
+/// Predictive BrAC calculator for party mode pacing.
 ///
-/// IMPORTANT: Breathalyzers measure BrAC (Breath Alcohol Content) in mg/L of exhaled air
-///
-/// DGT Reference Data (immediate consumption, no metabolism):
-/// Men 70kg:  1 beer = 0.3 mg/L | 2 beers = 0.6 mg/L | 3 beers = 0.8 mg/L
-/// Men 80kg:  1 beer = 0.2 mg/L | 2 beers = 0.5 mg/L | 3 beers = 0.7 mg/L
-/// Women 50kg: 1 beer = 0.5 mg/L | 2 beers = 1.0 mg/L | 3 beers = 1.5 mg/L
-/// Women 60kg: 1 beer = 0.5 mg/L | 2 beers = 0.8 mg/L | 3 beers = 1.2 mg/L
-///
-/// Party Context (6-8 hours, 10-12 beers with metabolism):
-/// - Small person (50-60kg): Peak ~4.0-5.0 mg/L, Optimal ~2.5 mg/L
-/// - Medium person (65-75kg): Peak ~3.0-3.5 mg/L, Optimal ~2.0 mg/L
-/// - Large person (80-90kg): Peak ~2.5-3.0 mg/L, Optimal ~1.8 mg/L
-///
-/// Game Thresholds:
-/// - Optimal zone: ±0.2 mg/L from target
-/// - Close: ±0.4 mg/L from target
-/// - Impoundment: 3.5 mg/L (sit out next round)
-/// - Dangerous spike: >0.8 mg/L per hour (3 beers/hour)
-///
-/// The breathalyzer reading is the actual measurement - we personalize targets
-/// by body size to level the playing field between different players.
+/// Targets are calibrated for a 6-hour party window (rounds 1-6) with peak
+/// euphoria at round 4 (~0.35-0.48 mg/L), followed by gradual wind-down.
+/// Rounds 7+ use linear elimination from round 5 baseline.
 class BACCalculator {
   BACCalculator._();
 
-  /// Calculate theoretical BAC from drinks consumed (for estimation only)
-  /// In the actual game, we use breathalyzer readings directly!
-  /// Formula: BAC = (Alcohol consumed in grams / (Body weight in grams × r)) × 100
-  /// r = 0.68 for men, 0.55 for women
-  static double calculateBAC({
-    required double alcoholGrams,
-    required Sex sex,
-    required BodySize bodySize,
-  }) {
-    final bodyWeight = _getBodyWeight(bodySize);
-    final r = sex == Sex.male
-        ? AppConstants.widmarkRMale
-        : AppConstants.widmarkRFemale;
-    return (alcoholGrams / (bodyWeight * 1000 * r)) * 100;
-  }
+  // Party mode optimal BrAC targets for rounds 1-10 (mg/L)
+  // Calibrated for high-energy party state with peak at round 6
+  // Based on real consumption patterns: gradual build-up, plateau, wind-down
+  static const Map<Sex, Map<BodySize, List<double>>> _partyModeTargets = {
+    Sex.male: {
+      // M-S (~65kg): 7.3 tercios total (~2.4L)
+      BodySize.small: [
+        0.105,
+        0.210,
+        0.315,
+        0.420,
+        0.525,
+        0.630, // Consumo constante hasta Peak en H6
+        0.555, 0.480, 0.405, 0.330, // Wind-down (-0.075 mg/L por hora)
+      ],
+      // M-M (~78kg): 9.1 tercios total (~3.0L)
+      BodySize.medium: [
+        0.111, 0.223, 0.335, 0.446, 0.558, 0.670, // Peak en H6
+        0.595, 0.520, 0.445, 0.370, // Wind-down
+      ],
+      // M-L (~95kg): 11.8 tercios total (~3.9L)
+      BodySize.large: [
+        0.125, 0.250, 0.375, 0.500, 0.625, 0.750, // Peak en H6
+        0.675, 0.600, 0.525, 0.450, // Wind-down
+      ],
+    },
+    Sex.female: {
+      // F-S (~55kg): 4.5 tercios total (~1.5L)
+      BodySize.small: [
+        0.086, 0.173, 0.260, 0.346, 0.433, 0.520, // Peak en H6
+        0.445, 0.370, 0.295, 0.220, // Wind-down
+      ],
+      // F-M (~65kg): 6.0 tercios total (~2.0L)
+      BodySize.medium: [
+        0.108, 0.216, 0.325, 0.433, 0.541, 0.650, // Peak en H6
+        0.575, 0.500, 0.425, 0.350, // Wind-down
+      ],
+      // F-L (~80kg): 7.8 tercios total (~2.6L)
+      BodySize.large: [
+        0.118, 0.236, 0.355, 0.473, 0.591, 0.710, // Peak en H6
+        0.635, 0.560, 0.485, 0.410, // Wind-down
+      ],
+    },
+  };
 
-  /// Get body weight estimate based on body size
-  static double _getBodyWeight(BodySize size) {
-    switch (size) {
-      case BodySize.small:
-        return AppConstants.bodyWeightSmall;
-      case BodySize.medium:
-        return AppConstants.bodyWeightMedium;
-      case BodySize.large:
-        return AppConstants.bodyWeightLarge;
-    }
-  }
-
-  /// Calculate optimal breathalyzer reading zone based on body size
-  /// These are "sweet spot" targets for sustained drinking over 6-8 hours
-  /// Based on DGT data extrapolated for party context
-  /// Breathalyzer readings in mg/L:
-  /// - Small (50-60kg): 2.5 mg/L (~6-7 beers sustained)
-  /// - Medium (65-75kg): 2.0 mg/L (~7-8 beers sustained)
-  /// - Large (80-90kg): 1.8 mg/L (~8-9 beers sustained)
+  /// Optimal BrAC for round N. Round 0 = 0.0 (baseline, no target).
   ///
-  /// Note: Larger people have LOWER optimal readings because they metabolize
-  /// alcohol more efficiently and feel comfortable at lower BrAC levels
-  static double calculateOptimalBAC(BodySize size) {
-    switch (size) {
-      case BodySize.small:
-        return AppConstants.optimalBACSmall;
-      case BodySize.medium:
-        return AppConstants.optimalBACMedium;
-      case BodySize.large:
-        return AppConstants.optimalBACLarge;
+  /// Rounds 1-10 use hardcoded party mode targets.
+  /// Rounds 11+ extrapolate using the last known value (round 10).
+  static double calculateOptimalBrAC(
+    int roundNumber,
+    Sex sex,
+    BodySize bodySize,
+  ) {
+    if (roundNumber <= 0) return 0.0;
+
+    final targets = _partyModeTargets[sex]![bodySize]!;
+
+    // Rounds 1-10: Use hardcoded targets
+    if (roundNumber <= targets.length) {
+      return targets[roundNumber - 1];
     }
+
+    // Rounds 11+: Use round 10 value (party is winding down)
+    return targets[9]; // Index 9 = round 10
   }
 
-  /// Check if BAC is in the "sweet spot" (±0.2 mg/L tolerance)
-  static bool isInOptimalZone(double currentBAC, double optimalBAC) {
-    return (currentBAC - optimalBAC).abs() <=
-        AppConstants.optimalToleranceClose;
+  /// Raw party-mode target for a given round (1–10) directly from the table.
+  /// Returns null for rounds outside [1, 10].
+  /// Use this in tests to avoid hardcoding values that must change with the table.
+  static double? optimalTargetAt(int round, Sex sex, BodySize size) {
+    if (round < 1 || round > 10) return null;
+    return _partyModeTargets[sex]![size]![round - 1];
   }
 
-  /// Check if BAC is close to optimal (±0.2–0.4 mg/L from target)
-  static bool isCloseToOptimal(double currentBAC, double optimalBAC) {
-    final diff = (currentBAC - optimalBAC).abs();
-    return diff > AppConstants.optimalToleranceClose &&
-        diff <= AppConstants.optimalToleranceFar;
-  }
+  static double _pct(double currentBrAC, double optimalBrAC) =>
+      (currentBrAC - optimalBrAC).abs() / optimalBrAC;
 
-  /// Check if player crossed the optimal line (>+0.4 mg/L over target)
-  static bool crossedOptimalLine(double currentBAC, double optimalBAC) {
-    return currentBAC > (optimalBAC + AppConstants.optimalToleranceFar);
-  }
-
-  /// Check if BAC is too low (<-0.4 mg/L from optimal)
-  static bool isTooLow(double currentBAC, double optimalBAC) {
-    return currentBAC < (optimalBAC - AppConstants.optimalToleranceFar);
-  }
-
-  /// Calculate BAC change rate per hour
-  static double calculateBACRatePerHour(
-    double currentBAC,
-    double previousBAC,
-    Duration timeDelta,
-  ) {
-    if (timeDelta.inMinutes == 0) return 0.0;
-    final delta = currentBAC - previousBAC;
-    return delta / (timeDelta.inMinutes / 60.0);
-  }
-
-  /// Check if BAC spike is dangerous (>0.15/hr)
-  static bool isDangerousSpike(
-    double currentBAC,
-    double previousBAC,
-    Duration timeDelta,
-  ) {
-    final ratePerHour = calculateBACRatePerHour(
-      currentBAC,
-      previousBAC,
-      timeDelta,
+  /// Get zone thresholds (party mode uses consistent thresholds for all rounds).
+  static _ZoneThresholds _getThresholds(int roundNumber) {
+    return _ZoneThresholds(
+      sweetSpot: AppConstants.zoneSweetSpotPct,
+      close: AppConstants.zoneClosePct,
+      neutral: AppConstants.zoneNeutralPct,
+      far: AppConstants.zoneFarPct,
     );
-    return ratePerHour > AppConstants.dangerousSpikeRate;
   }
+
+  /// True when currentBrAC is within sweet spot range (+2).
+  static bool isInOptimalZone(
+    double currentBrAC,
+    double optimalBrAC, {
+    int roundNumber = 3,
+  }) {
+    if (optimalBrAC <= 0) return false;
+    final thresholds = _getThresholds(roundNumber);
+    return _pct(currentBrAC, optimalBrAC) <= thresholds.sweetSpot;
+  }
+
+  /// True when currentBrAC is within close range (+1).
+  static bool isCloseToOptimal(
+    double currentBrAC,
+    double optimalBrAC, {
+    int roundNumber = 3,
+  }) {
+    if (optimalBrAC <= 0) return false;
+    final thresholds = _getThresholds(roundNumber);
+    final pct = _pct(currentBrAC, optimalBrAC);
+    return pct > thresholds.sweetSpot && pct <= thresholds.close;
+  }
+
+  /// True when currentBrAC is within neutral range (0).
+  static bool isNeutralZone(
+    double currentBrAC,
+    double optimalBrAC, {
+    int roundNumber = 3,
+  }) {
+    if (optimalBrAC <= 0) return false;
+    final thresholds = _getThresholds(roundNumber);
+    final pct = _pct(currentBrAC, optimalBrAC);
+    return pct > thresholds.close && pct <= thresholds.neutral;
+  }
+
+  /// True when currentBrAC is within far range (-1).
+  static bool isFarFromOptimal(
+    double currentBrAC,
+    double optimalBrAC, {
+    int roundNumber = 3,
+  }) {
+    if (optimalBrAC <= 0) return false;
+    final thresholds = _getThresholds(roundNumber);
+    final pct = _pct(currentBrAC, optimalBrAC);
+    return pct > thresholds.neutral && pct <= thresholds.far;
+  }
+
+  /// True when currentBrAC exceeds fine threshold (-4).
+  static bool crossedOptimalLine(
+    double currentBrAC,
+    double optimalBrAC, {
+    int roundNumber = 3,
+  }) {
+    if (optimalBrAC <= 0) return false;
+    final thresholds = _getThresholds(roundNumber);
+    return currentBrAC > optimalBrAC * (1 + thresholds.far);
+  }
+}
+
+/// Internal helper for zone threshold values.
+class _ZoneThresholds {
+  final double sweetSpot;
+  final double close;
+  final double neutral;
+  final double far;
+
+  _ZoneThresholds({
+    required this.sweetSpot,
+    required this.close,
+    required this.neutral,
+    required this.far,
+  });
 }

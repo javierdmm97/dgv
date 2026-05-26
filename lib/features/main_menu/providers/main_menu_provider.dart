@@ -60,7 +60,8 @@ class MainMenuNotifier extends _$MainMenuNotifier {
           readings: const [],
           titleCounts: const {},
           crossedOptimalLine: false,
-          isImpounded: false,
+          fineCount: 0,
+          moneyLost: 0,
           licenseImagePath: '',
         ),
       );

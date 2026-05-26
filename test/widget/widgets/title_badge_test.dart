@@ -34,13 +34,15 @@ void main() {
       expect(find.textContaining('×'), findsNothing);
     });
 
-    testWidgets('applies grey color filter when count is 0', (tester) async {
+    testWidgets('applies opacity when count is 0', (tester) async {
       await tester.pumpWidget(
         _wrap(const TitleBadge(title: DGTTitle.velocidadDeCrucero, count: 0)),
       );
 
-      // ColorFiltered is used to grey out the icon when inactive.
-      expect(find.byType(ColorFiltered), findsOneWidget);
+      // Opacity is used to grey out the icon when inactive.
+      expect(find.byType(Opacity), findsOneWidget);
+      final opacity = tester.widget<Opacity>(find.byType(Opacity));
+      expect(opacity.opacity, equals(0.3));
     });
 
     // ── Requirement 13.4: count >= 1 → full-color icon + counter ─────────────
@@ -63,13 +65,13 @@ void main() {
       expect(find.text('×3'), findsOneWidget);
     });
 
-    testWidgets('does not apply grey filter when count >= 1', (tester) async {
+    testWidgets('does not apply opacity when count >= 1', (tester) async {
       await tester.pumpWidget(
         _wrap(const TitleBadge(title: DGTTitle.lDePracticas, count: 2)),
       );
 
-      // No ColorFiltered wrapper when the badge is active.
-      expect(find.byType(ColorFiltered), findsNothing);
+      // No Opacity wrapper when the badge is active.
+      expect(find.byType(Opacity), findsNothing);
     });
 
     // ── Requirement 13.5: compact Row layout ─────────────────────────────────
@@ -151,7 +153,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    // ── Transition: count 0 → 1 shows counter, removes grey filter ───────────
+    // ── Transition: count 0 → 1 shows counter, removes opacity ──────────────
 
     testWidgets('updates correctly when count changes from 0 to 1', (
       tester,
@@ -161,42 +163,25 @@ void main() {
       );
 
       expect(find.textContaining('×'), findsNothing);
-      expect(find.byType(ColorFiltered), findsOneWidget);
+      expect(find.byType(Opacity), findsOneWidget);
 
       await tester.pumpWidget(
         _wrap(const TitleBadge(title: DGTTitle.vehiculoHibrido, count: 1)),
       );
 
       expect(find.text('×1'), findsOneWidget);
-      expect(find.byType(ColorFiltered), findsNothing);
+      expect(find.byType(Opacity), findsNothing);
     });
 
-    // ── Requirement 13.7: uses theme colors (outline for grey) ───────────────
+    // ── Requirement 13.7: uses opacity for inactive state ────────────────────
 
-    testWidgets('grayed icon uses outline color from theme', (tester) async {
-      const customOutline = Color(0xFFABCDEF);
+    testWidgets('grayed icon uses opacity 0.3', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(outline: customOutline),
-          ),
-          home: const Scaffold(
-            body: Center(
-              child: TitleBadge(title: DGTTitle.velocidadDeCrucero, count: 0),
-            ),
-          ),
-        ),
+        _wrap(const TitleBadge(title: DGTTitle.velocidadDeCrucero, count: 0)),
       );
 
-      final colorFiltered = tester.widget<ColorFiltered>(
-        find.byType(ColorFiltered),
-      );
-      final filter = colorFiltered.colorFilter;
-      // The filter should use the theme's outline color.
-      expect(
-        filter,
-        equals(const ColorFilter.mode(customOutline, BlendMode.srcIn)),
-      );
+      final opacity = tester.widget<Opacity>(find.byType(Opacity));
+      expect(opacity.opacity, equals(0.3));
     });
   });
 }

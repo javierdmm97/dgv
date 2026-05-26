@@ -7,67 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🚧 Phase 2.5 - Mechanics Revision (planned for next release)
+---
 
-#### Changed — BrAC Calculator: DGT Table-Based Progressive Optimal (CRITICAL)
+## [0.4.0] - 2026-05-25
+
+### Phase 2.5 — Mechanics Revision (COMPLETED)
+
+#### Changed — BrAC Calculator: Proportional Zone Detection
 - The "sweet spot" is no longer a **fixed value** (2.0/2.5/1.8 mg/L) stored per player
-- Replaced with **per-round progressive target** derived from official DGT BrAC tables
-- Round N ≈ N drinks consumed → optimal BrAC grows with each round
-- Tables calibrated per sex (men: 60-110 kg groups; women: 40-90 kg groups)
-- Removed Widmark formula — the breathalyzer measures BrAC directly; no calculation needed
-- Removed `optimalBAC` field from `PlayerProfile` (was stored in Hive, now computed on-the-fly)
-- All score/tiebreaker calculations updated to use per-round optimal: `BACCalculator.calculateOptimalBrAC(roundNumber, sex, bodySize)`
-- Body size UI updated to show sex-appropriate weight ranges (men vs women different kg groups)
-- BAC progression graph now shows a growing optimal zone band (not flat horizontal)
+- Optimal BrAC is now a **per-round progressive target** computed on-the-fly via the Widmark formula — it grows naturally as players consume more drinks across rounds
+- Removed `optimalBAC` field from `PlayerProfile` (was stored in Hive, now computed as `BACCalculator.calculateOptimalBrAC(roundNumber, sex, bodySize)`)
+- Zone detection replaced with **proportional thresholds** (% of the per-round optimal) so bands scale correctly across all profiles and rounds — previously fixed ±0.2/±0.4 mg/L bands were calibrated for a 2.0 mg/L scale and produced nonsensically wide zones (e.g. at round-1 optimal of 0.127 mg/L, ±0.2 spanned 0–0.327)
+- Added `BACCalculator.isNeutralZone()` and `BACCalculator.isFarFromOptimal()` for the two new scoring tiers
+- BAC progression graph (player detail) now shows a proportional optimal band that grows each round
 
 #### Changed — Points System Overhaul
-- Simplified scoring scale to **-4 / -2 / 0 / +2 / +4** per round (previously -5/-3/-2/0/+1/+2)
-- In the zone (±0.2 mg/L): **+4** (was +2)
-- Close to optimal (±0.4 mg/L): **+2** (was +1)
-- Over the line (>+0.4 mg/L): **-4** (was -3) — also triggers a Fine
-- Too far below optimal (>0.4 mg/L below): **-2** new penalty ("Policía de la Diversión")
-- Neutral cases now explicitly **0**
+- Scoring scale changed to **-2 / -1 / 0 / +1 / +2** per round (5 tiers, symmetric around optimal)
+- **-4** reserved exclusively for fines (>80% above optimal — was wrongly triggered at just +0.4 mg/L)
+- Zone thresholds are now proportional to the per-round optimal BrAC:
+  - Sweet spot (±10%): **+2** — ¡En la zona!
+  - Close (±20%): **+1** — Cerca del óptimo
+  - Neutral (±40%): **0** — Sin cambios
+  - Far (±80%): **-1** — Alejándote del objetivo
+  - Way below (>80% below): **-2** — Policía de la Diversión
+  - Way above (>80% above): **-4 Fine** — ¡Te has pasado!
 - Max points cap enforced at 15 (no over-gain)
-- Removed: spike-rate penalty (>0.8 mg/L per hour)
-- Removed: `timeDelta` parameter from `calculatePointsChange()`
+- Removed: spike-rate penalty, `timeDelta` parameter from `calculatePointsChange()`
+- Added `FeedbackColor.orange` for the -1 "far" zone feedback
 
 #### Changed — Fine System (replaces Impoundment)
 - Removed all "Vehículo Inmovilizado" (impoundment) logic
 - Players are **never excluded** from rounds
 - A -4 measurement now issues a **Fine**: shows `assets/fine.png` full-screen
 - `PlayerProfile` gains two new Hive fields: `fineCount` (int) and `moneyLost` (int)
-- Money lost is informational only (tracked for a separate next-day game, e.g. -100 per fine)
+- Money lost is informational only (tracked for a separate next-day game, 100 per fine)
 - Removed: `isImpounded` field from `PlayerProfile`
 
 #### Changed — DGT Titles (cosmetic only)
 - Titles no longer affect winners or ranking — purely visual/cosmetic license accumulation
-- `itvPassed`: new trigger logic → player lost points last round but is back in zone this round ("Redemption")
-- `vehiculoHibrido`: logic removed (BAC drops physically impossible in a 5h party window); replacement title TBD
-- Grand Prizes (El Conductor Perfecto, Precisión Absoluta, Coleccionista de Títulos) removed as separate awards
+- `itvPassed`: new trigger — player was out of zone last round but is back in zone this round ("Redemption")
+- `vehiculoHibrido`: logic removed (BAC drops are physically improbable in a 5h party window); replacement title TBD
+- Grand Prizes removed as separate awards — Leaderboard is the sole source of truth
 
 #### Changed — Winners & Leaderboard
-- Winners are now the **top 3 of the Leaderboard only** (Leaderboard is sole source of truth)
-- Tiebreaker: **perfection score** — standard deviation of readings from optimal line (lower = closer = better)
-- Added `PointsCalculator.calculatePerfectionScore()` for tiebreaker calculation
-- Leaderboard reactivity fix: updates now reflect immediately without app restart or screen reload
+- Winners are the **top 3 of the Leaderboard only**
+- Tiebreaker: **perfection score** — average + variance of deviation from per-round optimal line (lower = better)
+- Leaderboard reactivity fix: updates reflect immediately without app restart
 
 #### Changed — Round-Robin ("El Retén")
-- Removed auto-advance timer (every 10s) — player now manually advances after each confirmed entry
+- Removed auto-advance timer (every 10 s) — player manually advances after confirming each entry
 
 #### Added
-- **Debug skip button**: triggers next checkpoint measurement immediately without waiting for the timer (gated behind `kDebugMode`)
-- **OS push notifications** for checkpoint group alerts (`flutter_local_notifications`)
-  - Sound: `assets/sound/policia_control.mp3`
-  - Registers `assets/sound/` in `pubspec.yaml`
-- **Fine screen**: `assets/fine.png` shown full-screen when a player receives a fine
-- Added `PointsCalculator.shouldIssueFine()` helper
-- Added `TitleEvaluator.calculateLeaderboard()` with tiebreaker sort
-- Added `TitleEvaluator.getMostTitlesPlayer()` for end-of-game cosmetic reveal
+- **Debug skip button** in checkpoint screen (gated behind `kDebugMode`)
+- **OS push notifications** for checkpoint group alerts (`flutter_local_notifications`, sound: `assets/sound/policia_control.mp3`)
+- **Fine screen**: `assets/fine.png` shown full-screen on fine
+- `PointsCalculator.shouldIssueFine()` helper
+- `TitleEvaluator.getMostTitlesPlayer()` for end-of-game cosmetic reveal
+- `AppConstants` zone percentage constants (`zoneSweetSpotPct`, `zoneClosePct`, `zoneNeutralPct`, `zoneFarPct`)
 
 #### Planning & Architecture
 - Added **Phase 4: Firebase & Web Frontend** (Developer C lead)
 - Renamed old Phase 4 → **Phase 5: Polish & Release**
-- Added **Developer C** to collaboration team
+- Added **Developer C** (Josema) to collaboration team
 
 ---
 

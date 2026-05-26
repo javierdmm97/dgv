@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/providers/checkpoint_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
+import 'package:dgv/core/services/notification_service.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
 import 'package:dgv/features/checkpoint/presentation/group_countdown_card.dart';
@@ -59,6 +61,23 @@ class _CheckpointScreenState extends ConsumerState<CheckpointScreen> {
         backgroundColor: DGTColors.primary,
         foregroundColor: DGTColors.textOnPrimary,
       ),
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.small(
+              onPressed: () {
+                ref
+                    .read(checkpointNotifierProvider.notifier)
+                    .skipToNextCheckpoint();
+                final state = ref.read(checkpointNotifierProvider).value;
+                final groupIndex = state?.activeGroupIndex;
+                final label = groupIndex != null
+                    ? 'Grupo ${groupIndex + 1}'
+                    : 'Grupo 1';
+                NotificationService.showCheckpointAlert(label);
+              },
+              tooltip: 'DEBUG: Skip timer + test notification',
+              child: const Icon(Icons.fast_forward),
+            )
+          : null,
       body: asyncState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),

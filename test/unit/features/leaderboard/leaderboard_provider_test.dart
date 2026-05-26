@@ -14,15 +14,26 @@ PlayerProfile _makePlayer(String id, {required int points}) {
     sex: Sex.male,
     bodySize: BodySize.medium,
     points: points,
-    optimalBAC: 2.0,
     licenseImagePath: '',
   );
 }
 
 ProviderContainer _makeContainer(List<PlayerProfile> players) {
   return ProviderContainer(
-    overrides: [playerListProvider.overrideWith((ref) async => players)],
+    overrides: [
+      playerListNotifierProvider.overrideWith(
+        () => _FakePlayerListNotifier(players),
+      ),
+    ],
   );
+}
+
+class _FakePlayerListNotifier extends PlayerListNotifier {
+  _FakePlayerListNotifier(this._players);
+  final List<PlayerProfile> _players;
+
+  @override
+  Future<List<PlayerProfile>> build() async => _players;
 }
 
 void main() {
@@ -36,7 +47,10 @@ void main() {
       final container = _makeContainer(players);
       addTearDown(container.dispose);
 
-      final result = await container.read(sortedLeaderboardProvider.future);
+      // Wait for the async notifier to complete
+      await container.read(playerListNotifierProvider.future);
+
+      final result = container.read(sortedLeaderboardProvider);
 
       expect(result.map((p) => p.id).toList(), equals(['b', 'c', 'a']));
     });
@@ -45,7 +59,8 @@ void main() {
       final container = _makeContainer([]);
       addTearDown(container.dispose);
 
-      final result = await container.read(sortedLeaderboardProvider.future);
+      await container.read(playerListNotifierProvider.future);
+      final result = container.read(sortedLeaderboardProvider);
       expect(result, isEmpty);
     });
 
@@ -54,7 +69,8 @@ void main() {
       final container = _makeContainer(players);
       addTearDown(container.dispose);
 
-      final result = await container.read(sortedLeaderboardProvider.future);
+      await container.read(playerListNotifierProvider.future);
+      final result = container.read(sortedLeaderboardProvider);
       expect(result.length, equals(1));
       expect(result.first.id, equals('only'));
     });
@@ -68,7 +84,8 @@ void main() {
       final container = _makeContainer(players);
       addTearDown(container.dispose);
 
-      final result = await container.read(sortedLeaderboardProvider.future);
+      await container.read(playerListNotifierProvider.future);
+      final result = container.read(sortedLeaderboardProvider);
       expect(result.length, equals(3));
       expect(result.map((p) => p.points).toSet(), equals({10}));
     });
@@ -81,7 +98,8 @@ void main() {
       final container = _makeContainer(players);
       addTearDown(container.dispose);
 
-      final result = await container.read(sortedLeaderboardProvider.future);
+      await container.read(playerListNotifierProvider.future);
+      final result = container.read(sortedLeaderboardProvider);
       expect(() => result.clear(), throwsUnsupportedError);
       expect(result.length, equals(2));
     });

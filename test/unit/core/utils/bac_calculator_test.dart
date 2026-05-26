@@ -2,306 +2,404 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/utils/bac_calculator.dart';
 
 void main() {
   group('BACCalculator', () {
-    // ── calculateOptimalBAC ──────────────────────────────────────────────────
+    // ── calculateOptimalBrAC ─────────────────────────────────────────────────
 
-    group('calculateOptimalBAC', () {
-      test('returns 2.5 for small body size', () {
+    group('calculateOptimalBrAC', () {
+      test('returns 0.0 for round 0 (baseline)', () {
         expect(
-          BACCalculator.calculateOptimalBAC(BodySize.small),
-          equals(AppConstants.optimalBACSmall),
+          BACCalculator.calculateOptimalBrAC(0, Sex.male, BodySize.medium),
+          equals(0.0),
         );
       });
 
-      test('returns 2.0 for medium body size', () {
+      test('returns correct value for round 1 (party mode)', () {
+        // Reads directly from the table so the test stays valid when targets change.
+        final expected = BACCalculator.optimalTargetAt(
+          1,
+          Sex.male,
+          BodySize.medium,
+        );
         expect(
-          BACCalculator.calculateOptimalBAC(BodySize.medium),
-          equals(AppConstants.optimalBACMedium),
+          BACCalculator.calculateOptimalBrAC(1, Sex.male, BodySize.medium),
+          equals(expected),
         );
       });
 
-      test('returns 1.8 for large body size', () {
-        expect(
-          BACCalculator.calculateOptimalBAC(BodySize.large),
-          equals(AppConstants.optimalBACLarge),
+      test('returns correct value for round 5 (party mode)', () {
+        // Reads directly from the table so the test stays valid when targets change.
+        final expected = BACCalculator.optimalTargetAt(
+          5,
+          Sex.male,
+          BodySize.medium,
         );
+        expect(
+          BACCalculator.calculateOptimalBrAC(5, Sex.male, BodySize.medium),
+          equals(expected),
+        );
+      });
+
+      test('caps at hour 10 target for later rounds', () {
+        // Later rounds stay at the hour-10 value (behavioral test).
+        final round10 = BACCalculator.calculateOptimalBrAC(
+          10,
+          Sex.male,
+          BodySize.medium,
+        );
+        final round15 = BACCalculator.calculateOptimalBrAC(
+          15,
+          Sex.male,
+          BodySize.medium,
+        );
+        // Structural: any round beyond 10 returns the round-10 value.
+        expect(round15, equals(round10));
+        // Regression snapshot: update this when the table changes intentionally.
+        expect(
+          round15,
+          equals(BACCalculator.optimalTargetAt(10, Sex.male, BodySize.medium)),
+        );
+      });
+
+      test('men have higher BrAC targets than women for same size', () {
+        // New table: males have higher peaks because they process more volume
+        // before reaching the same impairment level (higher body water ratio).
+        final maleValue = BACCalculator.calculateOptimalBrAC(
+          5,
+          Sex.male,
+          BodySize.medium,
+        );
+        final femaleValue = BACCalculator.calculateOptimalBrAC(
+          5,
+          Sex.female,
+          BodySize.medium,
+        );
+        expect(maleValue, greaterThan(femaleValue));
       });
     });
 
-    // ── isInOptimalZone ──────────────────────────────────────────────────────
+    // ── isInOptimalZone ───────────────────────────────────────────────────────
 
     group('isInOptimalZone', () {
-      const optimal = 2.0;
+      const optimal = 0.5;
 
-      test('returns true when BAC equals optimal', () {
-        expect(BACCalculator.isInOptimalZone(2.0, optimal), isTrue);
-      });
+      group('all rounds (±10% sweet spot)', () {
+        const roundNumber = 3;
 
-      test('returns true when BAC is within +toleranceClose boundary', () {
-        // Use a value clearly inside the zone (not at the floating-point boundary)
-        expect(
-          BACCalculator.isInOptimalZone(
-            optimal + AppConstants.optimalToleranceClose - 0.01,
-            optimal,
-          ),
-          isTrue,
-        );
-      });
+        test('returns true when BAC equals optimal', () {
+          expect(
+            BACCalculator.isInOptimalZone(
+              0.5,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
 
-      test('returns true when BAC is within -toleranceClose boundary', () {
-        expect(
-          BACCalculator.isInOptimalZone(
-            optimal - AppConstants.optimalToleranceClose + 0.01,
-            optimal,
-          ),
-          isTrue,
-        );
-      });
+        test('returns true when BAC is just inside +10% boundary', () {
+          // 0.5 * 1.10 - 0.001 = 0.549
+          expect(
+            BACCalculator.isInOptimalZone(
+              0.549,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
 
-      test('returns false when BAC is just above +toleranceClose', () {
-        expect(
-          BACCalculator.isInOptimalZone(
-            optimal + AppConstants.optimalToleranceClose + 0.01,
-            optimal,
-          ),
-          isFalse,
-        );
-      });
+        test('returns true when BAC is just inside -10% boundary', () {
+          // 0.5 * 0.90 + 0.001 = 0.451
+          expect(
+            BACCalculator.isInOptimalZone(
+              0.451,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
 
-      test('returns false when BAC is just below -toleranceClose', () {
-        expect(
-          BACCalculator.isInOptimalZone(
-            optimal - AppConstants.optimalToleranceClose - 0.01,
-            optimal,
-          ),
-          isFalse,
-        );
+        test('returns false when BAC is just outside +10% boundary', () {
+          // 0.5 * 1.10 + 0.001 = 0.551
+          expect(
+            BACCalculator.isInOptimalZone(
+              0.551,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+
+        test('returns false when BAC is just outside -10% boundary', () {
+          // 0.5 * 0.90 - 0.001 = 0.449
+          expect(
+            BACCalculator.isInOptimalZone(
+              0.449,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
       });
     });
 
     // ── isCloseToOptimal ─────────────────────────────────────────────────────
 
     group('isCloseToOptimal', () {
-      const optimal = 2.0;
+      const optimal = 0.5;
 
-      test('returns true when BAC is just above +toleranceClose', () {
-        expect(
-          BACCalculator.isCloseToOptimal(
-            optimal + AppConstants.optimalToleranceClose + 0.01,
-            optimal,
-          ),
-          isTrue,
+      group('all rounds (±10-20% close)', () {
+        const roundNumber = 3;
+
+        test(
+          'returns true when BAC is just outside +10% (entering close zone)',
+          () {
+            // 0.5 * 1.10 + 0.001 = 0.551
+            expect(
+              BACCalculator.isCloseToOptimal(
+                0.551,
+                optimal,
+                roundNumber: roundNumber,
+              ),
+              isTrue,
+            );
+          },
         );
-      });
 
-      test('returns true when BAC is within +toleranceFar boundary', () {
-        expect(
-          BACCalculator.isCloseToOptimal(
-            optimal + AppConstants.optimalToleranceFar - 0.01,
-            optimal,
-          ),
-          isTrue,
-        );
-      });
+        test('returns true when BAC is just inside +20% boundary', () {
+          // 0.5 * 1.20 - 0.001 = 0.599
+          expect(
+            BACCalculator.isCloseToOptimal(
+              0.599,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
 
-      test('returns false when BAC is in optimal zone', () {
-        expect(BACCalculator.isCloseToOptimal(2.0, optimal), isFalse);
-      });
+        test('returns false when BAC is in optimal zone', () {
+          expect(
+            BACCalculator.isCloseToOptimal(
+              0.5,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
 
-      test('returns false when BAC exceeds +toleranceFar', () {
-        expect(
-          BACCalculator.isCloseToOptimal(
-            optimal + AppConstants.optimalToleranceFar + 0.01,
-            optimal,
-          ),
-          isFalse,
-        );
+        test('returns false when BAC exceeds +20%', () {
+          // 0.5 * 1.20 + 0.001 = 0.601
+          expect(
+            BACCalculator.isCloseToOptimal(
+              0.601,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+      });
+    });
+
+    // ── isNeutralZone ────────────────────────────────────────────────────────
+
+    group('isNeutralZone', () {
+      const optimal = 0.5;
+
+      group('all rounds (±20-40% neutral)', () {
+        const roundNumber = 3;
+
+        test('returns true at 30% above optimal', () {
+          // 0.5 * 1.30 = 0.65
+          expect(
+            BACCalculator.isNeutralZone(
+              0.65,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
+
+        test('returns true at 30% below optimal', () {
+          // 0.5 * 0.70 = 0.35
+          expect(
+            BACCalculator.isNeutralZone(
+              0.35,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
+
+        test('returns false when BAC is in close zone', () {
+          expect(
+            BACCalculator.isNeutralZone(
+              0.55,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+
+        test('returns false when BAC is in far zone', () {
+          // 0.5 * 1.50 = 0.75 (beyond 40%)
+          expect(
+            BACCalculator.isNeutralZone(
+              0.75,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+      });
+    });
+
+    // ── isFarFromOptimal ─────────────────────────────────────────────────────
+
+    group('isFarFromOptimal', () {
+      const optimal = 0.5;
+
+      group('all rounds (±40-80% far)', () {
+        const roundNumber = 3;
+
+        test('returns true at 60% above optimal', () {
+          // 0.5 * 1.60 = 0.80
+          expect(
+            BACCalculator.isFarFromOptimal(
+              0.80,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
+
+        test('returns true at 60% below optimal', () {
+          // 0.5 * 0.40 = 0.20
+          expect(
+            BACCalculator.isFarFromOptimal(
+              0.20,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
+
+        test('returns false when BAC is in neutral zone', () {
+          expect(
+            BACCalculator.isFarFromOptimal(
+              0.65,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+
+        test('returns false when BAC has crossed the line (>80% above)', () {
+          // 0.5 * 1.85 = 0.925 (beyond 80% above)
+          expect(
+            BACCalculator.isFarFromOptimal(
+              0.925,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
       });
     });
 
     // ── crossedOptimalLine ───────────────────────────────────────────────────
 
     group('crossedOptimalLine', () {
-      const optimal = 2.0;
+      const optimal = 0.5;
 
-      test('returns true when BAC exceeds optimal + toleranceFar', () {
+      group('all rounds (>80% above)', () {
+        const roundNumber = 3;
+
+        test('returns true when BAC exceeds +80% threshold', () {
+          // 0.5 * 1.80 + 0.001 = 0.901
+          expect(
+            BACCalculator.crossedOptimalLine(
+              0.901,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isTrue,
+          );
+        });
+
+        test('returns false when BAC is exactly at +80% boundary', () {
+          // 0.5 * 1.80 = 0.90
+          expect(
+            BACCalculator.crossedOptimalLine(
+              0.90,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+
+        test('returns false when BAC is below optimal', () {
+          expect(
+            BACCalculator.crossedOptimalLine(
+              0.1,
+              optimal,
+              roundNumber: roundNumber,
+            ),
+            isFalse,
+          );
+        });
+      });
+
+      test('real scenario: 0.35 at optimal 0.125 round 1 triggers fine', () {
+        // 0.35 / 0.125 = 2.8 = 180% above → fine (>80% threshold)
         expect(
-          BACCalculator.crossedOptimalLine(
-            optimal + AppConstants.optimalToleranceFar + 0.01,
-            optimal,
-          ),
+          BACCalculator.crossedOptimalLine(0.35, 0.125, roundNumber: 1),
           isTrue,
         );
       });
-
-      test('returns false when BAC is exactly at +toleranceFar', () {
-        expect(
-          BACCalculator.crossedOptimalLine(
-            optimal + AppConstants.optimalToleranceFar,
-            optimal,
-          ),
-          isFalse,
-        );
-      });
-
-      test('returns false when BAC is in optimal zone', () {
-        expect(BACCalculator.crossedOptimalLine(2.0, optimal), isFalse);
-      });
     });
 
-    // ── isTooLow ─────────────────────────────────────────────────────────────
-
-    group('isTooLow', () {
-      const optimal = 2.0;
-
-      test('returns true when BAC is below optimal - toleranceFar', () {
-        expect(
-          BACCalculator.isTooLow(
-            optimal - AppConstants.optimalToleranceFar - 0.01,
-            optimal,
-          ),
-          isTrue,
-        );
-      });
-
-      test('returns false when BAC is exactly at -toleranceFar', () {
-        expect(
-          BACCalculator.isTooLow(
-            optimal - AppConstants.optimalToleranceFar,
-            optimal,
-          ),
-          isFalse,
-        );
-      });
-
-      test('returns false when BAC is in optimal zone', () {
-        expect(BACCalculator.isTooLow(2.0, optimal), isFalse);
-      });
-
-      test('returns true for zero BAC with non-zero optimal', () {
-        expect(BACCalculator.isTooLow(0.0, 2.0), isTrue);
-      });
-    });
-
-    // ── calculateBACRatePerHour ──────────────────────────────────────────────
-
-    group('calculateBACRatePerHour', () {
-      test('returns 0.0 when time delta is zero minutes', () {
-        expect(
-          BACCalculator.calculateBACRatePerHour(2.0, 1.0, Duration.zero),
-          equals(0.0),
-        );
-      });
-
-      test('calculates correct rate for positive delta', () {
-        // delta = 1.0 mg/L over 60 minutes → 1.0 mg/L per hour
-        expect(
-          BACCalculator.calculateBACRatePerHour(
-            2.0,
-            1.0,
-            const Duration(minutes: 60),
-          ),
-          closeTo(1.0, 0.001),
-        );
-      });
-
-      test('calculates correct rate for negative delta (BAC decreased)', () {
-        // delta = -0.5 mg/L over 30 minutes → -1.0 mg/L per hour
-        expect(
-          BACCalculator.calculateBACRatePerHour(
-            1.5,
-            2.0,
-            const Duration(minutes: 30),
-          ),
-          closeTo(-1.0, 0.001),
-        );
-      });
-
-      test('rate is halved when duration doubles', () {
-        const current = 2.0;
-        const previous = 1.0;
-        final rate30 = BACCalculator.calculateBACRatePerHour(
-          current,
-          previous,
-          const Duration(minutes: 30),
-        );
-        final rate60 = BACCalculator.calculateBACRatePerHour(
-          current,
-          previous,
-          const Duration(minutes: 60),
-        );
-        expect(rate30, closeTo(rate60 * 2, 0.001));
-      });
-
-      test('rate doubles when delta doubles', () {
-        final rate1 = BACCalculator.calculateBACRatePerHour(
-          2.0,
-          1.0,
-          const Duration(minutes: 60),
-        );
-        final rate2 = BACCalculator.calculateBACRatePerHour(
-          3.0,
-          1.0,
-          const Duration(minutes: 60),
-        );
-        expect(rate2, closeTo(rate1 * 2, 0.001));
-      });
-    });
-
-    // ── isDangerousSpike ─────────────────────────────────────────────────────
-
-    group('isDangerousSpike', () {
-      test('returns true when rate exceeds dangerousSpikeRate', () {
-        // 1.0 mg/L in 30 min = 2.0 mg/L/hr > 0.8 threshold
-        expect(
-          BACCalculator.isDangerousSpike(2.0, 1.0, const Duration(minutes: 30)),
-          isTrue,
-        );
-      });
-
-      test('returns false when rate is below dangerousSpikeRate', () {
-        // 0.3 mg/L in 60 min = 0.3 mg/L/hr < 0.8 threshold
-        expect(
-          BACCalculator.isDangerousSpike(2.3, 2.0, const Duration(minutes: 60)),
-          isFalse,
-        );
-      });
-
-      test('returns false when BAC decreased', () {
-        expect(
-          BACCalculator.isDangerousSpike(1.5, 2.0, const Duration(minutes: 30)),
-          isFalse,
-        );
-      });
-    });
-
-    // ── Property 1: Zone functions are mutually exclusive ────────────────────
+    // ── Property 1: All zone functions are mutually exclusive ────────────────
 
     group('Property 1: zone functions are mutually exclusive', () {
-      // Feature: phase-1-completion, Property 1: BAC zone functions are mutually exclusive
       test(
         'at most one zone function returns true for any BAC/optimal pair',
         () {
           final rng = Random(42);
           for (var i = 0; i < 200; i++) {
             final bac = rng.nextDouble() * 5.0;
-            final optimal = rng.nextDouble() * 3.0 + 0.5;
+            final optimal = rng.nextDouble() * 3.0 + 0.1;
 
             final inZone = BACCalculator.isInOptimalZone(bac, optimal);
             final close = BACCalculator.isCloseToOptimal(bac, optimal);
+            final neutral = BACCalculator.isNeutralZone(bac, optimal);
+            final far = BACCalculator.isFarFromOptimal(bac, optimal);
             final crossed = BACCalculator.crossedOptimalLine(bac, optimal);
-            final tooLow = BACCalculator.isTooLow(bac, optimal);
 
             final trueCount = [
               inZone,
               close,
+              neutral,
+              far,
               crossed,
-              tooLow,
             ].where((v) => v).length;
 
             expect(
@@ -309,38 +407,28 @@ void main() {
               lessThanOrEqualTo(1),
               reason:
                   'bac=$bac, optimal=$optimal: '
-                  'inZone=$inZone, close=$close, '
-                  'crossed=$crossed, tooLow=$tooLow',
+                  'inZone=$inZone, close=$close, neutral=$neutral, '
+                  'far=$far, crossed=$crossed',
             );
           }
         },
       );
     });
 
-    // ── Property 2: Rate calculation is linear in time ───────────────────────
+    // ── Property 2: Optimal BrAC is consistent per round ─────────────────────
 
-    group('Property 2: BAC rate calculation is linear in time', () {
-      // Feature: phase-1-completion, Property 2: BAC rate calculation is linear in time
-      test('rate equals delta / (minutes / 60)', () {
+    group('Property 2: Optimal BrAC is deterministic per round', () {
+      test('same round/sex/bodySize always returns same optimal', () {
         final rng = Random(42);
-        for (var i = 0; i < 200; i++) {
-          final delta = (rng.nextDouble() * 4.0) - 2.0; // [-2, 2)
-          final minutes = (rng.nextInt(119) + 1); // [1, 120)
-          final previous = rng.nextDouble() * 2.0;
-          final current = previous + delta;
+        for (var i = 0; i < 50; i++) {
+          final round = rng.nextInt(10) + 1;
+          final sex = rng.nextBool() ? Sex.male : Sex.female;
+          final bodySize = BodySize.values[rng.nextInt(BodySize.values.length)];
 
-          final rate = BACCalculator.calculateBACRatePerHour(
-            current,
-            previous,
-            Duration(minutes: minutes),
-          );
+          final opt1 = BACCalculator.calculateOptimalBrAC(round, sex, bodySize);
+          final opt2 = BACCalculator.calculateOptimalBrAC(round, sex, bodySize);
 
-          final expected = delta / (minutes / 60.0);
-          expect(
-            rate,
-            closeTo(expected, 0.0001),
-            reason: 'delta=$delta, minutes=$minutes',
-          );
+          expect(opt1, equals(opt2));
         }
       });
     });

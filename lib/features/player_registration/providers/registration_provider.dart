@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/player_providers.dart';
-import 'package:dgv/core/utils/bac_calculator.dart';
 
 part 'registration_provider.freezed.dart';
 part 'registration_provider.g.dart';
@@ -83,7 +82,6 @@ class RegistrationNotifier extends _$RegistrationNotifier {
     state = s.copyWith(isLoading: true, error: null);
 
     try {
-      final optimalBAC = BACCalculator.calculateOptimalBAC(s.bodySize!);
       final profile = PlayerProfile(
         id: const Uuid().v4(),
         name: s.name,
@@ -91,7 +89,6 @@ class RegistrationNotifier extends _$RegistrationNotifier {
         photoPath: s.photoPath,
         sex: s.sex!,
         bodySize: s.bodySize!,
-        optimalBAC: optimalBAC,
         licenseImagePath: '',
         createdAt: DateTime.now(),
       );

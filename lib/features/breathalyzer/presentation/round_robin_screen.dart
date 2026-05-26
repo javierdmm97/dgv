@@ -49,6 +49,10 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
 
     // Show feedback for rounds 1+
     if (_round > 0) {
+      if (result.isFined) {
+        await Navigator.pushNamed(context, AppRoutes.fine, arguments: result);
+        if (!mounted) return;
+      }
       await Navigator.pushNamed(context, AppRoutes.feedback, arguments: result);
       if (!mounted) return;
     }

@@ -31,8 +31,8 @@ mixin _$PlayerProfile {
   List<BACReading> get readings => throw _privateConstructorUsedError;
   Map<DGTTitle, int> get titleCounts => throw _privateConstructorUsedError;
   bool get crossedOptimalLine => throw _privateConstructorUsedError;
-  bool get isImpounded => throw _privateConstructorUsedError;
-  double get optimalBAC => throw _privateConstructorUsedError;
+  int get fineCount => throw _privateConstructorUsedError;
+  int get moneyLost => throw _privateConstructorUsedError;
   String get licenseImagePath => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
@@ -64,8 +64,8 @@ abstract class $PlayerProfileCopyWith<$Res> {
     List<BACReading> readings,
     Map<DGTTitle, int> titleCounts,
     bool crossedOptimalLine,
-    bool isImpounded,
-    double optimalBAC,
+    int fineCount,
+    int moneyLost,
     String licenseImagePath,
     DateTime? createdAt,
   });
@@ -96,8 +96,8 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
     Object? readings = null,
     Object? titleCounts = null,
     Object? crossedOptimalLine = null,
-    Object? isImpounded = null,
-    Object? optimalBAC = null,
+    Object? fineCount = null,
+    Object? moneyLost = null,
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
   }) {
@@ -143,14 +143,14 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
                 ? _value.crossedOptimalLine
                 : crossedOptimalLine // ignore: cast_nullable_to_non_nullable
                       as bool,
-            isImpounded: null == isImpounded
-                ? _value.isImpounded
-                : isImpounded // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            optimalBAC: null == optimalBAC
-                ? _value.optimalBAC
-                : optimalBAC // ignore: cast_nullable_to_non_nullable
-                      as double,
+            fineCount: null == fineCount
+                ? _value.fineCount
+                : fineCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            moneyLost: null == moneyLost
+                ? _value.moneyLost
+                : moneyLost // ignore: cast_nullable_to_non_nullable
+                      as int,
             licenseImagePath: null == licenseImagePath
                 ? _value.licenseImagePath
                 : licenseImagePath // ignore: cast_nullable_to_non_nullable
@@ -185,8 +185,8 @@ abstract class _$$PlayerProfileImplCopyWith<$Res>
     List<BACReading> readings,
     Map<DGTTitle, int> titleCounts,
     bool crossedOptimalLine,
-    bool isImpounded,
-    double optimalBAC,
+    int fineCount,
+    int moneyLost,
     String licenseImagePath,
     DateTime? createdAt,
   });
@@ -216,8 +216,8 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
     Object? readings = null,
     Object? titleCounts = null,
     Object? crossedOptimalLine = null,
-    Object? isImpounded = null,
-    Object? optimalBAC = null,
+    Object? fineCount = null,
+    Object? moneyLost = null,
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
   }) {
@@ -263,14 +263,14 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
             ? _value.crossedOptimalLine
             : crossedOptimalLine // ignore: cast_nullable_to_non_nullable
                   as bool,
-        isImpounded: null == isImpounded
-            ? _value.isImpounded
-            : isImpounded // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        optimalBAC: null == optimalBAC
-            ? _value.optimalBAC
-            : optimalBAC // ignore: cast_nullable_to_non_nullable
-                  as double,
+        fineCount: null == fineCount
+            ? _value.fineCount
+            : fineCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        moneyLost: null == moneyLost
+            ? _value.moneyLost
+            : moneyLost // ignore: cast_nullable_to_non_nullable
+                  as int,
         licenseImagePath: null == licenseImagePath
             ? _value.licenseImagePath
             : licenseImagePath // ignore: cast_nullable_to_non_nullable
@@ -298,8 +298,8 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     final List<BACReading> readings = const [],
     final Map<DGTTitle, int> titleCounts = const {},
     this.crossedOptimalLine = false,
-    this.isImpounded = false,
-    required this.optimalBAC,
+    this.fineCount = 0,
+    this.moneyLost = 0,
     required this.licenseImagePath,
     this.createdAt = null,
   }) : _readings = readings,
@@ -346,9 +346,10 @@ class _$PlayerProfileImpl implements _PlayerProfile {
   final bool crossedOptimalLine;
   @override
   @JsonKey()
-  final bool isImpounded;
+  final int fineCount;
   @override
-  final double optimalBAC;
+  @JsonKey()
+  final int moneyLost;
   @override
   final String licenseImagePath;
   @override
@@ -357,7 +358,7 @@ class _$PlayerProfileImpl implements _PlayerProfile {
 
   @override
   String toString() {
-    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, isImpounded: $isImpounded, optimalBAC: $optimalBAC, licenseImagePath: $licenseImagePath, createdAt: $createdAt)';
+    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, fineCount: $fineCount, moneyLost: $moneyLost, licenseImagePath: $licenseImagePath, createdAt: $createdAt)';
   }
 
   @override
@@ -381,10 +382,10 @@ class _$PlayerProfileImpl implements _PlayerProfile {
             ) &&
             (identical(other.crossedOptimalLine, crossedOptimalLine) ||
                 other.crossedOptimalLine == crossedOptimalLine) &&
-            (identical(other.isImpounded, isImpounded) ||
-                other.isImpounded == isImpounded) &&
-            (identical(other.optimalBAC, optimalBAC) ||
-                other.optimalBAC == optimalBAC) &&
+            (identical(other.fineCount, fineCount) ||
+                other.fineCount == fineCount) &&
+            (identical(other.moneyLost, moneyLost) ||
+                other.moneyLost == moneyLost) &&
             (identical(other.licenseImagePath, licenseImagePath) ||
                 other.licenseImagePath == licenseImagePath) &&
             (identical(other.createdAt, createdAt) ||
@@ -405,8 +406,8 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     const DeepCollectionEquality().hash(_readings),
     const DeepCollectionEquality().hash(_titleCounts),
     crossedOptimalLine,
-    isImpounded,
-    optimalBAC,
+    fineCount,
+    moneyLost,
     licenseImagePath,
     createdAt,
   );
@@ -437,8 +438,8 @@ abstract class _PlayerProfile implements PlayerProfile {
     final List<BACReading> readings,
     final Map<DGTTitle, int> titleCounts,
     final bool crossedOptimalLine,
-    final bool isImpounded,
-    required final double optimalBAC,
+    final int fineCount,
+    final int moneyLost,
     required final String licenseImagePath,
     final DateTime? createdAt,
   }) = _$PlayerProfileImpl;
@@ -467,9 +468,9 @@ abstract class _PlayerProfile implements PlayerProfile {
   @override
   bool get crossedOptimalLine;
   @override
-  bool get isImpounded;
+  int get fineCount;
   @override
-  double get optimalBAC;
+  int get moneyLost;
   @override
   String get licenseImagePath;
   @override

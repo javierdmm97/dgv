@@ -8,15 +8,12 @@ import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/widgets/title_badge.dart';
 
 /// A DGT-styled license card displaying a player's photo, name, points,
-/// title badges, and optional impounded overlay.
+/// and title badges.
 ///
-/// Meets the License_Card spec:
 /// - Circular photo crop with initials fallback when [PlayerProfile.photoPath] is empty
 /// - Name/surname using [TextTheme.titleMedium]
 /// - Points using [TextTheme.displaySmall] in [DGTColors.primary]
 /// - Row of [TitleBadge] for each [DGTTitle]
-/// - "VEHÍCULO INMOVILIZADO" overlay when [PlayerProfile.isImpounded]
-/// - Optimal BAC reference at bottom
 /// - Card with elevation 4, border radius 12, [DGTColors.licenseId] background
 /// - Wrapped in [GestureDetector] for [onTap]
 class LicenseCard extends StatelessWidget {
@@ -35,26 +32,23 @@ class LicenseCard extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
         color: DGTColors.licenseId,
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _LicenseHeader(player: player),
-                  const SizedBox(height: 8),
-                  _PointsDisplay(points: player.points),
-                  const SizedBox(height: 8),
-                  _BadgesRow(titleCounts: player.titleCounts),
-                  const SizedBox(height: 8),
-                  _OptimalBACLabel(optimalBAC: player.optimalBAC),
-                ],
-              ),
-            ),
-            if (player.isImpounded) const _ImpoundedOverlay(),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _LicenseHeader(player: player),
+              const SizedBox(height: 8),
+              _PointsDisplay(points: player.points),
+              const SizedBox(height: 8),
+              _BadgesRow(titleCounts: player.titleCounts),
+              if (player.fineCount > 0) ...[
+                const SizedBox(height: 8),
+                _FineCount(fineCount: player.fineCount),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -111,7 +105,6 @@ class _PlayerAvatar extends StatelessWidget {
       );
     }
 
-    // Fallback: initials
     final initials = _buildInitials(player.name, player.surname);
     return CircleAvatar(
       radius: 28,
@@ -171,57 +164,18 @@ class _BadgesRow extends StatelessWidget {
   }
 }
 
-class _OptimalBACLabel extends StatelessWidget {
-  const _OptimalBACLabel({required this.optimalBAC});
+class _FineCount extends StatelessWidget {
+  const _FineCount({required this.fineCount});
 
-  final double optimalBAC;
+  final int fineCount;
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Óptimo: $optimalBAC mg/L',
-      style: Theme.of(
-        context,
-      ).textTheme.labelSmall?.copyWith(color: DGTColors.textSecondary),
-    );
-  }
-}
-
-class _ImpoundedOverlay extends StatelessWidget {
-  const _ImpoundedOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
-        child: ColoredBox(
-          color: DGTColors.red.withValues(alpha: 0.15),
-          child: Center(
-            child: Transform.rotate(
-              angle: -0.35, // ~-20 degrees
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: DGTColors.red,
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  border: Border.all(color: DGTColors.textOnPrimary, width: 2),
-                ),
-                child: Text(
-                  'VEHÍCULO INMOVILIZADO',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: DGTColors.textOnPrimary,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      '🚗 $fineCount multa${fineCount == 1 ? '' : 's'}',
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: DGTColors.red,
+        fontWeight: FontWeight.bold,
       ),
     );
   }

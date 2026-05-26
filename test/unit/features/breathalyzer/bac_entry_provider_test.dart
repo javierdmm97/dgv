@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/models/game_state.dart';
 import 'package:dgv/core/models/player_profile.dart';
@@ -79,11 +76,7 @@ class _FakePlayerListNotifier extends PlayerListNotifier {
 // Helpers
 // ---------------------------------------------------------------------------
 
-PlayerProfile _makePlayer({
-  String id = 'p1',
-  int points = 15,
-  double optimalBAC = 2.0,
-}) {
+PlayerProfile _makePlayer({String id = 'p1', int points = 15}) {
   return PlayerProfile(
     id: id,
     name: 'Test',
@@ -92,7 +85,6 @@ PlayerProfile _makePlayer({
     sex: Sex.male,
     bodySize: BodySize.medium,
     points: points,
-    optimalBAC: optimalBAC,
     licenseImagePath: '',
   );
 }
@@ -144,7 +136,6 @@ void main() {
 
         expect(result.pointsChange, equals(0));
         expect(result.roundNumber, equals(0));
-        expect(result.isImpounded, isFalse);
       });
 
       test('saves a BACReading with roundNumber 0', () async {
@@ -197,35 +188,32 @@ void main() {
 
     group('Round 1 (active)', () {
       test('returns +2 points when BAC is in optimal zone', () async {
-        const optimal = 2.0;
-        final repo = _FakePlayerRepo()
-          ..seed(_makePlayer(points: 10, optimalBAC: optimal));
+        final repo = _FakePlayerRepo()..seed(_makePlayer(points: 10));
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
-        // 2.0 is exactly at optimal → +2
+        // Round 1 optimal for medium male = 0.111, so 0.111 is in sweet spot
         final result = await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', optimal);
+            .submitBAC('p1', 0.111);
 
-        expect(result.pointsChange, equals(AppConstants.pointsInOptimalZone));
+        expect(result.pointsChange, equals(2));
       });
 
-      test(
-        'returns -5 and marks isImpounded when BAC >= impoundment threshold',
-        () async {
-          final repo = _FakePlayerRepo()..seed(_makePlayer(points: 10));
-          final container = _makeContainer(repo: repo, currentRound: 1);
-          addTearDown(container.dispose);
+      test('returns -4 and issues fine when BAC crosses optimal line', () async {
+        final repo = _FakePlayerRepo()..seed(_makePlayer(points: 10));
+        final container = _makeContainer(repo: repo, currentRound: 1);
+        addTearDown(container.dispose);
 
-          final result = await container
-              .read(bACEntryNotifierProvider.notifier)
-              .submitBAC('p1', AppConstants.impoundmentThreshold);
+        // Round 1 optimal for medium male = 0.111, fine threshold = 0.111 * 1.8 = 0.200
+        // 0.35 is well above threshold
+        final result = await container
+            .read(bACEntryNotifierProvider.notifier)
+            .submitBAC('p1', 0.35);
 
-          expect(result.pointsChange, equals(AppConstants.pointsImpounded));
-          expect(result.isImpounded, isTrue);
-        },
-      );
+        expect(result.pointsChange, equals(-4));
+        expect(result.fineCount, equals(1));
+      });
 
       test('calls recordPlayerMeasurement on checkpoint notifier', () async {
         final repo = _FakePlayerRepo()..seed(_makePlayer());
@@ -249,26 +237,27 @@ void main() {
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
+        // Round 1 optimal = 0.111, submit 0.111 for +2
         await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 2.0);
+            .submitBAC('p1', 0.111);
 
         expect(repo.lastUpdated, isNotNull);
-        // +2 for optimal zone, 10+2=12
+        // +2 for sweet spot: 10+2=12
         expect(repo.lastUpdated!.points, equals(12));
       });
 
-      test('player points never exceed maxPoints after submitBAC', () async {
-        final repo = _FakePlayerRepo()
-          ..seed(_makePlayer(points: AppConstants.maxPoints));
+      test('player points never exceed 15 after submitBAC', () async {
+        final repo = _FakePlayerRepo()..seed(_makePlayer(points: 15));
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
+        // Round 1 optimal = 0.111, submit 0.111 for +2 (15+2 clamped to 15)
         await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 2.0); // +2
+            .submitBAC('p1', 0.111);
 
-        expect(repo.lastUpdated!.points, equals(AppConstants.maxPoints));
+        expect(repo.lastUpdated!.points, equals(15));
       });
     });
   });

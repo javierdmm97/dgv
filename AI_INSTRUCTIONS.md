@@ -1557,19 +1557,19 @@ dev_dependencies:
 - [x] Checkpoint timer system (with persistence)
 - [x] Leaderboard with BAC graphs
 
-### 🚧 Phase 2.5: Mechanics Revision (Pre-Phase 3) - IN PROGRESS
-- [ ] Replace impoundment with Fine system (fine.png, fineCount, moneyLost)
-- [ ] Simplify points scale to -4 / -2 / 0 / +2 / +4
-- [ ] Add "Policía de la Diversión" penalty (too low = -2 pts)
-- [ ] Fix leaderboard reactivity (real-time updates without reload)
-- [ ] Update title logic: ITV Passed → "Redemption" (lost pts → back in zone)
-- [ ] Remove Vehículo Híbrido logic (TBD replacement title)
-- [ ] Remove Round-Robin auto-advance (manual progression only)
-- [ ] Add debug button to skip timer and trigger next measurement immediately
-- [ ] OS push notifications for checkpoint alerts (`flutter_local_notifications`)
+### ✅ Phase 2.5: Mechanics Revision (Pre-Phase 3) - COMPLETED (2026-05-25)
+- [x] Replace impoundment with Fine system (fine.png, fineCount, moneyLost)
+- [x] Proportional 5-tier points scale: -2 / -1 / 0 / +1 / +2 (fine = -4, zones are % of per-round optimal)
+- [x] "Policía de la Diversión" penalty (>80% below optimal → -2 pts)
+- [x] Fix leaderboard reactivity (real-time updates without reload)
+- [x] Update title logic: ITV Passed → "Redemption" (lost pts → back in zone)
+- [x] Remove Vehículo Híbrido logic (TBD replacement title)
+- [x] Remove Round-Robin auto-advance (manual progression only)
+- [x] Add debug button to skip timer (gated behind `kDebugMode`)
+- [x] OS push notifications for checkpoint alerts (`flutter_local_notifications`)
   - Sound: `assets/sound/policia_control.mp3`
-- [ ] Update tiebreaker logic (perfection score)
-- [ ] DGT Titles now cosmetic-only (no impact on winners)
+- [x] Update tiebreaker logic (perfection score — avg + variance of deviation from per-round optimal)
+- [x] DGT Titles now cosmetic-only (no impact on winners)
 
 ### 🚀 Phase 3: Advanced Features (Week 3)
 - [ ] OCR camera integration ("El Radar")
