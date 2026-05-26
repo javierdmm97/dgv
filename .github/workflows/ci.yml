@@ -70,6 +70,10 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
     needs: [analyze, test]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     if: |
       github.event_name == 'pull_request' && 
       contains(github.event.pull_request.body, '[x] **Build APK**')
@@ -109,6 +113,7 @@ jobs:
           retention-days: 7
       
       - name: Comment APK ready
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
