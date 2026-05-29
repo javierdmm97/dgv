@@ -30,14 +30,8 @@ class TitleEvaluator {
       awards[closestPlayer.id] = DGTTitle.velocidadDeCrucero;
     }
 
-    // 🔴 Multa por Exceso: Highest BAC spike from last round
-    final highestSpikePlayer = _findHighestSpike(
-      playersWithReadings,
-      currentRound,
-    );
-    if (highestSpikePlayer != null) {
-      awards[highestSpikePlayer.id] = DGTTitle.multaPorExceso;
-    }
+    // 🔴 Multa por Exceso: Highest BAC spike from last round (all tied players)
+    _awardMultaPorExceso(awards, playersWithReadings, currentRound);
 
     // 🔰 L de Prácticas: Lowest BAC in the round
     final lowestBACPlayer = _findLowestBAC(playersWithReadings, currentRound);
@@ -78,7 +72,9 @@ class TitleEvaluator {
         player.bodySize,
       );
       final distance = (reading.bac - optimal).abs();
-      if (distance < minDistance) {
+      if (distance < minDistance ||
+          (distance == minDistance &&
+              player.name.compareTo(closest!.name) < 0)) {
         minDistance = distance;
         closest = player;
       }
@@ -87,30 +83,34 @@ class TitleEvaluator {
     return closest;
   }
 
-  /// Find player with highest BAC spike from previous round.
-  static PlayerProfile? _findHighestSpike(
+  /// Award `multaPorExceso` to all players sharing the highest BAC spike.
+  /// Not awarded in round 1 (no previous round to compare against).
+  static void _awardMultaPorExceso(
+    Map<String, DGTTitle> awards,
     List<PlayerProfile> players,
     int currentRound,
   ) {
-    if (currentRound <= 1) return null;
+    if (currentRound <= 1) return;
 
-    PlayerProfile? highestSpike;
     double maxSpike = 0.0;
-
-    for (final player in players) {
-      final currentReading = player.latestReadingForRound(currentRound);
-      final previousReading = player.latestReadingForRound(currentRound - 1);
-
-      if (currentReading == null || previousReading == null) continue;
-
-      final spike = currentReading.bac - previousReading.bac;
-      if (spike > maxSpike) {
-        maxSpike = spike;
-        highestSpike = player;
-      }
+    for (final p in players) {
+      final cur = p.latestReadingForRound(currentRound);
+      final prev = p.latestReadingForRound(currentRound - 1);
+      if (cur == null || prev == null) continue;
+      final spike = cur.bac - prev.bac;
+      if (spike > maxSpike) maxSpike = spike;
     }
 
-    return highestSpike;
+    if (maxSpike <= 0) return;
+
+    for (final p in players) {
+      final cur = p.latestReadingForRound(currentRound);
+      final prev = p.latestReadingForRound(currentRound - 1);
+      if (cur == null || prev == null) continue;
+      if ((cur.bac - prev.bac) == maxSpike) {
+        awards[p.id] = DGTTitle.multaPorExceso;
+      }
+    }
   }
 
   /// Find player with lowest BAC in the round.

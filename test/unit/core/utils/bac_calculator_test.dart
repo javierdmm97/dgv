@@ -79,6 +79,80 @@ void main() {
         );
         expect(maleValue, greaterThan(femaleValue));
       });
+
+      // ── Curve multiplier ─────────────────────────────────────────────────
+
+      test('applies 0.80 multiplier — returns rawTarget × 0.80', () {
+        // Validates: Requirements 12.7, 12.8
+        final raw = BACCalculator.optimalTargetAt(3, Sex.male, BodySize.medium);
+        final result = BACCalculator.calculateOptimalBrAC(
+          3,
+          Sex.male,
+          BodySize.medium,
+          curveMultiplier: 0.80,
+        );
+        expect(result, closeTo(raw! * 0.80, 1e-10));
+      });
+
+      test(
+        'applies 1.00 multiplier — returns rawTarget × 1.00 (unchanged)',
+        () {
+          // Validates: Requirements 12.7, 12.8
+          final raw = BACCalculator.optimalTargetAt(
+            3,
+            Sex.male,
+            BodySize.medium,
+          );
+          final result = BACCalculator.calculateOptimalBrAC(
+            3,
+            Sex.male,
+            BodySize.medium,
+            curveMultiplier: 1.00,
+          );
+          expect(result, closeTo(raw! * 1.00, 1e-10));
+        },
+      );
+
+      test('applies 1.20 multiplier — returns rawTarget × 1.20', () {
+        // Validates: Requirements 12.7, 12.8
+        final raw = BACCalculator.optimalTargetAt(3, Sex.male, BodySize.medium);
+        final result = BACCalculator.calculateOptimalBrAC(
+          3,
+          Sex.male,
+          BodySize.medium,
+          curveMultiplier: 1.20,
+        );
+        expect(result, closeTo(raw! * 1.20, 1e-10));
+      });
+
+      test('default multiplier (1.0) matches explicit 1.0 call', () {
+        // Validates: Requirements 12.7
+        final withDefault = BACCalculator.calculateOptimalBrAC(
+          5,
+          Sex.female,
+          BodySize.large,
+        );
+        final withExplicit = BACCalculator.calculateOptimalBrAC(
+          5,
+          Sex.female,
+          BodySize.large,
+          curveMultiplier: 1.0,
+        );
+        expect(withDefault, equals(withExplicit));
+      });
+
+      test('multiplier does not affect round 0 (always returns 0.0)', () {
+        // Validates: Requirements 12.7
+        expect(
+          BACCalculator.calculateOptimalBrAC(
+            0,
+            Sex.male,
+            BodySize.medium,
+            curveMultiplier: 1.20,
+          ),
+          equals(0.0),
+        );
+      });
     });
 
     // ── isInOptimalZone ───────────────────────────────────────────────────────

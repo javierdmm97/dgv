@@ -24,4 +24,7 @@ class AppRoutes {
   static const leaderboard = '/leaderboard';
 
   static const ayuda = '/ayuda';
+
+  /// Requires `arguments: PlayerProfile` — full-screen two-sided license viewer
+  static const licenseViewer = '/license-viewer';
 }

@@ -35,6 +35,7 @@ mixin _$PlayerProfile {
   int get moneyLost => throw _privateConstructorUsedError;
   String get licenseImagePath => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  String? get licenseBackImagePath => throw _privateConstructorUsedError;
 
   /// Serializes this PlayerProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -68,6 +69,7 @@ abstract class $PlayerProfileCopyWith<$Res> {
     int moneyLost,
     String licenseImagePath,
     DateTime? createdAt,
+    String? licenseBackImagePath,
   });
 }
 
@@ -100,6 +102,7 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
     Object? moneyLost = null,
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
+    Object? licenseBackImagePath = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -159,6 +162,10 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            licenseBackImagePath: freezed == licenseBackImagePath
+                ? _value.licenseBackImagePath
+                : licenseBackImagePath // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -189,6 +196,7 @@ abstract class _$$PlayerProfileImplCopyWith<$Res>
     int moneyLost,
     String licenseImagePath,
     DateTime? createdAt,
+    String? licenseBackImagePath,
   });
 }
 
@@ -220,6 +228,7 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
     Object? moneyLost = null,
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
+    Object? licenseBackImagePath = freezed,
   }) {
     return _then(
       _$PlayerProfileImpl(
@@ -279,6 +288,10 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        licenseBackImagePath: freezed == licenseBackImagePath
+            ? _value.licenseBackImagePath
+            : licenseBackImagePath // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -302,6 +315,7 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     this.moneyLost = 0,
     required this.licenseImagePath,
     this.createdAt = null,
+    this.licenseBackImagePath = null,
   }) : _readings = readings,
        _titleCounts = titleCounts;
 
@@ -355,10 +369,13 @@ class _$PlayerProfileImpl implements _PlayerProfile {
   @override
   @JsonKey()
   final DateTime? createdAt;
+  @override
+  @JsonKey()
+  final String? licenseBackImagePath;
 
   @override
   String toString() {
-    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, fineCount: $fineCount, moneyLost: $moneyLost, licenseImagePath: $licenseImagePath, createdAt: $createdAt)';
+    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, fineCount: $fineCount, moneyLost: $moneyLost, licenseImagePath: $licenseImagePath, createdAt: $createdAt, licenseBackImagePath: $licenseBackImagePath)';
   }
 
   @override
@@ -389,7 +406,9 @@ class _$PlayerProfileImpl implements _PlayerProfile {
             (identical(other.licenseImagePath, licenseImagePath) ||
                 other.licenseImagePath == licenseImagePath) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.licenseBackImagePath, licenseBackImagePath) ||
+                other.licenseBackImagePath == licenseBackImagePath));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -410,6 +429,7 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     moneyLost,
     licenseImagePath,
     createdAt,
+    licenseBackImagePath,
   );
 
   /// Create a copy of PlayerProfile
@@ -442,6 +462,7 @@ abstract class _PlayerProfile implements PlayerProfile {
     final int moneyLost,
     required final String licenseImagePath,
     final DateTime? createdAt,
+    final String? licenseBackImagePath,
   }) = _$PlayerProfileImpl;
 
   factory _PlayerProfile.fromJson(Map<String, dynamic> json) =
@@ -475,6 +496,8 @@ abstract class _PlayerProfile implements PlayerProfile {
   String get licenseImagePath;
   @override
   DateTime? get createdAt;
+  @override
+  String? get licenseBackImagePath;
 
   /// Create a copy of PlayerProfile
   /// with the given fields replaced by the non-null parameter values.

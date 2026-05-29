@@ -58,22 +58,25 @@ class BACCalculator {
   ///
   /// Rounds 1-10 use hardcoded party mode targets.
   /// Rounds 11+ extrapolate using the last known value (round 10).
+  ///
+  /// [curveMultiplier] scales the raw target proportionally.
+  /// Range: [0.80, 1.20], default: 1.0 (no scaling).
   static double calculateOptimalBrAC(
     int roundNumber,
     Sex sex,
-    BodySize bodySize,
-  ) {
+    BodySize bodySize, {
+    double curveMultiplier = 1.0,
+  }) {
     if (roundNumber <= 0) return 0.0;
 
     final targets = _partyModeTargets[sex]![bodySize]!;
 
     // Rounds 1-10: Use hardcoded targets
-    if (roundNumber <= targets.length) {
-      return targets[roundNumber - 1];
-    }
+    final raw = roundNumber <= targets.length
+        ? targets[roundNumber - 1]
+        : targets[9]; // Rounds 11+: Use round 10 value (party is winding down)
 
-    // Rounds 11+: Use round 10 value (party is winding down)
-    return targets[9]; // Index 9 = round 10
+    return raw * curveMultiplier;
   }
 
   /// Raw party-mode target for a given round (1–10) directly from the table.

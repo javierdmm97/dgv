@@ -7,438 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
----
+### Added — Phase 3 Wave 0–1 (May 26–28, 2026)
 
-## [0.3.5] - 2026-05-26
+**Data Model & Repository Foundations**
+- `licenseBackImagePath` field (`@HiveField(13) String?`) added to `PlayerProfile` Freezed model
+- `CurveSettingsRepository` abstract interface + `HiveCurveSettingsRepository` implementation in `lib/data/repositories/curve_settings_repository.dart`
+- `curveSettingsRepositoryProvider` and `curveMultiplierProvider` added to `lib/core/providers/repository_providers.dart`
+- `assets/sound/` registered as Flutter asset directory in `pubspec.yaml`
 
-### Phase 2.5 — Mechanics Revision (COMPLETED)
+**Business Logic Updates**
+- `BACCalculator.calculateOptimalBrAC()` now accepts `{double curveMultiplier = 1.0}` parameter and applies it to the raw target
+- Call sites in `checkpointNotifierProvider` and `bacEntryProvider` updated to read `curveMultiplierProvider` and pass the value down
+- `TitleEvaluator._findClosestToOptimal()` updated with alphabetical name tiebreaker for `velocidadDeCrucero`
+- `TitleEvaluator._awardMultaPorExceso()` rewritten to award all tied players sharing the maximum spike; not awarded in round 1
+- Unit tests added for all business logic changes
 
-### Changed
+**Siren Audio Fix**
+- `AudioPlayer` wired in `SirenAlertOverlay.initState()` with try/catch silent degradation
+- `_audioPlayer` stopped and disposed in `dispose()`
 
-**BrAC Calculator — Proportional Zone Detection**
-- The "sweet spot" is no longer a **fixed value** (2.0/2.5/1.8 mg/L) stored per player
-- Optimal BrAC is now a **per-round progressive target** using hardcoded party-mode targets that model a 6-hour arc (build-up → peak at round 6 → wind-down); rounds 11+ use the round 10 value
-- Removed `optimalBAC` field from `PlayerProfile` (now computed as `BACCalculator.calculateOptimalBrAC(roundNumber, sex, bodySize)`)
-- Zone detection replaced with **proportional thresholds** (% of the per-round optimal) so bands scale correctly across all profiles and rounds — previously fixed ±0.2/±0.4 mg/L bands produced nonsensically wide zones at early rounds
-- Added `BACCalculator.isNeutralZone()` and `BACCalculator.isFarFromOptimal()` for the two new scoring tiers
-- BAC progression graph (player detail) now shows a proportional optimal band
+**License Back-Side Generation**
+- `LicenseGenerator.generateBack(PlayerProfile player)` added — renders back-side PNG with round-by-round BrAC table, fine log, total money lost, and perfection score onto `assets/license/back.png` template
+- `LicenseUpdateService.updateForPlayer()` updated to call both `generate()` and `generateBack()` and persist both paths
 
-**Points System Overhaul**
-- Scoring scale changed to **-2 / -1 / 0 / +1 / +2** per round (5 tiers, symmetric around optimal)
-- **-4** reserved exclusively for fines (>80% above optimal — was wrongly triggered at just +0.4 mg/L)
-- Zone thresholds proportional to the per-round optimal BrAC:
-  - Sweet spot (±10%): **+2** — ¡En la zona!
-  - Close (±20%): **+1** — Cerca del óptimo
-  - Neutral (±40%): **0** — Sin cambios
-  - Far (±80%): **-1** — Alejándote del objetivo
-  - Way below (>80% below): **-2** — Policía de la Diversión
-  - Way above (>80% above): **-4 Fine** — ¡Te has pasado!
-- Max points cap enforced at 15 (no over-gain)
-- Removed: spike-rate penalty, `timeDelta` parameter from `calculatePointsChange()`
-- Added `FeedbackColor.orange` for the -1 "far" zone feedback
+### Added — Phase 3 Wave 2–4 (May 29, 2026)
 
-**Fine System (replaces Impoundment)**
-- Removed all "Vehículo Inmovilizado" (impoundment) logic; players are **never excluded** from rounds
-- A -4 measurement issues a **Fine**: shows `assets/fine.png` full-screen
-- `PlayerProfile` gains two new Hive fields: `fineCount` (int) and `moneyLost` (int, 100 per fine — informational only for a separate next-day game)
-- Removed: `isImpounded` field from `PlayerProfile`
+**OCR Camera Integration ("El Radar")**
+- `OcrService` abstract interface + `OcrCandidate` model in `lib/features/breathalyzer/data/ocr_service.dart`
+- `MlKitOcrService` implementation using `google_mlkit_text_recognition` — filters text with `\d\.\d{2}` regex, derives confidence from ML Kit block scores
+- `CameraOcrScreen` with live `CameraController` preview, frame capture every 500 ms, 10-second timeout fallback, bounding box `CustomPaint` overlay, and "Entrada manual" `MassiveButton`
+- Auto-confirms on confidence > 0.90; shows "Confirmar"/"Reintentar" on confidence ≤ 0.90
+- Graceful fallback to `ManualEntryScreen` on camera unavailable or permission denied
 
-**DGT Titles (cosmetic only)**
-- Titles no longer affect winners or ranking — purely visual/cosmetic license accumulation
-- `itvPassed`: new trigger — player was out of zone last round but is back in zone this round ("Redemption")
-- `vehiculoHibrido`: logic removed (BAC drops are physically improbable in a 5h party window); replacement title TBD
-- Grand Prizes removed as separate awards — Leaderboard is the sole source of truth
+**Keypad Confirmation Step**
+- `BacConfirmationScreen` with player name (24sp bold), entered value (48sp bold), "Confirmar" and "Corregir" `MassiveButton` actions (minHeight 80)
+- No Hive writes until "Confirmar" is tapped; "Corregir" returns to keypad with pre-populated value
+- Wired into `ManualEntryScreen` (replaces direct save) and `CameraOcrScreen` (low-confidence path)
 
-**Winners & Leaderboard**
-- Winners are the **top 3 of the Leaderboard only**
-- Tiebreaker: **perfection score** — average + variance of deviation from per-round optimal line (lower = better)
-- Leaderboard reactivity fix: updates reflect immediately without app restart
+**Graph Zone Visualization**
+- `buildZoneBands(double optimal, int roundNumber)` helper producing 5 colored zone bands
+- Round-aware thresholds: wider sweet-spot (0.20) for rounds 1–2, standard (0.10) for rounds 3+
+- Rendered as `HorizontalRangeAnnotation` entries in `fl_chart` `LineChartData` with fill opacity ≤ 0.15
+- Single-reading edge case handled (`minX = 0`, `maxX = 2`)
 
-**Round-Robin ("El Retén")**
-- Removed auto-advance timer (every 10 s) — player manually advances after confirming each entry
+**Last Measurement Display**
+- `LastMeasurementWidget` displaying `Último registro: 0.XX mg/L — Ronda N` (font ≥ 16sp)
+- Returns `SizedBox.shrink()` when player has no readings; updates reactively via Riverpod
+- Placed inside `LicenseCard` on `LeaderboardScreen`
 
-**Planning & Architecture**
-- Added **Phase 4: Firebase & Web Frontend** (Developer C — Josema — lead)
-- Renamed old Phase 4 → **Phase 5: Polish & Release**
+**DGT Title Badges on Leaderboard**
+- `TitleBadge` widgets with `×N` accumulation counters now visible on each player card in `LeaderboardScreen`
+- Only badges with count > 0 are shown
 
-### Added
-- **Debug skip button** in checkpoint screen (gated behind `kDebugMode`)
-- **OS push notifications** for checkpoint group alerts (`flutter_local_notifications`, sound: `assets/sound/policia_control.mp3`)
-- **Fine screen** (`lib/features/scoring/presentation/fine_screen.dart`): `assets/fine.png` shown full-screen on fine
-- **Ayuda screen** (`lib/features/main_menu/presentation/ayuda_screen.dart`): satirical DGT help page accessible from the main menu
-- `PointsCalculator.shouldIssueFine()` helper
-- `TitleEvaluator.getMostTitlesPlayer()` for end-of-game cosmetic reveal
-- `AppConstants` zone percentage constants (`zoneSweetSpotPct`, `zoneClosePct`, `zoneNeutralPct`, `zoneFarPct`)
-- `NotificationService` for OS push notification integration
+**Two-Sided License Viewer**
+- `LicenseViewerScreen` — full-screen swipeable `PageView` with front and back sides
+- Each page wrapped in `InteractiveViewer` (minScale: 1.0, maxScale: 4.0) for pinch-to-zoom
+- Page 2 falls back to `_DynamicBackWidget` (built from `PlayerProfile.readings`) when `licenseBackImagePath` is null
+- Two-dot page indicator showing current side
+- Wired from `LeaderboardScreen` player card tap
 
-### Testing
-- Updated unit tests for `BACCalculator` (proportional zones, party-mode targets, edge cases)
-- Updated unit tests for `PointsCalculator` (new 5-tier scale, fine threshold, perfection score)
-- Updated unit tests for `TitleEvaluator` (ITV Passed redemption logic, cosmetic-only titles)
-- Updated widget tests for feedback screen, manual entry, leaderboard, and title badge
-- Added widget tests for `PlayerDetailScreen` (`test/widget/features/leaderboard/player_detail_screen_test.dart`)
-
----
-
-## [0.3.2] - 2026-05-18
-
-### 🔧 Hotfix - Gameplay Blockers (device testing)
-
-### Fixed
-
-- **Main menu reactivity** — `MainMenuNotifier` now watches `gameStateNotifierProvider` (invalidates on every mutation) instead of `currentGameStateProvider` (read-once). The "Continuar Control" / "Nueva Partida" buttons now update immediately after starting or resetting a game without requiring an app restart
-- **Driver list reactivity** — `MainMenuNotifier` now watches `playerListNotifierProvider` instead of the read-only `playerListProvider`, so newly registered players appear instantly in the list
-- **BAC graph vertical line** — `PlayerDetailScreen` now guards against `minX == maxX` in the `fl_chart LineChart`; when a player only has Round 0 data all dots stacked at x=0 producing a vertical line instead of a proper timeline
-- **Checkpoint timer real-time display** — `GroupCountdownCard` was a `StatelessWidget` with no internal tick; converted to `StatefulWidget` with a `Timer.periodic(1s)` so the MM:SS countdown updates live without requiring provider state emissions every second
-
-### Added
-
-- **Nueva Partida (reset game) button** — shown in the main menu when a game is in progress; opens a confirmation dialog then resets checkpoint state, game state, and all per-player game data (readings, points, titles, impoundment flags, license image) while keeping player registration data intact
-- **Lateral navigation drawer** — menu icon (top-right) now opens an `endDrawer` with: DGV branding header, navigation items (Inicio, Mis Vehículos, Control Activo, Clasificación, Actualidad DGV), and footer (Ajustes / Ayuda placeholders)
-- **Subtitle in fake error notification** — second line of smaller text added under "Modo sin conexión"
-
----
-
-## [0.3.1] - 2026-05-18
-
-### 🔧 Hotfix - Android Build & Asset Reorganization
-
-### Fixed
-
-- Removed unused `image_gallery_saver` dependency that caused AGP namespace error blocking CI builds
-- Added ProGuard/R8 keep rules for Google ML Kit Text Recognition to fix R8 minification failure in release builds
-- Enabled `isMinifyEnabled` in release build type with proper ProGuard configuration
-- Added `permissions: contents: write` to GitHub Actions release workflow
+**Game State Recovery**
+- `RecoveryNotifier` Riverpod provider reads `GameStateRepository` on app launch
+- Routes to checkpoint screen, leaderboard, or main menu based on saved `GameState`
+- Restores checkpoint timer elapsed time via `checkpointNotifierProvider.notifier.restoreFromState()`
+- Wired into `app.dart` first-build routing
 
 ### Changed
+- **README.md** — Phase 3 feature list updated: waves 0–4 items moved from "Planned" to "Implemented"; wave 5 remaining items listed separately
+- **ROADMAP.md** — Phase 3 progress updated to ~80%; feature completion table updated; key changes note added
 
-- Reorganized assets into proper subfolders: `assets/license/`, `assets/environmentalDistinctives/`
-- Replaced oversized title images with optimized DGV-branded versions
-- Updated `asset_paths.dart` constants to reflect new asset folder structure
-- Replaced `assets/msg_error.png` with `assets/msg_error.jpg`
-- Removed `assets/carnet-de-conducir.png` (replaced by `assets/license/front.png` and `assets/license/back.png`)
-
----
-
-## [0.3.0] - 2026-05-14
-
-### 🎉 Phase 2 Completion - Core Gameplay
-
-This release delivers the full playable game loop: player selection → Round 0 baseline → BAC entry → real-time feedback → checkpoint timers with siren alerts → leaderboard with BAC progression graphs and fake license generation.
-
-### Added
-
-#### App Routing & Wiring
-- **Route constants** (`lib/core/constants/route_constants.dart`) — central `AppRoutes` class for all named routes
-- **App wiring** (`lib/app.dart`) — `onGenerateRoute` switch wiring all screens; `MainMenuScreen` as home
-
-#### Player Registration Feature
-- **RegistrationNotifier** (`lib/features/player_registration/providers/registration_provider.dart`) — multi-step form state with `RegistrationFormState` (Freezed); auto-generates `optimalBAC` from body size on submit; triggers async license generation
-- **PlayerRegistrationScreen** (`lib/features/player_registration/presentation/player_registration_screen.dart`) — 5-page `PageView` flow: name → surname → sex → body size → photo; auto-advances on selection pages; displays optimal BAC zone on photo page
-- **PlayerSelectionScreen** (`lib/features/player_registration/presentation/player_selection_screen.dart`) — `LicenseCard` + `Checkbox` list; `SegmentedButton` interval selector (30/45/60 min); enables start only when ≥1 player selected
-
-#### BAC Entry System
-- **BACEntryResult / RoundRobinArgs** (`lib/features/breathalyzer/providers/bac_entry_result.dart`) — plain Dart route-argument value objects
-- **BACEntryNotifier** (`lib/features/breathalyzer/providers/bac_entry_provider.dart`) — `submitBAC` orchestrates Widmark → points calculation → impoundment check → checkpoint recording; Round 0 saves baseline silently
-- **ManualEntryScreen** (`lib/features/breathalyzer/presentation/manual_entry_screen.dart`) — `CustomKeypad(maxDigits: 3)` for X.XX mg/L entry; player photo/initials avatar; submits via `BACEntryNotifier`
-- **RoundRobinScreen** (`lib/features/breathalyzer/presentation/round_robin_screen.dart`) — sequential player carousel; Round 0 advances silently; Round 1+ pushes `FeedbackScreen`; on completion calls `CheckpointNotifier.completeGroupMeasurement` or `GameStateNotifier.advanceRound`
-- **FeedbackScreen** (`lib/features/breathalyzer/presentation/feedback_screen.dart`) — full-screen color-coded result (green/yellow/red/dark); points delta in `displayLarge`; impoundment banner; awarded DGT title display; auto-dismiss after `AppConstants.feedbackDuration`; triggers `SirenAlertOverlay` on impoundment
-
-#### Checkpoint UI
-- **SirenAlertOverlay** (`lib/features/checkpoint/presentation/siren_alert_overlay.dart`) — `AnimationController` red/blue flash at 250ms for `AppConstants.sirenDuration`; audio via `audioplayers` in try/catch (degrades silently)
-- **GroupCountdownCard** (`lib/features/checkpoint/presentation/group_countdown_card.dart`) — renders per-group "Grupo N: MM:SS" countdown from `GroupCheckpoint.formattedTimeRemaining`; highlights active groups
-- **CheckpointScreen** (`lib/features/checkpoint/presentation/checkpoint_screen.dart`) — `ref.listen` detects `isCheckpointActive` transition to trigger `SirenAlertOverlay`; countdown body with `GroupCountdownCard` list; active checkpoint body with group banner + "Ir al Retén" button
-
-#### Leaderboard & Player Detail
-- **sortedLeaderboardProvider** (`lib/features/leaderboard/providers/leaderboard_provider.dart`) — `FutureProvider` watching `playerListProvider`; returns `List.unmodifiable` sorted descending by points
-- **LeaderboardScreen** (`lib/features/leaderboard/presentation/leaderboard_screen.dart`) — `RefreshIndicator` + `ListView`; gold/silver/bronze medal badges for top 3; `LicenseCard` per player; tap → player detail
-- **PlayerDetailScreen** (`lib/features/leaderboard/presentation/player_detail_screen.dart`) — player header with photo, points, impounded badge; earned DGT title chips; `fl_chart` `LineChart` with optimal zone band (green shading), color-coded dots per zone; empty state for no readings
-
-#### License Generation
-- **LicenseGenerator** (`lib/features/fake_id/services/license_generator.dart`) — `dart:ui` `PictureRecorder` + `Canvas` pipeline: loads `assets/carnet-de-conducir.png` template, circle-clips player photo (or draws initials avatar), overlays name/points/BAC/title emoji text, exports PNG to app documents directory
-- **LicenseUpdateService** (`lib/features/fake_id/services/license_update_service.dart`) — thin wrapper calling `LicenseGenerator.generate` then `PlayerRepository.update` with new license path
-
-#### Round Completion
-- **RoundCompletionService** (`lib/features/breathalyzer/providers/round_completion_service.dart`) — evaluates per-round DGT titles via `TitleEvaluator`, increments player `titleCounts`, persists updates, triggers license regeneration; wired into `CheckpointNotifier._completeCheckpoint`
-
-### Changed
-
-#### Bug Fixes & Improvements
-- **CustomKeypad** (`lib/widgets/custom_keypad.dart`) — added `maxDigits` parameter (default `2` for backward compat, `3` for BAC entry); buffer `[a,b,c]` displays as `a.bc`; updated `_onDigit`, `_displayValue`, `_parseInitialValue`, `_onConfirm`
-- **BACCalculator doc comment** (`lib/core/utils/bac_calculator.dart`) — fixed `±0.02` → `±0.2` in tolerance comments
-- **CheckpointNotifier** (`lib/core/providers/checkpoint_providers.dart`) — `_completeCheckpoint` now calls `RoundCompletionService.evaluateAndApply` and `GameStateNotifier.advanceRound`
-- **leaderboard_provider** — returns `List.unmodifiable` to prevent caller mutation
-- **CheckpointScreen AppBar** — shows "Control Sorpresa" (no round) when no game is active; "Control Sorpresa — Ronda N" only when a game is in progress
-
-#### Layout Fix
-- **ManualEntryScreen** — wrapped body in `SingleChildScrollView` to prevent column overflow on smaller viewport heights; replaced `Spacer` with fixed `SizedBox(height: 32)` gap
-
-### Testing
-
-#### New Unit Tests
-- **BAC calculator edge cases** (`test/unit/core/utils/bac_calculator_edge_cases_test.dart`) — body size ordering, Widmark formula proportionality, male vs female constants, rate calculation, extreme values, boundary conditions
-- **Points calculator edge cases** (`test/unit/core/utils/points_calculator_edge_cases_test.dart`) — average distance, clamping, spike priority
-- **BACEntryNotifier** (`test/unit/features/breathalyzer/bac_entry_provider_test.dart`) — Round 0 baseline (no points, no checkpoint call), Round 1 optimal zone (+2), impoundment override (−5), checkpoint recording
-- **sortedLeaderboardProvider** (`test/unit/features/leaderboard/leaderboard_provider_test.dart`) — sort order, empty list, single player, equal-points stability, unmodifiable result
-
-#### New Widget Tests
-- **ManualEntryScreen** (`test/widget/features/breathalyzer/manual_entry_screen_test.dart`) — AppBar title, player name, optimal BAC hint, initials avatar, `CustomKeypad(maxDigits: 3)`, background color
-- **FeedbackScreen** (`test/widget/features/breathalyzer/feedback_screen_test.dart`) — player name, points delta sign, impoundment banner, background color, Continuar button navigation
-- **LeaderboardScreen** (`test/widget/features/leaderboard/leaderboard_screen_test.dart`) — AppBar title, empty state, loading indicator, `LicenseCard` count, medal emoji placement (top 3 only)
-- **CheckpointScreen** (`test/widget/features/checkpoint/checkpoint_screen_test.dart`) — AppBar title states, no-game body, countdown body, active checkpoint banner, round number display, loading indicator
-
-### Quality
-- `flutter analyze` — 0 issues
-- `flutter test` — 225/225 tests passing
-- All lint rules resolved (`unnecessary_underscores`, `prefer_const_constructors`, `deprecated_member_use`)
-
----
-
-## [0.2.0] - 2026-05-14
-
-### 🎉 Phase 1 Completion - UI, Providers, and Test Suite
-
-This release completes Phase 1 of the project with comprehensive UI screens, state management providers, reusable widgets, and extensive test coverage.
-
-### Added
-
-#### Core Providers & State Management
-- **Checkpoint Providers** (`lib/core/providers/checkpoint_providers.dart`)
-  - Per-group checkpoint timer management with independent intervals
-  - Configurable checkpoint intervals (30, 45, 60 minutes)
-  - Group division logic (3-8 players per group)
-  - Hive persistence for timer state and crash recovery
-  - Stream-based reactive updates for UI
-  - Beer consumption estimation per group
-  - Generated code with Riverpod annotations
-
-#### UI Screens - Main Menu Feature
-- **Main Menu Screen** (`lib/features/main_menu/presentation/main_menu_screen.dart`)
-  - Persistent home screen that serves as central navigation hub
-  - Game state detection (Start Game vs Resume Game buttons)
-  - Navigation to Add Player, Fake News, and Fake Error screens
-  - DGT-themed UI with oversized touch targets (60+ height)
-  - Responsive layout with proper spacing
-- **Fake News Screen** (`lib/features/main_menu/presentation/fake_news_screen.dart`)
-  - Satirical DGT news articles with authentic styling
-  - Scrollable list of fake news items
-  - Tap to view full article details
-  - DGT color palette integration
-- **Fake News Detail Screen** (`lib/features/main_menu/presentation/fake_news_detail_screen.dart`)
-  - Full article view with image, headline, and body text
-  - Back navigation to news list
-  - Proper text formatting and spacing
-- **Fake Error Screen** (`lib/features/main_menu/presentation/fake_error_screen.dart`)
-  - Humorous fake error message screen
-  - Displays mock system error with DGT branding
-  - Return to menu functionality
-  - Used for impoundment penalties and random ceremony jokes
-
-#### UI Widgets - Main Menu Components
-- **Fake Error Notification** (`lib/features/main_menu/presentation/widgets/fake_error_notification.dart`)
-  - Reusable error notification widget
-  - DGT-styled error display
-  - Configurable message and icon
-- **Fake News Section** (`lib/features/main_menu/presentation/widgets/fake_news_section.dart`)
-  - News item card component
-  - Thumbnail image support
-  - Headline and summary display
-  - Tap interaction handling
-
-#### Reusable Widgets
-- **Massive Button** (`lib/widgets/massive_button.dart`)
-  - Oversized button widget for drunk-proof UX
-  - Minimum height of 60+ pixels
-  - High contrast colors from DGT palette
-  - Haptic feedback on tap
-  - Loading state support
-  - Customizable colors, text, and icons
-- **Custom Keypad** (`lib/widgets/custom_keypad.dart`)
-  - Drunk-proof numerical input widget
-  - Large touch targets (80x80 minimum)
-  - Supports decimal input for BAC entry
-  - Backspace and clear functionality
-  - Haptic feedback on key press
-  - Customizable max length and decimal places
-  - Value change callback
-- **Title Badge** (`lib/widgets/title_badge.dart`)
-  - DGT title display widget with counter
-  - Shows title emoji and count (e.g., 🟢×3)
-  - Compact and large size variants
-  - Proper spacing and alignment
-  - Used in leaderboard and license cards
-- **License Card** (`lib/widgets/license_card.dart`)
-  - Player license display widget
-  - Shows photo, name, surname, points, optimal BAC
-  - Displays title badges in grid layout
-  - Tap to view full-screen license
-  - DGT-themed styling with license ID background color
-  - Supports impoundment badge overlay
-
-#### Constants & Strings
-- **DGT Strings** (`lib/core/constants/dgt_strings.dart`)
-  - Centralized string constants for UI text
-  - Main menu labels and buttons
-  - Fake news headlines and articles
-  - Error messages and notifications
-  - Title names and descriptions
-  - Consistent Spanish DGT terminology
-
-#### State Management - Main Menu
-- **Main Menu Provider** (`lib/features/main_menu/providers/main_menu_provider.dart`)
-  - Game state detection (in progress vs not started)
-  - Navigation state management
-  - Fake news data provider
-  - Generated Freezed models and Riverpod code
-
-#### Comprehensive Test Suite
-
-**Unit Tests (90%+ coverage target):**
-- **BAC Calculator Tests** (`test/unit/core/utils/bac_calculator_test.dart`)
-  - 348 lines of comprehensive tests
-  - Optimal zone calculations for all body sizes
-  - Zone checking methods (in zone, close, crossed line)
-  - Edge cases and boundary conditions
-  - Widmark formula validation
-- **Points Calculator Tests** (`test/unit/core/utils/points_calculator_test.dart`)
-  - 347 lines of test coverage
-  - Hybrid points system validation (+2 in zone, +1 close, -3 crossed, -2 spike, -5 impounded)
-  - Feedback message generation tests
-  - Average distance calculations
-  - All reward and penalty scenarios
-- **Title Evaluator Tests** (`test/unit/core/utils/title_evaluator_test.dart`)
-  - 392 lines of comprehensive tests
-  - Per-round title awards (5 titles)
-  - Grand prize calculations (3 prizes)
-  - Environmental distinctive selection (top 5)
-  - Edge cases (ties, no eligible players)
-- **Checkpoint Calculator Tests** (`test/unit/core/utils/checkpoint_calculator_test.dart`)
-  - 348 lines of test coverage
-  - Per-group timer calculations
-  - Independent checkpoint times for each group
-  - Configurable intervals (30, 45, 60 minutes)
-  - Group division logic validation
-  - Beer consumption estimation
-
-**Repository Tests (85%+ coverage target):**
-- **Player Repository Tests** (`test/unit/data/repositories/player_repository_test.dart`)
-  - 248 lines of tests
-  - CRUD operations validation
-  - Stream-based updates testing
-  - Hive persistence verification
-  - Mock Hive box implementation
-- **Game State Repository Tests** (`test/unit/data/repositories/game_state_repository_test.dart`)
-  - 211 lines of tests
-  - Game state persistence
-  - Round tracking
-  - Timer state management
-  - Crash recovery scenarios
-- **Checkpoint Repository Tests** (`test/unit/data/repositories/checkpoint_repository_test.dart`)
-  - 263 lines of tests
-  - Per-group checkpoint state persistence
-  - Timer state save/load
-  - Group management operations
-  - Stream updates validation
-- **Fake Box Helper** (`test/unit/data/repositories/fake_box.dart`)
-  - 168 lines of mock Hive box implementation
-  - Reusable test utility for all repository tests
-  - In-memory storage for fast tests
-  - Full Hive Box API implementation
-
-**Integration Tests:**
-- **Checkpoint Provider Integration Tests** (`test/integration/checkpoint_provider_test.dart`)
-  - 384 lines of comprehensive integration tests
-  - End-to-end provider functionality
-  - Hive persistence integration
-  - Timer state management across app restarts
-  - Group checkpoint coordination
-  - Real-world usage scenarios
-
-**Widget Tests:**
-- **Title Badge Widget Tests** (`test/widget/widgets/title_badge_test.dart`)
-  - 202 lines of widget tests
-  - Rendering validation for both sizes
-  - Counter display verification
-  - Layout and spacing tests
-  - Accessibility checks
-
-### Changed
-
-#### Documentation Updates
-- **README.md Updates**
-  - Updated Phase 1 progress to 100% complete
-  - Added new UI screens to feature list
-  - Updated test coverage statistics
-  - Added widget documentation
-  - Improved setup instructions
-- **ROADMAP.md Updates**
-  - Marked Phase 1 as ✅ 100% Complete
-  - Updated feature completion table
-  - Moved completed tasks from "Planned" to "Complete"
-  - Updated progress tracking section
-  - Added Phase 2 preparation notes
-
-#### Technical Improvements
-- Generated Riverpod provider code for checkpoint management
-- Generated Freezed models for main menu state
-- Added JSON serialization for CheckpointState
-- Improved code organization with feature-first structure
-- Enhanced error handling in providers
-- Added comprehensive inline documentation
-
-### Testing & Quality
-- **Total Test Files:** 11 new test files
-- **Total Test Lines:** 3,500+ lines of test code
-- **Coverage Targets:**
-  - Unit tests: 90%+ coverage achieved
-  - Repository tests: 85%+ coverage achieved
-  - Widget tests: Core widgets covered
-  - Integration tests: Critical flows validated
-- **Test Quality:**
-  - Edge cases and boundary conditions covered
-  - Real-world scenarios validated
-  - Mock implementations for fast execution
-  - Comprehensive assertions and expectations
-
-### Developer Experience
-- Reusable widgets reduce code duplication
-- Centralized string constants improve maintainability
-- Comprehensive tests enable confident refactoring
-- Clear provider structure simplifies state management
-- Feature-first organization improves navigation
-
-### 🎯 What's Next (Phase 2)
-- Player registration flow implementation
-- Manual BAC entry screen with custom keypad integration
-- Round 0 baseline measurement flow
-- Real-time feedback system for Round 1+
-- Leaderboard screen with BAC progression
-- License viewing and update system
-
----
-
-## [0.1.0] - 2026-05-04
-
-### 🎉 Initial Setup & Foundation
-
-### Changed
-- **README.md & AI_INSTRUCTIONS.md Game Mechanics Update:** Updated documentation to reflect breathalyzer readings in mg/L instead of BAC percentages
-  - Changed optimal zones: Small 2.5 mg/L, Medium 2.0 mg/L, Large 1.8 mg/L (was 0.05, 0.07, 0.09 BAC)
-  - Updated tolerance zones: ±0.2 mg/L (in zone), ±0.4 mg/L (close) - was ±0.02 BAC
-  - Updated thresholds: Spike rate >0.8 mg/L/hr, Impoundment ≥3.5 mg/L (was >0.15/hr, ≥1.2 BAC)
-  - README.md: Added Measurement System section explaining mg/L vs BAC percentages
-  - README.md: Updated Quick Example with mg/L readings
-  - README.md: Removed duplicate sections (BAC Calculation, DGT Titles, Grand Prizes)
-  - AI_INSTRUCTIONS.md: Updated BACCalculator, PointsCalculator, and TitleEvaluator code examples
-  - AI_INSTRUCTIONS.md: Updated leaderboard card layout example and impoundment threshold
-  - Documentation now matches app_constants.dart implementation
-- Improved setup script to source bashrc for Flutter PATH detection in non-interactive shells
-- Switched from incompatible lefthook Dart package to native lefthook binary
-- Added comprehensive lefthook installation guide to README
-- Fixed labeler.yml format for actions/labeler@v5 compatibility
-- Added required write permissions to GitHub Actions workflows
-
-### Changed - Game Mechanics & Flow Redesign (May 4, 2026)
+### Changed — Game Mechanics & Flow Redesign (May 4, 2026)
 
 **Major game mechanics and app flow overhaul:**
 
@@ -499,34 +137,6 @@ This release completes Phase 1 of the project with comprehensive UI screens, sta
 - Titles displayed with counters on leaderboard (🟢×3, 🔴×1, etc.)
 - Licenses auto-update with new title badges after each round
 
-#### New Features
-- **Environmental Distinctive Badges:** Top 5 highest BAC players receive satirical eco-style badges (as a joke)
-- **Fake Error Message:** Added humorous error screen (assets/msg_error.png) shown on impoundment or randomly during ceremony
-- **Fake News Screen:** Satirical DGT/DGV news articles accessible from main menu
-- **Real-time License Updates:** Licenses update automatically after each round with new points and badges
-- **Final Report Screen:** Summary statistics and graphs before final ceremony
-- **License Export:** Export single or all licenses to gallery
-
-#### UI/UX Updates
-- **Color Palette Correction:**
-  - Primary: #0F5993 (DGT Blue) - was #003DA5
-  - Background: #F6F4F5 (Light Gray) - was #121212 dark
-  - License ID: #F3E8EC (Light Pink)
-  - Green: #D2D667, Yellow: #F4E944, Orange: #F3910E, Red: #EF6B6A
-- **Leaderboard Enhancements:**
-  - Show name + surname (not just name)
-  - Show optimal BAC zone for each player
-  - Display title badge counters
-  - Tap player card → view full license
-  - Highlight optimal zone as green band on BAC graphs
-  - Mark Round 0 as baseline on graphs
-- **Final Ceremony Updates:**
-  - Final report screen with statistics before ceremony
-  - 3 Grand Prize reveals with envelope animations
-  - Environmental Distinctive reveal for top 5
-  - 10% chance to show fake error message as a joke
-  - "Return to Menu" button (clear game state)
-  - "View All Licenses" gallery view
 
 #### Technical Changes
 - Updated `PlayerProfile` model:
@@ -575,7 +185,20 @@ This release completes Phase 1 of the project with comprehensive UI screens, sta
 - Improved documentation navigation and clarity
 - APK builds in CI now only run when explicitly requested via PR checkbox
 
----
+### Added
+- `CheckpointNotifier` provider with per-group timer management, absolute-timestamp timers, Hive persistence, and restart recovery
+- Main menu screens: `MainMenuScreen`, `FakeNewsScreen`, `FakeNewsDetailScreen`, `FakeErrorScreen`
+- Main menu sub-widgets: `FakeErrorNotification`, `FakeNewsSection`
+- `MainMenuNotifier` provider with `dismissFakeError` support
+- Reusable widgets: `MassiveButton`, `CustomKeypad`, `TitleBadge`, `LicenseCard`
+- `FakeNewsArticle` model and 5 static satirical articles in `dgt_strings.dart`
+- Unit tests for `BACCalculator`, `PointsCalculator`, `TitleEvaluator`, `CheckpointCalculator` (property-based, 200 iterations each)
+- Unit tests for `PlayerRepository`, `GameStateRepository`, `CheckpointRepository` with `FakeBox` test double
+- Integration tests for `CheckpointProvider` + Hive (6 scenarios)
+- Widget tests for `TitleBadge`
+
+
+
 
 ## [0.1.0] - 2026-05-04
 
@@ -645,7 +268,6 @@ Example:
 
 ### Fixed
 - Points calculation for negative BAC deltas (#52)
-- Updated asset paths and images for v2 (#)
 ```
 
 When releasing a version:
@@ -658,6 +280,5 @@ When releasing a version:
 
 ---
 
-[Unreleased]: https://github.com/javierdmm97/dgv/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/javierdmm97/dgv/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/javierdmm97/dgv/releases/tag/v0.1.0
+[Unreleased]: https://github.com/yourusername/dgv/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/yourusername/dgv/releases/tag/v0.1.0

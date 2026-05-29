@@ -65,10 +65,12 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     // -----------------------------------------------------------------------
     // Round 1+ — full scoring
     // -----------------------------------------------------------------------
+    final curveMultiplier = await ref.read(curveMultiplierProvider.future);
     final optimal = BACCalculator.calculateOptimalBrAC(
       currentRound,
       player.sex,
       player.bodySize,
+      curveMultiplier: curveMultiplier,
     );
 
     final pointsChange = PointsCalculator.calculatePointsChange(

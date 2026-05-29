@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
+import 'package:dgv/widgets/last_measurement_widget.dart';
 import 'package:dgv/widgets/title_badge.dart';
 
 /// A DGT-styled license card displaying a player's photo, name, points,
@@ -41,6 +42,8 @@ class LicenseCard extends StatelessWidget {
               _LicenseHeader(player: player),
               const SizedBox(height: 8),
               _PointsDisplay(points: player.points),
+              const SizedBox(height: 4),
+              LastMeasurementWidget(player: player),
               const SizedBox(height: 8),
               _BadgesRow(titleCounts: player.titleCounts),
               if (player.fineCount > 0) ...[

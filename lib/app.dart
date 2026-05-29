@@ -3,21 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dgv/core/constants/dgt_strings.dart';
 import 'package:dgv/core/constants/route_constants.dart';
+import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/providers/recovery_provider.dart';
 import 'package:dgv/core/theme/dgt_theme.dart';
+import 'package:dgv/features/breathalyzer/presentation/feedback_screen.dart';
+import 'package:dgv/features/breathalyzer/presentation/round_robin_screen.dart';
+import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
+import 'package:dgv/features/checkpoint/presentation/checkpoint_screen.dart';
+import 'package:dgv/features/fake_id/presentation/license_viewer_screen.dart';
+import 'package:dgv/features/leaderboard/presentation/leaderboard_screen.dart';
+import 'package:dgv/features/leaderboard/presentation/player_detail_screen.dart';
+import 'package:dgv/features/main_menu/presentation/ayuda_screen.dart';
 import 'package:dgv/features/main_menu/presentation/fake_news_screen.dart';
 import 'package:dgv/features/main_menu/presentation/main_menu_screen.dart';
 import 'package:dgv/features/player_registration/presentation/player_registration_screen.dart';
 import 'package:dgv/features/player_registration/presentation/player_selection_screen.dart';
-import 'package:dgv/features/breathalyzer/presentation/round_robin_screen.dart';
-import 'package:dgv/features/breathalyzer/presentation/feedback_screen.dart';
-import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
-import 'package:dgv/features/checkpoint/presentation/checkpoint_screen.dart';
-import 'package:dgv/features/leaderboard/presentation/leaderboard_screen.dart';
-import 'package:dgv/features/leaderboard/presentation/player_detail_screen.dart';
-import 'package:dgv/features/main_menu/presentation/ayuda_screen.dart';
 import 'package:dgv/features/scoring/presentation/fine_screen.dart';
 
-/// Main app widget
+/// Main app widget.
 class DGVApp extends ConsumerWidget {
   const DGVApp({super.key});
 
@@ -29,7 +32,7 @@ class DGVApp extends ConsumerWidget {
       darkTheme: DGTTheme.darkTheme,
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: const MainMenuScreen(),
+      home: const _RecoveryGate(),
       onGenerateRoute: _generateRoute,
     );
   }
@@ -102,8 +105,51 @@ class DGVApp extends ConsumerWidget {
           settings: settings,
         );
 
+      case AppRoutes.licenseViewer:
+        final player = settings.arguments as PlayerProfile;
+        return MaterialPageRoute<void>(
+          builder: (_) => LicenseViewerScreen(player: player),
+          settings: settings,
+        );
+
       default:
         return null;
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Recovery gate — routes to the correct screen on first launch
+// ---------------------------------------------------------------------------
+
+/// Reads [recoveryNotifierProvider] on first build and navigates to the
+/// appropriate screen. Shows a loading indicator while the provider resolves.
+class _RecoveryGate extends ConsumerWidget {
+  const _RecoveryGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recovery = ref.watch(recoveryNotifierProvider);
+
+    return recovery.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stack) => const MainMenuScreen(),
+      data: (route) {
+        // Navigate once on first data emission.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          switch (route) {
+            case RecoveryRoute.checkpoint:
+              Navigator.pushReplacementNamed(context, AppRoutes.game);
+            case RecoveryRoute.leaderboard:
+              Navigator.pushReplacementNamed(context, AppRoutes.leaderboard);
+            case RecoveryRoute.mainMenu:
+              break; // Already on main menu — no navigation needed.
+          }
+        });
+        return const MainMenuScreen();
+      },
+    );
   }
 }

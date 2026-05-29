@@ -5,6 +5,7 @@ import '../../data/repositories/game_state_repository.dart';
 import '../../data/repositories/game_state_repository_impl.dart';
 import '../../data/repositories/checkpoint_repository.dart';
 import '../../data/repositories/checkpoint_repository_impl.dart';
+import '../../data/repositories/curve_settings_repository.dart';
 
 part 'repository_providers.g.dart';
 
@@ -24,4 +25,19 @@ GameStateRepository gameStateRepository(GameStateRepositoryRef ref) {
 @riverpod
 CheckpointRepository checkpointRepository(CheckpointRepositoryRef ref) {
   return CheckpointRepositoryImpl();
+}
+
+/// Curve settings repository provider
+@riverpod
+CurveSettingsRepository curveSettingsRepository(
+  CurveSettingsRepositoryRef ref,
+) {
+  return HiveCurveSettingsRepository();
+}
+
+/// Current curve multiplier value (defaults to 1.00 if not persisted)
+@riverpod
+Future<double> curveMultiplier(CurveMultiplierRef ref) async {
+  final repo = ref.watch(curveSettingsRepositoryProvider);
+  return repo.getMultiplier();
 }

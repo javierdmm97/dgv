@@ -108,5 +108,143 @@ void main() {
         FlSpot(3, 0.335),
       ]);
     });
+
+    // ── Zone band tests (Task 7.1) ──────────────────────────────────────────
+
+    testWidgets('renders 8 horizontal zone band annotations', (tester) async {
+      final now = DateTime(2026);
+      final player = PlayerProfile(
+        id: 'player-2',
+        name: 'Zone',
+        surname: 'Test',
+        photoPath: '',
+        sex: Sex.male,
+        bodySize: BodySize.medium,
+        licenseImagePath: '',
+        readings: [
+          BACReading(
+            id: 'r1',
+            playerId: 'player-2',
+            bac: 0.33,
+            timestamp: now,
+            roundNumber: 3,
+            entryMethod: BACEntryMethod.manual,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            playerRepositoryProvider.overrideWith(
+              (ref) => _FakePlayerRepository([player]),
+            ),
+          ],
+          child: const MaterialApp(
+            home: PlayerDetailScreen(playerId: 'player-2'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final bands = chart.data.rangeAnnotations.horizontalRangeAnnotations;
+
+      // 8 bands: +2, +1 below, +1 above, 0 below, 0 above, -1 below, -1 above, -2
+      expect(bands.length, equals(8));
+    });
+
+    testWidgets('all zone band opacities are ≤ 0.15', (tester) async {
+      final now = DateTime(2026);
+      final player = PlayerProfile(
+        id: 'player-3',
+        name: 'Opacity',
+        surname: 'Test',
+        photoPath: '',
+        sex: Sex.male,
+        bodySize: BodySize.medium,
+        licenseImagePath: '',
+        readings: [
+          BACReading(
+            id: 'r1',
+            playerId: 'player-3',
+            bac: 0.33,
+            timestamp: now,
+            roundNumber: 3,
+            entryMethod: BACEntryMethod.manual,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            playerRepositoryProvider.overrideWith(
+              (ref) => _FakePlayerRepository([player]),
+            ),
+          ],
+          child: const MaterialApp(
+            home: PlayerDetailScreen(playerId: 'player-3'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final bands = chart.data.rangeAnnotations.horizontalRangeAnnotations;
+
+      for (final band in bands) {
+        final alpha = band.color?.a ?? 0.0;
+        expect(
+          alpha,
+          lessThanOrEqualTo(0.15),
+          reason: 'Band color alpha $alpha exceeds 0.15',
+        );
+      }
+    });
+
+    testWidgets('single-reading chart renders without error (minX=0, maxX=2)', (
+      tester,
+    ) async {
+      final now = DateTime(2026);
+      final player = PlayerProfile(
+        id: 'player-4',
+        name: 'Single',
+        surname: 'Reading',
+        photoPath: '',
+        sex: Sex.male,
+        bodySize: BodySize.medium,
+        licenseImagePath: '',
+        readings: [
+          BACReading(
+            id: 'r1',
+            playerId: 'player-4',
+            bac: 0.11,
+            timestamp: now,
+            roundNumber: 1,
+            entryMethod: BACEntryMethod.manual,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            playerRepositoryProvider.overrideWith(
+              (ref) => _FakePlayerRepository([player]),
+            ),
+          ],
+          child: const MaterialApp(
+            home: PlayerDetailScreen(playerId: 'player-4'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      // Non-degenerate x-range: minX=0, maxX=2
+      expect(chart.data.minX, equals(0.0));
+      expect(chart.data.maxX, equals(2.0));
+    });
   });
 }

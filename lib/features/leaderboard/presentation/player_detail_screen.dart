@@ -252,6 +252,80 @@ class _LineChart extends StatelessWidget {
 
   final PlayerProfile player;
 
+  // ---------------------------------------------------------------------------
+  // Zone band helpers
+  // ---------------------------------------------------------------------------
+
+  /// Builds zone band data for the BAC graph.
+  ///
+  /// Uses wider sweet-spot (0.20) for rounds 1–2, standard (0.10) for 3+.
+  /// Falls back to standard thresholds if roundNumber is out of range.
+  static List<HorizontalRangeAnnotation> _buildZoneBands(
+    double optimal,
+    int roundNumber,
+  ) {
+    if (optimal <= 0) return [];
+
+    final sweetSpot = (roundNumber >= 1 && roundNumber <= 2)
+        ? AppConstants
+              .zoneClosePct // 0.20 — wider for early rounds
+        : AppConstants.zoneSweetSpotPct; // 0.10 — standard
+    final close = AppConstants.zoneClosePct;
+    final neutral = AppConstants.zoneNeutralPct;
+    final far = AppConstants.zoneFarPct;
+
+    return [
+      // +2 zone (green): ±sweetSpot of optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 - sweetSpot),
+        y2: optimal * (1 + sweetSpot),
+        color: DGTColors.green.withValues(alpha: 0.15),
+      ),
+      // +1 zone below (yellow): close..sweetSpot below optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 - close),
+        y2: optimal * (1 - sweetSpot),
+        color: DGTColors.yellow.withValues(alpha: 0.15),
+      ),
+      // +1 zone above (yellow): sweetSpot..close above optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 + sweetSpot),
+        y2: optimal * (1 + close),
+        color: DGTColors.yellow.withValues(alpha: 0.15),
+      ),
+      // 0 zone below (gray): neutral..close below optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 - neutral),
+        y2: optimal * (1 - close),
+        color: DGTColors.textSecondary.withValues(alpha: 0.10),
+      ),
+      // 0 zone above (gray): close..neutral above optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 + close),
+        y2: optimal * (1 + neutral),
+        color: DGTColors.textSecondary.withValues(alpha: 0.10),
+      ),
+      // -1 zone below (orange): far..neutral below optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 - far),
+        y2: optimal * (1 - neutral),
+        color: DGTColors.orange.withValues(alpha: 0.12),
+      ),
+      // -1 zone above (orange): neutral..far above optimal
+      HorizontalRangeAnnotation(
+        y1: optimal * (1 + neutral),
+        y2: optimal * (1 + far),
+        color: DGTColors.orange.withValues(alpha: 0.12),
+      ),
+      // -2 zone (blue): below far threshold
+      HorizontalRangeAnnotation(
+        y1: 0,
+        y2: optimal * (1 - far),
+        color: DGTColors.primary.withValues(alpha: 0.10),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final chartReadings = [...player.readings]
@@ -283,12 +357,20 @@ class _LineChart extends StatelessWidget {
                 0.5)
             .ceilToDouble();
 
-    // Ensure a non-degenerate x-range so fl_chart renders a horizontal line
-    // rather than stacking all dots vertically when there is only one round.
+    // Single-reading edge case: ensure non-degenerate x-range (Req 3.7).
     final rawMinX = spots.first.x;
     final rawMaxX = spots.last.x;
-    final minX = rawMinX;
-    final maxX = rawMinX == rawMaxX ? rawMinX + 1 : rawMaxX;
+    final minX = rawMinX == rawMaxX ? 0.0 : rawMinX;
+    final maxX = rawMinX == rawMaxX ? 2.0 : rawMaxX;
+
+    // Build zone bands using the last round's optimal as reference.
+    final lastRound = chartReadings.last.roundNumber;
+    final lastOptimal = BACCalculator.calculateOptimalBrAC(
+      lastRound,
+      player.sex,
+      player.bodySize,
+    );
+    final zoneBands = _buildZoneBands(lastOptimal, lastRound);
 
     return LineChart(
       LineChartData(
@@ -296,6 +378,10 @@ class _LineChart extends StatelessWidget {
         maxY: maxY,
         minX: minX,
         maxX: maxX,
+        // Zone bands rendered behind the lines (Req 3.1–3.5)
+        rangeAnnotations: RangeAnnotations(
+          horizontalRangeAnnotations: zoneBands,
+        ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -346,6 +432,7 @@ class _LineChart extends StatelessWidget {
             sideTitles: SideTitles(showTitles: false),
           ),
         ),
+        // Lines rendered on top of zone bands (Req 3.6)
         lineBarsData: [
           LineChartBarData(
             spots: optimalUpperSpots,

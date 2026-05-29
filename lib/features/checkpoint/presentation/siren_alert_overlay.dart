@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dgv/core/constants/app_constants.dart';
@@ -20,6 +21,7 @@ class _SirenAlertOverlayState extends State<SirenAlertOverlay> {
   bool _isRed = true;
   Timer? _flashTimer;
   Timer? _closeTimer;
+  AudioPlayer? _audioPlayer;
 
   @override
   void initState() {
@@ -31,16 +33,24 @@ class _SirenAlertOverlayState extends State<SirenAlertOverlay> {
     );
     // Close after siren duration
     _closeTimer = Timer(AppConstants.sirenDuration, _dismiss);
+    _playAudio();
+  }
 
-    // Audio would go here — wrapped in try/catch so it degrades silently
-    // when the asset is missing.
-    // unawaited(AudioPlayer().play(AssetSource('audio/siren.mp3')));
+  Future<void> _playAudio() async {
+    try {
+      _audioPlayer = AudioPlayer();
+      await _audioPlayer!.play(AssetSource('sound/policia_control.mp3'));
+    } on Exception {
+      // Degrade silently — visual animation continues
+    }
   }
 
   @override
   void dispose() {
     _flashTimer?.cancel();
     _closeTimer?.cancel();
+    unawaited(_audioPlayer?.stop());
+    _audioPlayer?.dispose();
     super.dispose();
   }
 

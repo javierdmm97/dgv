@@ -102,7 +102,7 @@ lib/
     ├── scoring/             # Fine screen ✅
     ├── leaderboard/         # Leaderboard, player detail, BAC graph ✅
     ├── fake_id/             # License generator & update service ✅
-    │                        # front.png + back.png template rendering (Phase 3)
+    │                        # front.png + back.png template rendering ✅ (Phase 3)
     └── achievements/        # DGT titles & awards (Phase 3)
 ```
 
@@ -110,7 +110,7 @@ lib/
 
 ## 🎮 Core Features
 
-### ✅ Implemented (Phases 1–2.5)
+### ✅ Implemented (Phases 1–3, Waves 0–4)
 1. **Main Menu** - Persistent home screen with Start/Resume Game, Mis Vehículos, Fake News, Ayuda
 2. **Fake News Screen** - Satirical DGT articles list + full article view
 3. **Fake Error Screen** - Satirical DGT error modal with close button
@@ -129,30 +129,32 @@ lib/
 16. **Checkpoint Timer UI** - `GroupCountdownCard` MM:SS, police siren flash + OS notification
 17. **Points System** - Proportional 5-tier scale (-2/-1/0/+1/+2), 15-point hard cap
 18. **Leaderboard** - Sorted by points (tiebreaker: perfection score), top 3 medals 🥇🥈🥉
-19. **BAC Progression Graph** - `fl_chart` line chart with proportional zone bands
-20. **License Generation** - `dart:ui` canvas pipeline, updated after every round
+19. **BAC Progression Graph** - `fl_chart` line chart with 5 colored zone bands (round-aware widths)
+20. **License Generation** - `dart:ui` canvas pipeline, updated after every round (front + back sides)
 21. **OS Push Notifications** - `flutter_local_notifications` for checkpoint alerts
 22. **Debug Skip Button** - Gated behind `kDebugMode` for testing
+23. **OCR Camera ("El Radar")** - ML Kit text recognition with confidence scoring, auto-confirm > 0.90, bounding box overlay, 10s timeout fallback
+24. **Keypad Confirmation Step** - `BacConfirmationScreen` before saving any BAC reading; "Corregir" returns to keypad with pre-populated value
+25. **Graph Zone Visualization** - 5 `HorizontalRangeAnnotation` bands with round-aware thresholds (wider for rounds 1–2)
+26. **Last Measurement Display** - `LastMeasurementWidget` on leaderboard cards ("Último registro: 0.XX mg/L — Ronda N")
+27. **DGT Title Badges on Leaderboard** - `TitleBadge` widgets with `×N` counters on each player card
+28. **License Viewing (Two-Sided)** - Full-screen swipeable `PageView` (front + back) with `InteractiveViewer` pinch-to-zoom; dynamic fallback when back PNG not yet generated
+29. **Game State Recovery** - `RecoveryNotifier` reads Hive on launch and routes to correct screen with timer restored
+30. **BAC Curve Multiplier** - `CurveSettingsRepository` + `curveMultiplierProvider`; `BACCalculator` applies multiplier to all optimal targets
 
-### 🚀 Phase 3 (Planned)
-23. **OCR Camera ("El Radar")** - ML Kit text recognition with confidence scoring
-24. **Graph Zone Visualization** - Round-aware zone bands on BAC graph
-25. **Keypad Confirmation** - Confirm step before submitting BAC reading
-26. **License Viewing** - Full-screen pinch-to-zoom license view from leaderboard, swipeable front/back sides
-27. **License Back Side** - Back template (`assets/license/back.png`) records round-by-round BrAC readings, points changes, fine log, and perfection score
-28. **Game State Recovery** - Resume after crash from Hive
-29. **Player Edit & Delete** - Swipe-to-delete + edit screen
-30. **"Finish Game" Button** - Enabled after Round 5, triggers Final Ceremony
-31. **BAC Curve Calibration** - Settings multiplier (0.80–1.20×) for optimal targets
+### 🚧 Phase 3 — Remaining (Wave 5)
+31. **Player Edit & Delete** - Swipe-to-delete + edit screen (in progress)
+32. **"Finish Game" Button** - Enabled after Round 5, triggers Final Ceremony placeholder (in progress)
+33. **BAC Curve Calibration Settings** - `SettingsScreen` with slider (0.80–1.20×) (in progress)
 
 ### 🔥 Phase 4 (Planned — Developer C)
-31. **Firebase Sync** - Offline-first player data sync after each round
-32. **Web Leaderboard** - Real-time display screen with notification ticker
+34. **Firebase Sync** - Offline-first player data sync after each round
+35. **Web Leaderboard** - Real-time display screen with notification ticker
 
 ### 🎨 Phase 5 (Planned)
-33. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
-34. **Splash Screen** - DGT-blue landing screen with "Acceder" button
-35. **App Branding** - Logo + launcher icon
+36. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
+37. **Splash Screen** - DGT-blue landing screen with "Acceder" button
+38. **App Branding** - Logo + launcher icon
 
 ---
 
@@ -326,7 +328,7 @@ This project uses:
 
 ### Development Phases
 - **Phases 1–2.5** ✅ Complete — core infrastructure, full game loop, mechanics revision
-- **Phase 3** 🚀 In progress — OCR, license viewing, game end flow, curve calibration
+- **Phase 3** 🚧 ~80% in progress — OCR, license viewing, game state recovery done; edit/delete, finish game, settings remaining
 - **Phase 4** 🔥 Planned — Firebase sync + web leaderboard (Developer C lead)
 - **Phase 5** 🎨 Planned — final ceremony, splash screen, release
 

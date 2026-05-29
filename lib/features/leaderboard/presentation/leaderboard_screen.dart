@@ -74,8 +74,8 @@ class _PlayerList extends StatelessWidget {
               player: player,
               onTap: () => Navigator.pushNamed(
                 context,
-                AppRoutes.license,
-                arguments: player.id,
+                AppRoutes.licenseViewer,
+                arguments: player,
               ),
             ),
             if (index < 3)

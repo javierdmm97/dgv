@@ -67,5 +67,46 @@ final checkpointRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CheckpointRepositoryRef = AutoDisposeProviderRef<CheckpointRepository>;
+String _$curveSettingsRepositoryHash() =>
+    r'6b86a8a04b3146cdc3c5c3db1d88586f4e2387bf';
+
+/// Curve settings repository provider
+///
+/// Copied from [curveSettingsRepository].
+@ProviderFor(curveSettingsRepository)
+final curveSettingsRepositoryProvider =
+    AutoDisposeProvider<CurveSettingsRepository>.internal(
+      curveSettingsRepository,
+      name: r'curveSettingsRepositoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$curveSettingsRepositoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CurveSettingsRepositoryRef =
+    AutoDisposeProviderRef<CurveSettingsRepository>;
+String _$curveMultiplierHash() => r'5c0847fed3deb38e03a0338f2e796dc1463e4ad5';
+
+/// Current curve multiplier value (defaults to 1.00 if not persisted)
+///
+/// Copied from [curveMultiplier].
+@ProviderFor(curveMultiplier)
+final curveMultiplierProvider = AutoDisposeFutureProvider<double>.internal(
+  curveMultiplier,
+  name: r'curveMultiplierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$curveMultiplierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CurveMultiplierRef = AutoDisposeFutureProviderRef<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

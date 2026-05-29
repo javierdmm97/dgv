@@ -191,105 +191,102 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-### 🚀 Phase 3: Advanced Features (Week 3)
+### 🚧 Phase 3: Advanced Features (Week 3) — IN PROGRESS
 
 **Goal:** Complete the game loop with OCR, full round-robin audit, license viewing, and game end flow
 
-#### Tasks
+**Branch:** `feature/phase_3` | **Started:** May 26, 2026
 
-**3.1 OCR Camera Integration ("El Radar")**
-- [ ] Set up ML Kit text recognition
-- [ ] Build camera OCR screen (`lib/features/breathalyzer/presentation/camera_ocr_screen.dart`)
-- [ ] Implement OCR service with confidence scoring (auto-confirm if >90%)
-- [ ] Implement fallback to manual entry
-- [ ] Handle edge cases (poor lighting, angles, multiple numbers)
-- [ ] Write tests with mock camera data
+#### Completed (Wave 0–1)
 
-**3.2 Round-Robin Flow ("El Retén") — Audit & Complete**
-- [ ] Audit current implementation — identify what is done vs. missing
-- [ ] No auto-advance: player manually moves to next after confirming entry
-- [ ] Ensure progress indicator is accurate ("3/8 players logged")
-- [ ] Write/update integration tests
+**Data Model & Repository Foundations**
+- [x] Add `licenseBackImagePath` field to `PlayerProfile` (`@HiveField(13)`)
+- [x] Create `CurveSettingsRepository` with `HiveCurveSettingsRepository` implementation
+- [x] Add `curveSettingsRepositoryProvider` and `curveMultiplierProvider` to repository providers
+- [x] Register `assets/sound/` in `pubspec.yaml`
 
-**3.3 Graph Zone Visualization**
-- [ ] Add zone bands to BAC progression graph: +2 (green), +1 (yellow), 0 (gray), -1 (orange), -2 (blue)
-- [ ] Fine zone (-4) not shown on graph since it's already indicated by the Multa icon
-- [ ] Zones should be round-aware (wider for rounds 1-2, standard for rounds 3+)
-- [ ] Update `LineChart` in player detail screen with zone bands
+**Business Logic Updates**
+- [x] Apply `curveMultiplier` parameter in `BACCalculator.calculateOptimalBrAC()`
+- [x] Update call sites in providers to read and pass `curveMultiplierProvider`
+- [x] Fix `TitleEvaluator` — `velocidadDeCrucero` tie-breaking by alphabetical name
+- [x] Fix `TitleEvaluator` — `multaPorExceso` awards all tied players; not awarded in round 1
+- [x] Unit tests for all business logic changes
 
-**3.4 Last Measurement Display**
-- [ ] Show last measurement on "Clasificación" (Carnet por Puntos) screen
-- [ ] Display format: "Último registro: 0.XX mg/L - Ronda N"
-- [ ] Update when keypad is open (already shown in "Detalle del Conductor")
-- [ ] Ensure "Último registro" is visible and prominent
+**Siren Audio Fix**
+- [x] Uncomment `AudioPlayer` in `SirenAlertOverlay` with try/catch
+- [x] Stop and dispose `_audioPlayer` in `dispose()`
 
-**3.5 Keypad Confirmation**
-- [ ] Add confirmation step to keypad before submitting BAC reading
-- [ ] Show "Confirmar" button after entering value
-- [ ] Allow user to go back and re-enter if incorrect
-- [ ] Prevent accidental submissions
+**License Back-Side Generation**
+- [x] Add `LicenseGenerator.generateBack()` — renders back-side PNG with round-by-round BAC table, fine log, total money lost, and perfection score
+- [x] Update `LicenseUpdateService.updateForPlayer()` to generate both front and back sides
 
-**3.6 Siren Audio Fix**
-- [ ] Register `assets/sound/` in `pubspec.yaml`
-- [ ] Uncomment `AudioPlayer` call in `SirenAlertOverlay`
-- [ ] Test audio on physical device
+#### Completed (Waves 2–4)
 
-**3.7 DGT Title System — Finalize**
-- [ ] Complete all 5 per-round title evaluators (including TBD vehiculoHibrido replacement)
-- [ ] Define final replacement title for `vehiculoHibrido` with team
-- [ ] Display title badges on leaderboard with counters
-- [ ] Write unit tests for all title logic
+**OCR Camera Integration ("El Radar")**
+- [x] Create `OcrService` interface and `MlKitOcrService` with confidence scoring
+- [x] Build `CameraOcrScreen` with live preview, 10s timeout, bounding box overlay
+- [x] Fallback to `ManualEntryScreen` on timeout/permission denied
 
-**3.8 License Viewing**
-- [ ] Build full-screen license view screen (tap from leaderboard)
-- [ ] Show current license image with all badges
-- [ ] Add pinch-to-zoom functionality
-- [ ] Write widget tests
+**Keypad Confirmation Step**
+- [x] Create `BacConfirmationScreen` (player name + entered value, Confirmar/Corregir)
+- [x] Wire into `ManualEntryScreen` and `CameraOcrScreen`
 
-**3.9 Game State Recovery**
-- [ ] Implement game recovery provider
-- [ ] Check Hive for existing game state on app launch
-- [ ] Resume timer from saved state
-- [ ] Write integration tests for crash recovery
+**Graph Zone Visualization**
+- [x] Add `buildZoneBands()` helper with round-aware widths (wider for rounds 1–2)
+- [x] Render 5 `HorizontalRangeAnnotation` bands in `PlayerDetailScreen` BAC graph
 
-**3.10 Player Management (Edit & Delete)**
-- [ ] Add swipe-to-delete on `LicenseCard` in the player list
-- [ ] Add "Editar Conductor" screen (reuse `PlayerRegistrationScreen` in edit mode)
-- [ ] Confirmation dialog before delete
-- [ ] Write widget tests
+**Last Measurement Display**
+- [x] Create `LastMeasurementWidget` ("Último registro: 0.XX mg/L — Ronda N")
+- [x] Add to leaderboard player cards
 
-**3.11 "Finish Game" Button (Post-Round 5)**
-- [ ] Add "Finish Game" button accessible when a game is in progress (main menu or game screen)
-- [ ] Button only enabled after Round 5 is complete (minimum rounds requirement)
-- [ ] Confirmation dialog → navigate to Final Ceremony
-- [ ] Clear game state on "Return to Menu"
-- [ ] Display message: "Minimum 5 rounds completed. Ready to finish?"
+**DGT Title Badges on Leaderboard**
+- [x] Display `TitleBadge` widgets with `×N` counters on each player card
 
-**3.12 BAC Curve Calibration System**
-- [ ] Add settings screen accessible from main menu
-- [ ] Implement curve multiplier setting (range: 0.80 to 1.20, default: 1.00)
-- [ ] Multiplier adjusts all optimal BAC targets proportionally
-- [ ] Setting can only be changed between rounds (not during active round)
-- [ ] Display warning: "Curve adjustment affects all players equally. No points will be refunded."
-- [ ] Persist multiplier setting in Hive
-- [ ] Update `BACCalculator.calculateOptimalBrAC()` to apply multiplier
-- [ ] Add unit tests for multiplier logic
-- [ ] UI shows current multiplier value (e.g., "Curva: 0.95x - Menos agresiva")
+**Two-Sided License Viewer**
+- [x] Create `LicenseViewerScreen` — swipeable `PageView` (front + back) with `InteractiveViewer`
+- [x] Wire tap from `LeaderboardScreen`
+
+**Game State Recovery**
+- [x] Create `RecoveryNotifier` provider — reads Hive on launch, routes to correct screen
+- [x] Wire into `app.dart` / `main.dart`
+
+#### Remaining (Wave 5)
+
+**3.12 Player Edit & Delete**
+- [~] Swipe-to-delete on player list in `MainMenuScreen` (hidden during active game)
+- [~] Edit mode in `PlayerRegistrationScreen` (pre-populate fields, update on save)
+
+**3.13 Finish Game Button & Final Ceremony Placeholder**
+- [~] Add `FinishGameButton` to `MainMenuScreen` (disabled before round 5)
+- [~] Create `FinalCeremonyScreen` placeholder with "Volver al Menú"
+
+**3.14 BAC Curve Calibration Settings Screen**
+- [~] Create `SettingsScreen` with slider (0.80–1.20×), human-readable label, disabled during active round
+- [~] Add settings `IconButton` to `MainMenuScreen`
+
+**3.15 Final Verification**
+- [ ] `flutter test` — all tests pass
+- [ ] `flutter analyze` — 0 issues
+- [ ] `dart run build_runner build -d` — 0 conflicts
+- [ ] Verify `assets/sound/` audio plays on physical device
 
 **Deliverables:**
-- ✅ Working OCR camera integration
-- ✅ Audited and complete round-robin flow
-- ✅ Graph zone visualization with round-aware bands
-- ✅ Last measurement display on Clasificación screen
-- ✅ Keypad confirmation step to prevent errors
+- ✅ Data model foundations (licenseBackImagePath, CurveSettingsRepository)
 - ✅ Siren audio working
-- ✅ All 5 DGT titles finalized
-- ✅ Full-screen license viewing
-- ✅ Game state recovery
-- ✅ Player edit & delete UI
-- ✅ "Finish Game" accessible after Round 5
-- ✅ BAC curve calibration system
-- ✅ All tests passing
+- ✅ License back-side generation
+- ✅ BACCalculator curve multiplier support
+- ✅ TitleEvaluator tie-breaking and multi-winner fixes
+- ✅ OCR camera integration (`OcrService` + `CameraOcrScreen`)
+- ✅ Keypad confirmation step (`BacConfirmationScreen`)
+- ✅ Graph zone visualization (5 `HorizontalRangeAnnotation` bands)
+- ✅ Last measurement display (`LastMeasurementWidget`)
+- ✅ DGT title badges with `×N` counters on leaderboard
+- ✅ Two-sided license viewer (`LicenseViewerScreen` with `InteractiveViewer`)
+- ✅ Game state recovery (`RecoveryNotifier`)
+- ⏳ Player edit & delete UI (in progress)
+- ⏳ "Finish Game" button and `FinalCeremonyScreen` placeholder (in progress)
+- ⏳ BAC curve calibration settings screen (in progress)
+- ⏳ Final verification pass
 
 **Estimated Completion:** End of Week 3
 
@@ -465,7 +462,7 @@ notifications/{id}
 - **Phase 1:** ✅ 100% Complete
 - **Phase 2:** ✅ 100% Complete
 - **Phase 2.5:** ✅ 100% Complete (mechanics revision — merged to main)
-- **Phase 3:** ⏳ Planned
+- **Phase 3:** 🚧 ~80% In Progress (waves 0–4 done, wave 5 remaining)
 - **Phase 4:** ⏳ Planned (Firebase & Web — Developer C)
 - **Phase 5:** ⏳ Planned (Polish & Release)
 
@@ -497,11 +494,20 @@ notifications/{id}
 | Leaderboard Reactivity Fix | ✅ Complete | 100% |
 | OS Push Notifications | ✅ Complete | 100% |
 | Debug Skip Button | ✅ Complete | 100% |
-| OCR Camera | ⏳ Phase 3 | 0% |
-| License Viewing | ⏳ Phase 3 | 0% |
-| Game State Recovery | ⏳ Phase 3 | 0% |
-| Player Edit & Delete UI | ⏳ Phase 3 | 0% |
-| Finish Game Button | ⏳ Phase 3 | 0% |
+| License Back-Side Generation | 🚧 Phase 3 (done) | 100% |
+| BAC Curve Multiplier (BACCalculator) | 🚧 Phase 3 (done) | 100% |
+| TitleEvaluator Fixes | 🚧 Phase 3 (done) | 100% |
+| Siren Audio | 🚧 Phase 3 (done) | 100% |
+| OCR Camera | 🚧 Phase 3 (done) | 100% |
+| Keypad Confirmation Step | 🚧 Phase 3 (done) | 100% |
+| Graph Zone Visualization | 🚧 Phase 3 (done) | 100% |
+| Last Measurement Display | 🚧 Phase 3 (done) | 100% |
+| DGT Title Badges on Leaderboard | 🚧 Phase 3 (done) | 100% |
+| License Viewing (Two-Sided) | 🚧 Phase 3 (done) | 100% |
+| Game State Recovery | 🚧 Phase 3 (done) | 100% |
+| Player Edit & Delete UI | 🚧 Phase 3 (in progress) | ~50% |
+| Finish Game Button | 🚧 Phase 3 (in progress) | ~50% |
+| BAC Curve Calibration Settings | 🚧 Phase 3 (in progress) | ~50% |
 | Firebase Integration | ⏳ Phase 4 | 0% |
 | Web Frontend | ⏳ Phase 4 | 0% |
 | Final Ceremony | ⏳ Phase 5 | 0% |
@@ -513,11 +519,12 @@ notifications/{id}
 
 ## 🤝 Collaboration Strategy
 
-### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-2.5 COMPLETE
+### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-2.5 COMPLETE / 🚧 PHASE 3 IN PROGRESS
 - ✅ All dependencies and project setup
 - ✅ Complete theme system, constants, domain models
 - ✅ All business logic utilities, data layer, Riverpod providers
 - ✅ **Phase 2.5:** Points/fine system overhaul, model changes, tiebreaker logic
+- 🚧 **Phase 3 (waves 0–1):** `licenseBackImagePath`, `CurveSettingsRepository`, `BACCalculator` multiplier, `TitleEvaluator` fixes, siren audio, `LicenseGenerator.generateBack()`
 - 🔜 **Phase 4 support:** Firebase architecture decisions, offline-first strategy
 
 ### Developer B — Kristian (UI & Screens) - ✅ PHASES 1-2.5 COMPLETE
@@ -552,11 +559,17 @@ notifications/{id}
 
 ---
 
-**Last Updated:** May 26, 2026  
+**Last Updated:** May 29, 2026  
 **Next Review:** End of Phase 3
 
-**Key Changes in This Update (May 26):**
-- ✅ Phase 2.5 marked as **COMPLETED** — all mechanics revision tasks done, 221 tests passing
-- ✅ All Phase 2.5 feature rows updated to 100% in progress table
-- ✅ Collaboration section updated to reflect Phases 1–2.5 complete for both developers
-- ✅ `AyudaScreen` confirmed implemented (Help screen with satirical DGT joke)
+**Key Changes in This Update (May 29):**
+- 🚧 Phase 3 progress updated to **~80%** — waves 0–4 complete
+- ✅ `OcrService` interface + `MlKitOcrService` implemented with confidence scoring
+- ✅ `CameraOcrScreen` built with live preview, 10s timeout, bounding box overlay, and fallback to manual entry
+- ✅ `BacConfirmationScreen` created and wired into `ManualEntryScreen` and `CameraOcrScreen`
+- ✅ Graph zone visualization: `buildZoneBands()` helper with 5 `HorizontalRangeAnnotation` bands (round-aware widths)
+- ✅ `LastMeasurementWidget` created and added to leaderboard player cards
+- ✅ DGT title badges with `×N` counters displayed on leaderboard
+- ✅ `LicenseViewerScreen` created — swipeable `PageView` (front + back) with `InteractiveViewer` (pinch-to-zoom)
+- ✅ `RecoveryNotifier` provider created and wired into app launch
+- 🔜 Wave 5 remaining: player edit/delete, finish game button, settings screen, final verification

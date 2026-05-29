@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dgv/core/models/bac_reading.dart';
 import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/utils/bac_calculator.dart';
 import 'package:dgv/core/utils/title_evaluator.dart';
 
 // ---------------------------------------------------------------------------
@@ -91,6 +92,94 @@ void main() {
         expect(awards['a'], equals(DGTTitle.velocidadDeCrucero));
         // Player 'c' has lowest BAC
         expect(awards['c'], equals(DGTTitle.lDePracticas));
+      });
+
+      test('tie-breaking: awards to player with alphabetically earlier name when '
+          'equidistant from optimal', () {
+        // Both players are medium male, round 1 optimal ≈ 0.111
+        // Both are exactly 0.05 above optimal — same distance, neither is lowest BAC.
+        // A third player has a lower BAC so lDePracticas goes elsewhere.
+        final optimal1 = BACCalculator.calculateOptimalBrAC(
+          1,
+          Sex.male,
+          BodySize.medium,
+        );
+        final players = [
+          PlayerProfile(
+            id: 'id_zebra',
+            name: 'Zebra',
+            surname: 'Z',
+            photoPath: '',
+            sex: Sex.male,
+            bodySize: BodySize.medium,
+            licenseImagePath: '',
+            readings: [
+              BACReading(
+                id: 'id_zebra_r1',
+                playerId: 'id_zebra',
+                bac: optimal1 + 0.05, // 0.05 above optimal
+                timestamp: DateTime(2025, 1, 1, 15, 0),
+                roundNumber: 1,
+                entryMethod: BACEntryMethod.manual,
+              ),
+            ],
+            titleCounts: const {},
+            crossedOptimalLine: false,
+            points: 15,
+          ),
+          PlayerProfile(
+            id: 'id_alice',
+            name: 'Alice',
+            surname: 'A',
+            photoPath: '',
+            sex: Sex.male,
+            bodySize: BodySize.medium,
+            licenseImagePath: '',
+            readings: [
+              BACReading(
+                id: 'id_alice_r1',
+                playerId: 'id_alice',
+                bac: optimal1 + 0.05, // same distance above optimal
+                timestamp: DateTime(2025, 1, 1, 15, 0),
+                roundNumber: 1,
+                entryMethod: BACEntryMethod.manual,
+              ),
+            ],
+            titleCounts: const {},
+            crossedOptimalLine: false,
+            points: 15,
+          ),
+          // Third player has lowest BAC so lDePracticas goes to them, not Alice.
+          PlayerProfile(
+            id: 'id_carlos',
+            name: 'Carlos',
+            surname: 'C',
+            photoPath: '',
+            sex: Sex.male,
+            bodySize: BodySize.medium,
+            licenseImagePath: '',
+            readings: [
+              BACReading(
+                id: 'id_carlos_r1',
+                playerId: 'id_carlos',
+                bac: 0.01, // lowest BAC — gets lDePracticas
+                timestamp: DateTime(2025, 1, 1, 15, 0),
+                roundNumber: 1,
+                entryMethod: BACEntryMethod.manual,
+              ),
+            ],
+            titleCounts: const {},
+            crossedOptimalLine: false,
+            points: 15,
+          ),
+        ];
+
+        final awards = TitleEvaluator.evaluateRound(players, 1);
+        // Both Alice and Zebra are equidistant; 'Alice' < 'Zebra' alphabetically → Alice wins
+        expect(awards['id_alice'], equals(DGTTitle.velocidadDeCrucero));
+        expect(awards['id_zebra'], isNot(equals(DGTTitle.velocidadDeCrucero)));
+        // Carlos gets lDePracticas (lowest BAC)
+        expect(awards['id_carlos'], equals(DGTTitle.lDePracticas));
       });
     });
 
@@ -228,7 +317,42 @@ void main() {
 
         final awards = TitleEvaluator.evaluateRound(players, 2);
         expect(awards['a'], equals(DGTTitle.multaPorExceso));
+        expect(awards['b'], isNot(equals(DGTTitle.multaPorExceso)));
       });
+
+      test(
+        'awards multaPorExceso to all players sharing the maximum spike',
+        () {
+          final players = [
+            _playerWithReading(
+              id: 'a',
+              bac: 3.0,
+              round: 2,
+              previousBac: 1.0,
+              previousRound: 1,
+            ), // spike = 2.0
+            _playerWithReading(
+              id: 'b',
+              bac: 2.5,
+              round: 2,
+              previousBac: 0.5,
+              previousRound: 1,
+            ), // spike = 2.0 (tied)
+            _playerWithReading(
+              id: 'c',
+              bac: 2.0,
+              round: 2,
+              previousBac: 1.5,
+              previousRound: 1,
+            ), // spike = 0.5
+          ];
+
+          final awards = TitleEvaluator.evaluateRound(players, 2);
+          expect(awards['a'], equals(DGTTitle.multaPorExceso));
+          expect(awards['b'], equals(DGTTitle.multaPorExceso));
+          expect(awards['c'], isNot(equals(DGTTitle.multaPorExceso)));
+        },
+      );
     });
 
     // ── evaluateRound — empty players ────────────────────────────────────────

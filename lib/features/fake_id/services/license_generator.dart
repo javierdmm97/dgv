@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:dgv/core/constants/asset_paths.dart';
+import 'package:dgv/core/models/bac_reading.dart';
 import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
+import 'package:dgv/core/utils/points_calculator.dart';
 
 /// Renders a player's DGT-style license card to a PNG file on disk.
 ///
@@ -63,6 +65,146 @@ class LicenseGenerator {
     final file = File('${dir.path}/license_${player.id}.png');
     await file.writeAsBytes(pngBytes, flush: true);
     return file.path;
+  }
+
+  /// Generates the back-side license PNG for [player] and returns the file path.
+  ///
+  /// Draws a round-by-round BAC table, fine log, total money lost, and
+  /// perfection score onto the back template (600×375 canvas).
+  static Future<String> generateBack(PlayerProfile player) async {
+    final templateImage = await _loadAssetImage(AssetPaths.licenseBack);
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(
+      recorder,
+      const Rect.fromLTWH(0, 0, _cardWidth, _cardHeight),
+    );
+
+    _drawTemplate(canvas, templateImage);
+    _drawBackContent(canvas, player);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(
+      _cardWidth.toInt(),
+      _cardHeight.toInt(),
+    );
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final pngBytes = byteData!.buffer.asUint8List();
+
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/license_back_${player.id}.png');
+    await file.writeAsBytes(pngBytes, flush: true);
+    return file.path;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Back-side drawing helpers
+  // ---------------------------------------------------------------------------
+
+  static void _drawBackContent(Canvas canvas, PlayerProfile player) {
+    const double leftCol = 20;
+    const double rightCol = 310;
+    const double topY = 20;
+    const double rowHeight = 22;
+
+    // --- Section header: round-by-round table ---
+    _drawText(
+      canvas,
+      'HISTORIAL DE RONDAS',
+      const Offset(leftCol, topY),
+      fontSize: 11,
+      bold: true,
+      color: DGTColors.primary,
+    );
+
+    final activeReadings =
+        player.readings.where((r) => r.isActiveRound).toList()
+          ..sort((a, b) => a.roundNumber.compareTo(b.roundNumber));
+
+    double y = topY + rowHeight;
+    for (final reading in activeReadings) {
+      final sign = reading.pointsChange >= 0 ? '+' : '';
+      final line =
+          'R${reading.roundNumber}: ${reading.formattedBAC} mg/L  '
+          '($sign${reading.pointsChange} pts)';
+      _drawText(
+        canvas,
+        line,
+        Offset(leftCol, y),
+        fontSize: 10,
+        color: reading.pointsChange >= 0 ? DGTColors.green : DGTColors.red,
+      );
+      y += rowHeight - 2;
+      if (y > _cardHeight - 60) break; // guard against overflow
+    }
+
+    // --- Section header: fine log ---
+    _drawText(
+      canvas,
+      'MULTAS',
+      const Offset(rightCol, topY),
+      fontSize: 11,
+      bold: true,
+      color: DGTColors.red,
+    );
+
+    final fines = activeReadings
+        .where((r) => PointsCalculator.shouldIssueFine(r.pointsChange))
+        .toList();
+
+    double fy = topY + rowHeight;
+    if (fines.isEmpty) {
+      _drawText(
+        canvas,
+        'Sin multas 🎉',
+        Offset(rightCol, fy),
+        fontSize: 10,
+        color: DGTColors.green,
+      );
+    } else {
+      for (int i = 0; i < fines.length; i++) {
+        final fine = fines[i];
+        _drawText(
+          canvas,
+          'Multa ${i + 1} — Ronda ${fine.roundNumber} — 100€',
+          Offset(rightCol, fy),
+          fontSize: 10,
+          color: DGTColors.red,
+        );
+        fy += rowHeight - 2;
+        if (fy > _cardHeight - 60) break;
+      }
+    }
+
+    // --- Footer: total money lost + perfection score ---
+    const double footerY = _cardHeight - 50;
+
+    _drawText(
+      canvas,
+      'Total perdido: ${player.moneyLost}€',
+      const Offset(leftCol, footerY),
+      fontSize: 11,
+      bold: true,
+      color: DGTColors.textPrimary,
+    );
+
+    final perfScore = PointsCalculator.calculatePerfectionScore(
+      player.readings,
+      player.sex,
+      player.bodySize,
+    );
+    final perfLabel = perfScore == double.infinity
+        ? 'Sin datos'
+        : perfScore.toStringAsFixed(3);
+
+    _drawText(
+      canvas,
+      'Precisión: $perfLabel',
+      const Offset(rightCol, footerY),
+      fontSize: 11,
+      bold: true,
+      color: DGTColors.primary,
+    );
   }
 
   // ---------------------------------------------------------------------------

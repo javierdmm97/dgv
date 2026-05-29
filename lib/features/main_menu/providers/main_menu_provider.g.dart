@@ -6,7 +6,7 @@ part of 'main_menu_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mainMenuNotifierHash() => r'10b3b61186a7c4c533a915f1239a586b912c8e55';
+String _$mainMenuNotifierHash() => r'0a4e43242366aacb124031126441b6611aa90479';
 
 /// Notifier for the main menu screen
 ///

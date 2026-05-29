@@ -41,6 +41,7 @@ class PlayerProfile with _$PlayerProfile {
     @Default(0) int moneyLost,
     required String licenseImagePath,
     @Default(null) DateTime? createdAt,
+    @Default(null) String? licenseBackImagePath,
   }) = _PlayerProfile;
 
   factory PlayerProfile.fromJson(Map<String, dynamic> json) =>
