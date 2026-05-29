@@ -112,6 +112,8 @@ ProviderContainer _makeContainer({
       ),
       checkpointNotifierProvider.overrideWith(() => checkNotifier),
       playerListNotifierProvider.overrideWith(() => _FakePlayerListNotifier()),
+      // Override curveMultiplierProvider to avoid needing a real Hive box
+      curveMultiplierProvider.overrideWith((ref) async => 1.0),
     ],
   );
 }
