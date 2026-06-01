@@ -21,6 +21,7 @@ class LicenseGenerator {
 
   static const double _cardWidth = 600;
   static const double _cardHeight = 375;
+  static const double _pixelRatio = 2.0;
 
   // ---------------------------------------------------------------------------
   // Front layout constants
@@ -55,7 +56,6 @@ class LicenseGenerator {
   static const double _bkStartY = 8;
   static const double _bkRowH = 18;
 
-  static const double _bkRightX = 202;
   static const double _bkEnvIconSize = 82;
 
   // ---------------------------------------------------------------------------
@@ -98,8 +98,9 @@ class LicenseGenerator {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
-      const Rect.fromLTWH(0, 0, _cardWidth, _cardHeight),
+      const Rect.fromLTWH(0, 0, _cardWidth * _pixelRatio, _cardHeight * _pixelRatio),
     );
+    canvas.scale(_pixelRatio, _pixelRatio);
 
     _drawTemplate(canvas, templateImage);
     _drawPhotoOrInitials(canvas, playerPhoto, player);
@@ -114,8 +115,8 @@ class LicenseGenerator {
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(
-      _cardWidth.toInt(),
-      _cardHeight.toInt(),
+      (_cardWidth * _pixelRatio).toInt(),
+      (_cardHeight * _pixelRatio).toInt(),
     );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     final pngBytes = byteData!.buffer.asUint8List();
@@ -169,17 +170,17 @@ class LicenseGenerator {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
-      const Rect.fromLTWH(0, 0, _cardWidth, _cardHeight),
+      const Rect.fromLTWH(0, 0, _cardWidth * _pixelRatio, _cardHeight * _pixelRatio),
     );
+    canvas.scale(_pixelRatio, _pixelRatio);
 
     _drawTemplate(canvas, templateImage);
-    _drawBackLeftPanel(canvas, player, titleImages, fineImage);
-    _drawBackRightPanel(canvas, envImage);
+    _drawBackLeftPanel(canvas, player, titleImages, fineImage, envImage);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(
-      _cardWidth.toInt(),
-      _cardHeight.toInt(),
+      (_cardWidth * _pixelRatio).toInt(),
+      (_cardHeight * _pixelRatio).toInt(),
     );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     final pngBytes = byteData!.buffer.asUint8List();
@@ -204,9 +205,23 @@ class LicenseGenerator {
     if (photo != null) {
       canvas.save();
       canvas.clipRRect(rrect);
+
+      // Cover-fit: crop source to match destination aspect ratio, centred.
+      final srcW = photo.width.toDouble();
+      final srcH = photo.height.toDouble();
+      final dstAspect = _photoRect.width / _photoRect.height;
+      final Rect srcRect;
+      if (srcW / srcH > dstAspect) {
+        final cropW = srcH * dstAspect;
+        srcRect = Rect.fromLTWH((srcW - cropW) / 2, 0, cropW, srcH);
+      } else {
+        final cropH = srcW / dstAspect;
+        srcRect = Rect.fromLTWH(0, (srcH - cropH) / 2, srcW, cropH);
+      }
+
       canvas.drawImageRect(
         photo,
-        Rect.fromLTWH(0, 0, photo.width.toDouble(), photo.height.toDouble()),
+        srcRect,
         _photoRect,
         Paint()..filterQuality = FilterQuality.high,
       );
@@ -381,6 +396,7 @@ class LicenseGenerator {
     PlayerProfile player,
     Map<DGTTitle, ui.Image> titleImages,
     ui.Image? fineImage,
+    ui.Image? envImage,
   ) {
     double y = _bkStartY;
 
@@ -512,6 +528,25 @@ class LicenseGenerator {
       y += iconSize + 8;
     }
 
+    // Distintivo Ambiental — below títulos
+    if (envImage != null) {
+      canvas.drawImageRect(
+        envImage,
+        Rect.fromLTWH(0, 0, envImage.width.toDouble(), envImage.height.toDouble()),
+        Rect.fromLTWH(_bkLeftX, y, _bkEnvIconSize, _bkEnvIconSize),
+        Paint()..filterQuality = FilterQuality.high,
+      );
+      _drawText(
+        canvas,
+        'Distintivo\nAmbiental',
+        Offset(_bkLeftX + _bkEnvIconSize + 6, y + _bkEnvIconSize / 2 - 12),
+        fontSize: 11,
+        bold: true,
+        color: DGTColors.primary,
+      );
+      y += _bkEnvIconSize + 8;
+    }
+
     // Fine icon + count — inline, small
     if (fineImage != null) {
       const double fineSize = 28;
@@ -536,34 +571,6 @@ class LicenseGenerator {
         maxWidth: _bkLeftW - fineSize - 4,
       );
     }
-  }
-
-  // Right panel: environmental sticker only (awarded at export time)
-  static void _drawBackRightPanel(Canvas canvas, ui.Image? envImage) {
-    if (envImage == null) return;
-
-    canvas.drawImageRect(
-      envImage,
-      Rect.fromLTWH(
-        0,
-        0,
-        envImage.width.toDouble(),
-        envImage.height.toDouble(),
-      ),
-      const Rect.fromLTWH(_bkRightX, _bkStartY, _bkEnvIconSize, _bkEnvIconSize),
-      Paint()..filterQuality = FilterQuality.high,
-    );
-    _drawText(
-      canvas,
-      'Distintivo\nAmbiental',
-      const Offset(
-        _bkRightX + _bkEnvIconSize + 6,
-        _bkStartY + _bkEnvIconSize / 2 - 12,
-      ),
-      fontSize: 11,
-      bold: true,
-      color: DGTColors.primary,
-    );
   }
 
   // ---------------------------------------------------------------------------

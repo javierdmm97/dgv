@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- License back side: Distintivo Ambiental sticker moved from right panel to left panel, below Títulos row
+- License export: profile photo no longer stretches — uses cover-fit crop centred on the subject
+- License export: all PNG assets (title icons, stickers) rendered at 2× pixel ratio, eliminating pixelation
+
 ---
 
 ## [1.0.0] - 2026-06-01
