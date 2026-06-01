@@ -42,6 +42,7 @@ class PlayerProfile with _$PlayerProfile {
     required String licenseImagePath,
     @Default(null) DateTime? createdAt,
     @Default(null) String? licenseBackImagePath,
+    @Default(false) bool isIncautado,
   }) = _PlayerProfile;
 
   factory PlayerProfile.fromJson(Map<String, dynamic> json) =>

@@ -1,5 +1,4 @@
 import '../models/bac_reading.dart';
-import '../models/player_profile.dart';
 import 'bac_calculator.dart';
 
 /// Points calculation logic for Phase 2.5 simplified scoring.
@@ -63,22 +62,17 @@ class PointsCalculator {
   }
 
   /// Average distance from the per-round optimal across all active readings.
-  static double calculateAverageDistanceFromOptimal(
-    List<BACReading> readings,
-    Sex sex,
-    BodySize bodySize,
-  ) {
+  ///
+  /// Uses the [optimalBAC] stored on each reading — the exact value used when
+  /// points were awarded — so pre-game beers and any other modifiers are always
+  /// reflected correctly.
+  static double calculateAverageDistanceFromOptimal(List<BACReading> readings) {
     final activeReadings = readings.where((r) => r.roundNumber > 0).toList();
     if (activeReadings.isEmpty) return double.infinity;
 
-    final distances = activeReadings.map((r) {
-      final optimal = BACCalculator.calculateOptimalBrAC(
-        r.roundNumber,
-        sex,
-        bodySize,
-      );
-      return (r.bac - optimal).abs();
-    }).toList();
+    final distances = activeReadings
+        .map((r) => (r.bac - r.optimalBAC).abs())
+        .toList();
 
     return distances.reduce((a, b) => a + b) / distances.length;
   }
@@ -86,25 +80,16 @@ class PointsCalculator {
   /// Perfection score for leaderboard tiebreaker (lower = better).
   ///
   /// Combines average distance from per-round optimal with its variance.
-  static double calculatePerfectionScore(
-    List<BACReading> readings,
-    Sex sex,
-    BodySize bodySize,
-  ) {
+  static double calculatePerfectionScore(List<BACReading> readings) {
     final activeReadings = readings.where((r) => r.roundNumber > 0).toList();
     if (activeReadings.isEmpty) return double.infinity;
 
-    final avg = calculateAverageDistanceFromOptimal(readings, sex, bodySize);
+    final avg = calculateAverageDistanceFromOptimal(readings);
 
     final variance =
         activeReadings
             .map((r) {
-              final optimal = BACCalculator.calculateOptimalBrAC(
-                r.roundNumber,
-                sex,
-                bodySize,
-              );
-              final diff = (r.bac - optimal).abs() - avg;
+              final diff = (r.bac - r.optimalBAC).abs() - avg;
               return diff * diff;
             })
             .reduce((a, b) => a + b) /

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dgv/core/models/bac_reading.dart';
-import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/utils/points_calculator.dart';
 
 void main() {
@@ -11,17 +10,12 @@ void main() {
     group('calculateAverageDistanceFromOptimal', () {
       test('returns infinity for empty readings list', () {
         expect(
-          PointsCalculator.calculateAverageDistanceFromOptimal(
-            [],
-            Sex.male,
-            BodySize.medium,
-          ),
+          PointsCalculator.calculateAverageDistanceFromOptimal([]),
           equals(double.infinity),
         );
       });
 
       test('returns zero when every reading is exactly at optimal', () {
-        // For medium male: round 1 optimal = 0.111, round 2 optimal = 0.223
         final readings = [
           BACReading(
             id: 'r1',
@@ -30,6 +24,7 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 1,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.111,
           ),
           BACReading(
             id: 'r2',
@@ -38,22 +33,17 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 2,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.223,
           ),
         ];
         expect(
-          PointsCalculator.calculateAverageDistanceFromOptimal(
-            readings,
-            Sex.male,
-            BodySize.medium,
-          ),
+          PointsCalculator.calculateAverageDistanceFromOptimal(readings),
           closeTo(0.0, 0.0001),
         );
       });
 
       test('returns correct average for symmetric readings', () {
-        // Round 1 optimal for medium male = 0.111, reading = 0.611 -> distance 0.5
-        // Round 2 optimal for medium male = 0.223, reading = 0.723 -> distance 0.5
-        // Average = 0.5
+        // Distance R1: |0.611 - 0.111| = 0.5, Distance R2: |0.723 - 0.223| = 0.5
         final readings = [
           BACReading(
             id: 'r1',
@@ -62,6 +52,7 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 1,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.111,
           ),
           BACReading(
             id: 'r2',
@@ -70,14 +61,11 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 2,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.223,
           ),
         ];
         expect(
-          PointsCalculator.calculateAverageDistanceFromOptimal(
-            readings,
-            Sex.male,
-            BodySize.medium,
-          ),
+          PointsCalculator.calculateAverageDistanceFromOptimal(readings),
           closeTo(0.5, 0.0001),
         );
       });

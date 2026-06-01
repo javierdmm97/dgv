@@ -6,11 +6,10 @@ import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
-import 'package:dgv/widgets/massive_button.dart';
 
 /// Full-screen colored notification shown after each BAC entry (Round 1+).
 ///
-/// Auto-dismisses after [AppConstants.feedbackDuration].
+/// Tap anywhere (or wait for auto-close) to dismiss.
 /// Receives [BACEntryResult] as route argument.
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key, required this.result});
@@ -44,29 +43,38 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget build(BuildContext context) {
     final result = widget.result;
 
-    return Scaffold(
-      backgroundColor: result.feedbackColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              _PlayerName(name: result.playerName),
-              const SizedBox(height: 16),
-              _PointsDelta(pointsChange: result.pointsChange),
-              const SizedBox(height: 12),
-              _Message(message: result.feedbackMessage),
-              const SizedBox(height: 12),
-              _BACLabel(bac: result.bac),
-              if (result.awardedTitle != null) ...[
+    return GestureDetector(
+      onTap: _close,
+      child: Scaffold(
+        backgroundColor: result.feedbackColor,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Spacer(),
+                _PlayerName(name: result.playerName),
                 const SizedBox(height: 16),
-                _TitleAward(title: result.awardedTitle!),
+                _PointsDelta(pointsChange: result.pointsChange),
+                const SizedBox(height: 12),
+                _Message(message: result.feedbackMessage),
+                const SizedBox(height: 12),
+                _BACLabel(bac: result.bac),
+                if (result.awardedTitle != null) ...[
+                  const SizedBox(height: 16),
+                  _TitleAward(title: result.awardedTitle!),
+                ],
+                const Spacer(),
+                Text(
+                  'Toca para continuar',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: DGTColors.textPrimary.withValues(alpha: 0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ],
-              const Spacer(),
-              MassiveButton(text: 'Continuar', onPressed: _close),
-            ],
+            ),
           ),
         ),
       ),

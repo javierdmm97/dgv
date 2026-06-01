@@ -15,6 +15,7 @@ class GameState with _$GameState {
     @Default([]) List<String> playerIds,
     @Default(null) DateTime? lastCheckpointTime,
     @Default(null) DateTime? finishTime,
+    @Default(0.0) double preGameBeers,
   }) = _GameState;
 
   factory GameState.fromJson(Map<String, dynamic> json) =>

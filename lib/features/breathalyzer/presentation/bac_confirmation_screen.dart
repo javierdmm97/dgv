@@ -23,9 +23,17 @@ class BacConfirmationArgs {
 ///
 /// No Hive writes occur until "Confirmar" is tapped.
 class BacConfirmationScreen extends ConsumerStatefulWidget {
-  const BacConfirmationScreen({super.key, required this.args});
+  const BacConfirmationScreen({
+    super.key,
+    required this.args,
+    this.previewMode = false,
+  });
 
   final BacConfirmationArgs args;
+
+  /// When true, calls calculatePreview() instead of submitBAC() — no Hive writes.
+  /// Used by the staged Retén flow.
+  final bool previewMode;
 
   @override
   ConsumerState<BacConfirmationScreen> createState() =>
@@ -40,9 +48,16 @@ class _BacConfirmationScreenState extends ConsumerState<BacConfirmationScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final result = await ref
-          .read(bACEntryNotifierProvider.notifier)
-          .submitBAC(widget.args.player.id, widget.args.enteredValue);
+      final notifier = ref.read(bACEntryNotifierProvider.notifier);
+      final result = widget.previewMode
+          ? await notifier.calculatePreview(
+              widget.args.player.id,
+              widget.args.enteredValue,
+            )
+          : await notifier.submitBAC(
+              widget.args.player.id,
+              widget.args.enteredValue,
+            );
       if (mounted) Navigator.pop(context, result);
     } on Exception {
       if (mounted) setState(() => _isSubmitting = false);

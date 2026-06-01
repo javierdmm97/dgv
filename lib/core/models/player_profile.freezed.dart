@@ -36,6 +36,7 @@ mixin _$PlayerProfile {
   String get licenseImagePath => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   String? get licenseBackImagePath => throw _privateConstructorUsedError;
+  bool get isIncautado => throw _privateConstructorUsedError;
 
   /// Serializes this PlayerProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -70,6 +71,7 @@ abstract class $PlayerProfileCopyWith<$Res> {
     String licenseImagePath,
     DateTime? createdAt,
     String? licenseBackImagePath,
+    bool isIncautado,
   });
 }
 
@@ -103,6 +105,7 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
     Object? licenseBackImagePath = freezed,
+    Object? isIncautado = null,
   }) {
     return _then(
       _value.copyWith(
@@ -166,6 +169,10 @@ class _$PlayerProfileCopyWithImpl<$Res, $Val extends PlayerProfile>
                 ? _value.licenseBackImagePath
                 : licenseBackImagePath // ignore: cast_nullable_to_non_nullable
                       as String?,
+            isIncautado: null == isIncautado
+                ? _value.isIncautado
+                : isIncautado // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -197,6 +204,7 @@ abstract class _$$PlayerProfileImplCopyWith<$Res>
     String licenseImagePath,
     DateTime? createdAt,
     String? licenseBackImagePath,
+    bool isIncautado,
   });
 }
 
@@ -229,6 +237,7 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
     Object? licenseImagePath = null,
     Object? createdAt = freezed,
     Object? licenseBackImagePath = freezed,
+    Object? isIncautado = null,
   }) {
     return _then(
       _$PlayerProfileImpl(
@@ -292,6 +301,10 @@ class __$$PlayerProfileImplCopyWithImpl<$Res>
             ? _value.licenseBackImagePath
             : licenseBackImagePath // ignore: cast_nullable_to_non_nullable
                   as String?,
+        isIncautado: null == isIncautado
+            ? _value.isIncautado
+            : isIncautado // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -316,6 +329,7 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     required this.licenseImagePath,
     this.createdAt = null,
     this.licenseBackImagePath = null,
+    this.isIncautado = false,
   }) : _readings = readings,
        _titleCounts = titleCounts;
 
@@ -372,10 +386,13 @@ class _$PlayerProfileImpl implements _PlayerProfile {
   @override
   @JsonKey()
   final String? licenseBackImagePath;
+  @override
+  @JsonKey()
+  final bool isIncautado;
 
   @override
   String toString() {
-    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, fineCount: $fineCount, moneyLost: $moneyLost, licenseImagePath: $licenseImagePath, createdAt: $createdAt, licenseBackImagePath: $licenseBackImagePath)';
+    return 'PlayerProfile(id: $id, name: $name, surname: $surname, photoPath: $photoPath, sex: $sex, bodySize: $bodySize, points: $points, readings: $readings, titleCounts: $titleCounts, crossedOptimalLine: $crossedOptimalLine, fineCount: $fineCount, moneyLost: $moneyLost, licenseImagePath: $licenseImagePath, createdAt: $createdAt, licenseBackImagePath: $licenseBackImagePath, isIncautado: $isIncautado)';
   }
 
   @override
@@ -408,7 +425,9 @@ class _$PlayerProfileImpl implements _PlayerProfile {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.licenseBackImagePath, licenseBackImagePath) ||
-                other.licenseBackImagePath == licenseBackImagePath));
+                other.licenseBackImagePath == licenseBackImagePath) &&
+            (identical(other.isIncautado, isIncautado) ||
+                other.isIncautado == isIncautado));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -430,6 +449,7 @@ class _$PlayerProfileImpl implements _PlayerProfile {
     licenseImagePath,
     createdAt,
     licenseBackImagePath,
+    isIncautado,
   );
 
   /// Create a copy of PlayerProfile
@@ -463,6 +483,7 @@ abstract class _PlayerProfile implements PlayerProfile {
     required final String licenseImagePath,
     final DateTime? createdAt,
     final String? licenseBackImagePath,
+    final bool isIncautado,
   }) = _$PlayerProfileImpl;
 
   factory _PlayerProfile.fromJson(Map<String, dynamic> json) =
@@ -498,6 +519,8 @@ abstract class _PlayerProfile implements PlayerProfile {
   DateTime? get createdAt;
   @override
   String? get licenseBackImagePath;
+  @override
+  bool get isIncautado;
 
   /// Create a copy of PlayerProfile
   /// with the given fields replaced by the non-null parameter values.

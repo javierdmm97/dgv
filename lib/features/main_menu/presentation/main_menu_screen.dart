@@ -1,9 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:dgv/core/constants/dgt_strings.dart';
 import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/providers/game_state_providers.dart';
+import 'package:dgv/core/providers/player_providers.dart';
+import 'package:dgv/core/providers/repository_providers.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/main_menu/presentation/widgets/fake_error_notification.dart';
 import 'package:dgv/features/main_menu/presentation/widgets/fake_news_section.dart';
@@ -25,6 +30,7 @@ class _AppDrawer extends ConsumerWidget {
 
     return Drawer(
       backgroundColor: DGTColors.surface,
+      shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -48,10 +54,7 @@ class _AppDrawer extends ConsumerWidget {
                     label: 'Mis Vehículos',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.playerRegistration,
-                      );
+                      Navigator.pushNamed(context, AppRoutes.vehicleList);
                     },
                   ),
                   if (isGameInProgress) ...[
@@ -97,11 +100,7 @@ class _AppDrawer extends ConsumerWidget {
                       ),
                       onPressed: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ajustes — Próximamente'),
-                          ),
-                        );
+                        Navigator.pushNamed(context, AppRoutes.settings);
                       },
                     ),
                   ),
@@ -137,22 +136,13 @@ class _DrawerHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text(
-                'DGV',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/dgv_logo.png',
+              height: 64,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
             ),
           ),
           const SizedBox(height: 12),
@@ -273,6 +263,7 @@ class _MainMenuBody extends StatelessWidget {
               articles: kFakeNewsArticles,
               onViewAll: () => Navigator.pushNamed(context, AppRoutes.fakeNews),
             ),
+            if (kDebugMode) const _DebugSeedSection(),
             const SizedBox(height: 32),
           ]),
         ),
@@ -282,7 +273,7 @@ class _MainMenuBody extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _MainMenuHeader — DGT logo + menu icon row
+// _MainMenuHeader — DGV logo + menu icon row
 // ---------------------------------------------------------------------------
 
 class _MainMenuHeader extends StatelessWidget {
@@ -297,12 +288,13 @@ class _MainMenuHeader extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              DGTStrings.mainMenuTitle,
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: DGTColors.primary,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+            // DGV transparent logo
+            Expanded(
+              child: Image.asset(
+                'assets/dgv_logo_transparent.png',
+                height: 48,
+                fit: BoxFit.contain,
+                alignment: Alignment.centerLeft,
               ),
             ),
             IconButton(
@@ -334,6 +326,12 @@ class _GameActionSection extends ConsumerWidget {
         ? DGTStrings.resumeGame
         : DGTStrings.startGame;
 
+    final gameState = ref.watch(gameStateNotifierProvider).value;
+    final currentRound = gameState?.currentRound ?? 0;
+    final canFinish =
+        state.isGameInProgress &&
+        (kDebugMode ? currentRound >= 1 : currentRound >= 5);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -351,6 +349,14 @@ class _GameActionSection extends ConsumerWidget {
           ),
           if (state.isGameInProgress) ...[
             const SizedBox(height: 8),
+            MassiveButton(
+              text: 'Finalizar Partida',
+              icon: Icons.flag_outlined,
+              isEnabled: canFinish,
+              backgroundColor: DGTColors.green,
+              onPressed: canFinish ? () => _confirmFinish(context, ref) : null,
+            ),
+            const SizedBox(height: 8),
             OutlinedButton.icon(
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Nueva Partida'),
@@ -365,6 +371,30 @@ class _GameActionSection extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmFinish(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Finalizar la partida?'),
+        content: const Text('Mínimo 5 rondas completadas.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Finalizar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      Navigator.pushNamed(context, AppRoutes.finalCeremony);
+    }
   }
 
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
@@ -412,14 +442,17 @@ class _MisVehiculosSection extends StatelessWidget {
         _SectionHeading(
           title: DGTStrings.myVehicles,
           trailing: TextButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text(DGTStrings.addPlayer),
+            icon: const Icon(Icons.grid_view_outlined),
+            label: const Text('Ver todos'),
             onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.playerRegistration),
+                Navigator.pushNamed(context, AppRoutes.vehicleList),
           ),
         ),
         const SizedBox(height: 8),
-        _PlayerList(players: state.players),
+        _PlayerList(
+          players: state.players,
+          isGameInProgress: state.isGameInProgress,
+        ),
       ],
     );
   }
@@ -452,14 +485,37 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
-class _PlayerList extends StatelessWidget {
-  const _PlayerList({required this.players});
+class _PlayerList extends ConsumerStatefulWidget {
+  const _PlayerList({required this.players, required this.isGameInProgress});
 
   final List<PlayerProfile> players;
+  final bool isGameInProgress;
+
+  @override
+  ConsumerState<_PlayerList> createState() => _PlayerListState();
+}
+
+class _PlayerListState extends ConsumerState<_PlayerList> {
+  static const _pageSize = 5;
+  int _visibleCount = _pageSize;
+
+  List<PlayerProfile> get _visible =>
+      widget.players.take(_visibleCount).toList();
+
+  bool get _hasMore => _visibleCount < widget.players.length;
+
+  @override
+  void didUpdateWidget(_PlayerList old) {
+    super.didUpdateWidget(old);
+    // Reset page when the list changes (e.g. after seed/clear).
+    if (old.players.length != widget.players.length) {
+      _visibleCount = _pageSize;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (players.isEmpty) {
+    if (widget.players.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Center(
@@ -473,24 +529,203 @@ class _PlayerList extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: players.length,
-      separatorBuilder: (_, i) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final player = players[index];
-        return LicenseCard(
-          key: ValueKey(player.id),
-          player: player,
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRoutes.license,
-            arguments: player.id,
+    return Column(
+      children: [
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: _visible.length,
+          separatorBuilder: (_, i) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final player = _visible[index];
+
+            Widget card = RepaintBoundary(
+              key: ValueKey(player.id),
+              child: LicenseCard(
+                player: player,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.license,
+                  arguments: player.id,
+                ),
+                onEdit: widget.isGameInProgress
+                    ? null
+                    : () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.playerEdit,
+                        arguments: player,
+                      ),
+              ),
+            );
+
+            if (!widget.isGameInProgress) {
+              card = Dismissible(
+                key: ValueKey('dismiss_${player.id}'),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmDelete(context, player),
+                onDismissed: (_) => ref
+                    .read(playerListNotifierProvider.notifier)
+                    .deletePlayer(player.id),
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  color: DGTColors.red,
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                child: card,
+              );
+            }
+
+            return card;
+          },
+        ),
+        if (_hasMore) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => setState(
+              () => _visibleCount = (_visibleCount + _pageSize).clamp(
+                0,
+                widget.players.length,
+              ),
+            ),
+            child: Text(
+              'Ver más (${widget.players.length - _visibleCount} restantes)',
+              style: const TextStyle(color: DGTColors.primary),
+            ),
           ),
-        );
-      },
+        ],
+      ],
+    );
+  }
+
+  Future<bool?> _confirmDelete(BuildContext context, PlayerProfile player) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Eliminar a ${player.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: DGTColors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DEBUG ONLY — seed / clear players
+// ---------------------------------------------------------------------------
+
+class _DebugSeedSection extends ConsumerWidget {
+  const _DebugSeedSection();
+
+  static const _fakePlayers = [
+    ('Álvaro', 'García', Sex.male, BodySize.large),
+    ('Beatriz', 'López', Sex.female, BodySize.medium),
+    ('Carlos', 'Martín', Sex.male, BodySize.medium),
+    ('Diana', 'Sánchez', Sex.female, BodySize.small),
+    ('Eduardo', 'Pérez', Sex.male, BodySize.large),
+    ('Fátima', 'Romero', Sex.female, BodySize.medium),
+    ('Gonzalo', 'Torres', Sex.male, BodySize.small),
+    ('Helena', 'Vidal', Sex.female, BodySize.large),
+    ('Ignacio', 'Mora', Sex.male, BodySize.medium),
+  ];
+
+  Future<void> _seed(WidgetRef ref) async {
+    const uuid = Uuid();
+    final repo = ref.read(playerRepositoryProvider);
+    for (final (name, surname, sex, size) in _fakePlayers) {
+      await repo.save(
+        PlayerProfile(
+          id: uuid.v4(),
+          name: name,
+          surname: surname,
+          photoPath: '',
+          sex: sex,
+          bodySize: size,
+          licenseImagePath: '',
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+    ref.invalidate(playerListNotifierProvider);
+  }
+
+  Future<void> _clear(WidgetRef ref) async {
+    final repo = ref.read(playerRepositoryProvider);
+    await repo.clearAll();
+    ref.invalidate(playerListNotifierProvider);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.deepPurple.withValues(alpha: 0.3),
+              ),
+            ),
+            child: const Text(
+              'DEBUG',
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.group_add_outlined, size: 18),
+                  label: const Text('Seed 7 jugadores'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.deepPurple,
+                    side: const BorderSide(color: Colors.deepPurple),
+                  ),
+                  onPressed: () => _seed(ref),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                  label: const Text('Borrar todos'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: DGTColors.red,
+                    side: const BorderSide(color: DGTColors.red),
+                  ),
+                  onPressed: () => _clear(ref),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

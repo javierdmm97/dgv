@@ -14,42 +14,37 @@ class BACCalculator {
   // Based on real consumption patterns: gradual build-up, plateau, wind-down
   static const Map<Sex, Map<BodySize, List<double>>> _partyModeTargets = {
     Sex.male: {
-      // M-S (~65kg): 7.3 tercios total (~2.4L)
+      // M-S (~65kg)
       BodySize.small: [
-        0.105,
-        0.210,
-        0.315,
-        0.420,
-        0.525,
-        0.630, // Consumo constante hasta Peak en H6
-        0.555, 0.480, 0.405, 0.330, // Wind-down (-0.075 mg/L por hora)
+        0.105, 0.210, 0.315, 0.420, 0.525, 0.630, 0.735, // R1–R7, peak at R7
+        0.735, 0.735, 0.735, // R8–R10 plateau
       ],
-      // M-M (~78kg): 9.1 tercios total (~3.0L)
+      // M-M (~78kg)
       BodySize.medium: [
-        0.111, 0.223, 0.335, 0.446, 0.558, 0.670, // Peak en H6
-        0.595, 0.520, 0.445, 0.370, // Wind-down
+        0.111, 0.223, 0.335, 0.446, 0.558, 0.670, 0.782, // R1–R7, peak at R7
+        0.782, 0.782, 0.782, // R8–R10 plateau
       ],
-      // M-L (~95kg): 11.8 tercios total (~3.9L)
+      // M-L (~95kg)
       BodySize.large: [
-        0.125, 0.250, 0.375, 0.500, 0.625, 0.750, // Peak en H6
-        0.675, 0.600, 0.525, 0.450, // Wind-down
+        0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 0.875, // R1–R7, peak at R7
+        0.875, 0.875, 0.875, // R8–R10 plateau
       ],
     },
     Sex.female: {
-      // F-S (~55kg): 4.5 tercios total (~1.5L)
+      // F-S (~55kg)
       BodySize.small: [
-        0.086, 0.173, 0.260, 0.346, 0.433, 0.520, // Peak en H6
-        0.445, 0.370, 0.295, 0.220, // Wind-down
+        0.086, 0.173, 0.260, 0.346, 0.433, 0.520, 0.607, // R1–R7, peak at R7
+        0.607, 0.607, 0.607, // R8–R10 plateau
       ],
-      // F-M (~65kg): 6.0 tercios total (~2.0L)
+      // F-M (~65kg)
       BodySize.medium: [
-        0.108, 0.216, 0.325, 0.433, 0.541, 0.650, // Peak en H6
-        0.575, 0.500, 0.425, 0.350, // Wind-down
+        0.108, 0.216, 0.325, 0.433, 0.541, 0.650, 0.758, // R1–R7, peak at R7
+        0.758, 0.758, 0.758, // R8–R10 plateau
       ],
-      // F-L (~80kg): 7.8 tercios total (~2.6L)
+      // F-L (~80kg)
       BodySize.large: [
-        0.118, 0.236, 0.355, 0.473, 0.591, 0.710, // Peak en H6
-        0.635, 0.560, 0.485, 0.410, // Wind-down
+        0.118, 0.236, 0.355, 0.473, 0.591, 0.710, 0.828, // R1–R7, peak at R7
+        0.828, 0.828, 0.828, // R8–R10 plateau
       ],
     },
   };
@@ -78,6 +73,27 @@ class BACCalculator {
 
     return raw * curveMultiplier;
   }
+
+  /// BrAC offset (mg/L) for a given number of pre-game beers.
+  ///
+  /// Uses the Widmark formula: BrAC = grams_alcohol / (weight × r × 2.1)
+  /// The 2.1 factor converts g/L blood to mg/L breath (Henry's law).
+  /// Each player profile produces a different offset from the same beer count.
+  static double preGameBacOffset(double beers, Sex sex, BodySize bodySize) {
+    if (beers <= 0) return 0.0;
+    final weight = _bodyWeight(bodySize);
+    final r = sex == Sex.male
+        ? AppConstants.widmarkRMale
+        : AppConstants.widmarkRFemale;
+    final grams = beers * AppConstants.gramsAlcoholPerStandardBeer;
+    return grams / (weight * r * 2.1);
+  }
+
+  static double _bodyWeight(BodySize size) => switch (size) {
+    BodySize.small => AppConstants.bodyWeightSmall,
+    BodySize.medium => AppConstants.bodyWeightMedium,
+    BodySize.large => AppConstants.bodyWeightLarge,
+  };
 
   /// Raw party-mode target for a given round (1–10) directly from the table.
   /// Returns null for rounds outside [1, 10].

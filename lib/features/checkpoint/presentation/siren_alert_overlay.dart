@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dgv/core/constants/app_constants.dart';
@@ -10,6 +9,7 @@ import 'package:dgv/core/theme/dgt_colors.dart';
 ///
 /// Shown via [Navigator.push] with a transparent background.
 /// Auto-dismisses after [AppConstants.sirenDuration].
+/// Bug #3 fix: Audio removed entirely — visual animation only.
 class SirenAlertOverlay extends StatefulWidget {
   const SirenAlertOverlay({super.key});
 
@@ -21,7 +21,6 @@ class _SirenAlertOverlayState extends State<SirenAlertOverlay> {
   bool _isRed = true;
   Timer? _flashTimer;
   Timer? _closeTimer;
-  AudioPlayer? _audioPlayer;
 
   @override
   void initState() {
@@ -33,24 +32,14 @@ class _SirenAlertOverlayState extends State<SirenAlertOverlay> {
     );
     // Close after siren duration
     _closeTimer = Timer(AppConstants.sirenDuration, _dismiss);
-    _playAudio();
-  }
-
-  Future<void> _playAudio() async {
-    try {
-      _audioPlayer = AudioPlayer();
-      await _audioPlayer!.play(AssetSource('sound/policia_control.mp3'));
-    } on Exception {
-      // Degrade silently — visual animation continues
-    }
+    // Bug #3 fix: Removed audio playback
   }
 
   @override
   void dispose() {
     _flashTimer?.cancel();
     _closeTimer?.cancel();
-    unawaited(_audioPlayer?.stop());
-    _audioPlayer?.dispose();
+    // Bug #3 fix: Removed audio player disposal
     super.dispose();
   }
 

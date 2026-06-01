@@ -28,6 +28,7 @@ mixin _$BACReading {
   int get roundNumber => throw _privateConstructorUsedError;
   BACEntryMethod get entryMethod => throw _privateConstructorUsedError;
   int get pointsChange => throw _privateConstructorUsedError;
+  double get optimalBAC => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
 
   /// Serializes this BACReading to a JSON map.
@@ -55,6 +56,7 @@ abstract class $BACReadingCopyWith<$Res> {
     int roundNumber,
     BACEntryMethod entryMethod,
     int pointsChange,
+    double optimalBAC,
     String? notes,
   });
 }
@@ -81,6 +83,7 @@ class _$BACReadingCopyWithImpl<$Res, $Val extends BACReading>
     Object? roundNumber = null,
     Object? entryMethod = null,
     Object? pointsChange = null,
+    Object? optimalBAC = null,
     Object? notes = freezed,
   }) {
     return _then(
@@ -113,6 +116,10 @@ class _$BACReadingCopyWithImpl<$Res, $Val extends BACReading>
                 ? _value.pointsChange
                 : pointsChange // ignore: cast_nullable_to_non_nullable
                       as int,
+            optimalBAC: null == optimalBAC
+                ? _value.optimalBAC
+                : optimalBAC // ignore: cast_nullable_to_non_nullable
+                      as double,
             notes: freezed == notes
                 ? _value.notes
                 : notes // ignore: cast_nullable_to_non_nullable
@@ -140,6 +147,7 @@ abstract class _$$BACReadingImplCopyWith<$Res>
     int roundNumber,
     BACEntryMethod entryMethod,
     int pointsChange,
+    double optimalBAC,
     String? notes,
   });
 }
@@ -165,6 +173,7 @@ class __$$BACReadingImplCopyWithImpl<$Res>
     Object? roundNumber = null,
     Object? entryMethod = null,
     Object? pointsChange = null,
+    Object? optimalBAC = null,
     Object? notes = freezed,
   }) {
     return _then(
@@ -197,6 +206,10 @@ class __$$BACReadingImplCopyWithImpl<$Res>
             ? _value.pointsChange
             : pointsChange // ignore: cast_nullable_to_non_nullable
                   as int,
+        optimalBAC: null == optimalBAC
+            ? _value.optimalBAC
+            : optimalBAC // ignore: cast_nullable_to_non_nullable
+                  as double,
         notes: freezed == notes
             ? _value.notes
             : notes // ignore: cast_nullable_to_non_nullable
@@ -217,6 +230,7 @@ class _$BACReadingImpl implements _BACReading {
     required this.roundNumber,
     required this.entryMethod,
     this.pointsChange = 0,
+    this.optimalBAC = 0.0,
     this.notes = null,
   });
 
@@ -240,11 +254,14 @@ class _$BACReadingImpl implements _BACReading {
   final int pointsChange;
   @override
   @JsonKey()
+  final double optimalBAC;
+  @override
+  @JsonKey()
   final String? notes;
 
   @override
   String toString() {
-    return 'BACReading(id: $id, playerId: $playerId, bac: $bac, timestamp: $timestamp, roundNumber: $roundNumber, entryMethod: $entryMethod, pointsChange: $pointsChange, notes: $notes)';
+    return 'BACReading(id: $id, playerId: $playerId, bac: $bac, timestamp: $timestamp, roundNumber: $roundNumber, entryMethod: $entryMethod, pointsChange: $pointsChange, optimalBAC: $optimalBAC, notes: $notes)';
   }
 
   @override
@@ -264,6 +281,8 @@ class _$BACReadingImpl implements _BACReading {
                 other.entryMethod == entryMethod) &&
             (identical(other.pointsChange, pointsChange) ||
                 other.pointsChange == pointsChange) &&
+            (identical(other.optimalBAC, optimalBAC) ||
+                other.optimalBAC == optimalBAC) &&
             (identical(other.notes, notes) || other.notes == notes));
   }
 
@@ -278,6 +297,7 @@ class _$BACReadingImpl implements _BACReading {
     roundNumber,
     entryMethod,
     pointsChange,
+    optimalBAC,
     notes,
   );
 
@@ -304,6 +324,7 @@ abstract class _BACReading implements BACReading {
     required final int roundNumber,
     required final BACEntryMethod entryMethod,
     final int pointsChange,
+    final double optimalBAC,
     final String? notes,
   }) = _$BACReadingImpl;
 
@@ -324,6 +345,8 @@ abstract class _BACReading implements BACReading {
   BACEntryMethod get entryMethod;
   @override
   int get pointsChange;
+  @override
+  double get optimalBAC;
   @override
   String? get notes;
 

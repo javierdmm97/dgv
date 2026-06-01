@@ -1,11 +1,14 @@
+import 'package:hive/hive.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../data/repositories/player_repository.dart';
-import '../../data/repositories/player_repository_impl.dart';
-import '../../data/repositories/game_state_repository.dart';
-import '../../data/repositories/game_state_repository_impl.dart';
+
 import '../../data/repositories/checkpoint_repository.dart';
 import '../../data/repositories/checkpoint_repository_impl.dart';
-import '../../data/repositories/curve_settings_repository.dart';
+import '../../data/repositories/game_state_repository.dart';
+import '../../data/repositories/game_state_repository_impl.dart';
+import '../../data/repositories/hive_visual_style_repository.dart';
+import '../../data/repositories/player_repository.dart';
+import '../../data/repositories/player_repository_impl.dart';
+import '../../data/repositories/visual_style_repository.dart';
 
 part 'repository_providers.g.dart';
 
@@ -27,17 +30,9 @@ CheckpointRepository checkpointRepository(CheckpointRepositoryRef ref) {
   return CheckpointRepositoryImpl();
 }
 
-/// Curve settings repository provider
+/// Visual style repository provider
 @riverpod
-CurveSettingsRepository curveSettingsRepository(
-  CurveSettingsRepositoryRef ref,
-) {
-  return HiveCurveSettingsRepository();
-}
-
-/// Current curve multiplier value (defaults to 1.00 if not persisted)
-@riverpod
-Future<double> curveMultiplier(CurveMultiplierRef ref) async {
-  final repo = ref.watch(curveSettingsRepositoryProvider);
-  return repo.getMultiplier();
+VisualStyleRepository visualStyleRepository(VisualStyleRepositoryRef ref) {
+  final box = Hive.box<Map<dynamic, dynamic>>('visual_style');
+  return HiveVisualStyleRepository(box);
 }

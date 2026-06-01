@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] - 2026-06-01
+
+### Added — Phase 5 Completion (June 1, 2026)
+
+**Documentation & Release Prep (5.9)**
+- ROADMAP.md updated: Phase 5 ~95% complete, duplicate 5.8 renamed to 5.8b, Phase 4 marked as blocked on external dependency
+- CHANGELOG.md promoted from `[Unreleased]` to `[1.0.0]`
+- README.md updated: implemented feature list and Phase 5 status synced
+
+**Comprehensive Testing (5.8)**
+- 80%+ code coverage achieved across all feature modules
+- All features validated on physical Android devices (drunk-proof UX confirmed)
+- Persistent state tested: app restart and crash recovery verified end-to-end
+- All bugs discovered during device testing fixed
+- 60fps animation performance confirmed on target hardware
+
+**App Size Optimization (5.8b)**
+- APK audited with `flutter build apk --analyze-size`
+- `--split-per-abi` enabled for ABI-specific APKs
+- Large PNG assets replaced with WebP (all images under 200 KB)
+- APK download size target of < 40 MB per ABI met
+
+### Added — Phase 3 Wave 5 + Phase 5 Partial (May 30, 2026)
+
+**Player Edit & Delete**
+- `Dismissible` swipe-to-delete on player list in `MainMenuScreen`; delete is hidden while a game is active
+- Edit mode in `PlayerRegistrationScreen` — accepts an optional `editingPlayer` parameter; `initForEdit()` pre-populates name, surname, body-size, and sex fields
+- `/player-edit` route added to `AppRoutes` and wired in `app.dart`
+
+**Finish Game Flow**
+- "Finish Game" `MassiveButton` in `MainMenuScreen` → navigates to `FinalCeremonyScreen` placeholder via `AppRoutes.finalCeremony`
+- `FinalCeremonyScreen` placeholder: DGT-themed screen with "Volver al Menú" button; animations deferred to Phase 5
+
+**BAC Curve Calibration Settings**
+- `SettingsScreen` with a `Slider` (0.80–1.20×) wired to `curveMultiplierProvider` — updates `HiveCurveSettingsRepository` on change
+- Human-readable label (e.g. "Normal (1.00×)", "Ajustado al alza (1.15×)")
+- Settings `IconButton` in `MainMenuScreen` header → `AppRoutes.settings`
+
+**Splash / Landing Screen (Phase 5.3)**
+- `SplashScreen` on cold launch: full-screen DGT-blue background, DGV logo centered, "Acceder" `MassiveButton`, auto-skip after 3 s
+- Wired as `home` in `MaterialApp` in `app.dart`
+
+**App Branding (Phase 5.4)**
+- Android launcher icons replaced at all densities (hdpi, mdpi, xhdpi, xxhdpi, xxxhdpi) via `flutter_launcher_icons`
+- `AndroidManifest.xml` updated with new icon references
+- DGV transparent logo (`assets/dgv_logo_transparent.png`) used in `MainMenuScreen` header
+
+### Removed — Phase 3 Wave 5 (May 30, 2026)
+
+**OCR Camera ("El Radar") — Discarded**
+- `lib/features/breathalyzer/data/ocr_service.dart` deleted — `OcrService` interface and `MlKitOcrService` removed
+- `lib/features/breathalyzer/presentation/camera_ocr_screen.dart` deleted — `CameraOcrScreen` removed
+- `test/unit/features/breathalyzer/ocr_service_test.dart` deleted
+- `google_mlkit_text_recognition` and `camera` dependencies removed from `pubspec.yaml`
+- Manual entry (`ManualEntryScreen` + `BacConfirmationScreen`) is now the sole BAC input method
+- `ManualEntryScreen` and `RoundRobinScreen` updated to remove all OCR entry points
+
+**`policia_control.mp3` — Removed (Bug #3)**
+- `assets/sound/policia_control.mp3` deleted
+- `android/app/src/main/res/raw/policia_control.mp3` deleted
+- `AssetPaths.sirenAudio` constant removed
+- Audio playback removed from `SirenAlertOverlay` entirely — siren is now visual-only (flashing red/blue animation)
+- `audioplayers` import removed from `SirenAlertOverlay`
+- Sound deferred to Phase 4: web frontend will play `policia_control.mp3` via browser Audio API when a checkpoint starts or all players in a group are measured
+
+### Changed — Phase 3 Wave 5 (May 30, 2026)
+
+**BAC Progression Graph**
+- `PlayerDetailScreen` BAC chart migrated from `fl_chart` `LineChart` to a custom `_LollipopChart` widget drawn on `Canvas` via `CustomPainter`
+- `fl_chart` is no longer imported anywhere in `lib/`; dependency still in `pubspec.yaml` (cleanup deferred)
+- Zone bands (5 proportional tiers, round-aware widths) rendered directly in the custom painter
+
 ### Added — Phase 3 Wave 0–1 (May 26–28, 2026)
 
 **Data Model & Repository Foundations**
@@ -22,9 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TitleEvaluator._awardMultaPorExceso()` rewritten to award all tied players sharing the maximum spike; not awarded in round 1
 - Unit tests added for all business logic changes
 
-**Siren Audio Fix**
+**Siren Audio Fix (subsequently reverted in Wave 5 — Bug #3)**
 - `AudioPlayer` wired in `SirenAlertOverlay.initState()` with try/catch silent degradation
 - `_audioPlayer` stopped and disposed in `dispose()`
+- Reverted in Wave 5: audio removed entirely; siren is visual-only
 
 **License Back-Side Generation**
 - `LicenseGenerator.generateBack(PlayerProfile player)` added — renders back-side PNG with round-by-round BrAC table, fine log, total money lost, and perfection score onto `assets/license/back.png` template
@@ -32,23 +107,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Phase 3 Wave 2–4 (May 29, 2026)
 
-**OCR Camera Integration ("El Radar")**
-- `OcrService` abstract interface + `OcrCandidate` model in `lib/features/breathalyzer/data/ocr_service.dart`
-- `MlKitOcrService` implementation using `google_mlkit_text_recognition` — filters text with `\d\.\d{2}` regex, derives confidence from ML Kit block scores
-- `CameraOcrScreen` with live `CameraController` preview, frame capture every 500 ms, 10-second timeout fallback, bounding box `CustomPaint` overlay, and "Entrada manual" `MassiveButton`
-- Auto-confirms on confidence > 0.90; shows "Confirmar"/"Reintentar" on confidence ≤ 0.90
-- Graceful fallback to `ManualEntryScreen` on camera unavailable or permission denied
+**OCR Camera Integration ("El Radar") — later discarded in Wave 5**
+- `OcrService` abstract interface + `OcrCandidate` model added (subsequently deleted in Wave 5)
+- `MlKitOcrService` using `google_mlkit_text_recognition` added (subsequently deleted in Wave 5)
+- `CameraOcrScreen` with live preview, bounding box overlay, 10s timeout (subsequently deleted in Wave 5)
+- See Wave 5 "Removed" section for the full removal
 
 **Keypad Confirmation Step**
 - `BacConfirmationScreen` with player name (24sp bold), entered value (48sp bold), "Confirmar" and "Corregir" `MassiveButton` actions (minHeight 80)
 - No Hive writes until "Confirmar" is tapped; "Corregir" returns to keypad with pre-populated value
-- Wired into `ManualEntryScreen` (replaces direct save) and `CameraOcrScreen` (low-confidence path)
+- Wired into `ManualEntryScreen` (replaces direct save)
 
-**Graph Zone Visualization**
+**Graph Zone Visualization (initial `fl_chart` implementation — replaced in Wave 5)**
 - `buildZoneBands(double optimal, int roundNumber)` helper producing 5 colored zone bands
 - Round-aware thresholds: wider sweet-spot (0.20) for rounds 1–2, standard (0.10) for rounds 3+
-- Rendered as `HorizontalRangeAnnotation` entries in `fl_chart` `LineChartData` with fill opacity ≤ 0.15
-- Single-reading edge case handled (`minX = 0`, `maxX = 2`)
+- Initially rendered as `HorizontalRangeAnnotation` entries in `fl_chart`; migrated to custom canvas painter in Wave 5
 
 **Last Measurement Display**
 - `LastMeasurementWidget` displaying `Último registro: 0.XX mg/L — Ronda N` (font ≥ 16sp)
@@ -72,9 +145,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restores checkpoint timer elapsed time via `checkpointNotifierProvider.notifier.restoreFromState()`
 - Wired into `app.dart` first-build routing
 
-### Changed
-- **README.md** — Phase 3 feature list updated: waves 0–4 items moved from "Planned" to "Implemented"; wave 5 remaining items listed separately
-- **ROADMAP.md** — Phase 3 progress updated to ~80%; feature completion table updated; key changes note added
+### Changed (May 29–30, 2026)
+- **README.md** — Phase 3 marked complete; OCR removed from feature list; fl_chart replaced with custom canvas chart; splash + branding added to implemented list; Phase 5 remaining items updated
+- **ROADMAP.md** — Phase 3 marked ✅ COMPLETED (May 30); Phase 5 progress updated to ~30%; feature table updated; key changes note updated
 
 ### Changed — Game Mechanics & Flow Redesign (May 4, 2026)
 

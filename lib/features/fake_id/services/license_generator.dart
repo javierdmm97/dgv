@@ -22,15 +22,55 @@ class LicenseGenerator {
   static const double _cardWidth = 600;
   static const double _cardHeight = 375;
 
-  static const Offset _photoCenter = Offset(100, 200);
-  static const double _photoRadius = 68;
+  // ---------------------------------------------------------------------------
+  // Front layout constants
+  // ---------------------------------------------------------------------------
 
-  static const Offset _nameOffset = Offset(200, 90);
-  static const Offset _pointsOffset = Offset(200, 125);
-  static const Offset _titlesOffset = Offset(200, 155);
+  // Photo: height locked, -42px total left
+  static const Rect _photoRect = Rect.fromLTWH(60, 137, 98, 140);
 
-  /// Generates a license PNG for [player] and returns the absolute file path.
-  static Future<String> generate(PlayerProfile player) async {
+  // Text column to the right of the photo, same vertical origin
+  static const double _textX = 170;
+  static const Offset _nameOffset = Offset(_textX, 139);
+  static const Offset _pointsOffset = Offset(_textX, 169);
+  static const Offset _roundsOffset = Offset(_textX, 201);
+  static const Offset _totalsOffset = Offset(_textX, 221);
+  static const Offset _finesOffset = Offset(_textX, 241);
+  static const Offset _titlesOffset = Offset(_textX, 265);
+  static const double _titleIconSize = 38;
+  static const double _titleIconGap = 6;
+
+  // Medal / special badges
+  static const Offset _medalOffset = Offset(528, 147);
+  static const double _medalRadius = 26;
+  static const Offset _coleccionistaOffset = Offset(528, 207);
+  static const double _coleccionistaSize = 44;
+
+  // ---------------------------------------------------------------------------
+  // Back layout constants
+  // ---------------------------------------------------------------------------
+
+  static const double _bkLeftX = 8;
+  static const double _bkLeftW = 185;
+  static const double _bkStartY = 8;
+  static const double _bkRowH = 18;
+
+  static const double _bkRightX = 202;
+  static const double _bkEnvIconSize = 82;
+
+  // ---------------------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------------------
+
+  /// Generates a license front PNG for [player] and returns the file path.
+  ///
+  /// [podiumPosition] 1/2/3 adds a gold/silver/bronze medal badge.
+  /// [isColeccionista] adds a crown badge.
+  static Future<String> generate(
+    PlayerProfile player, {
+    int? podiumPosition,
+    bool isColeccionista = false,
+  }) async {
     final templateImage = await _loadAssetImage(AssetPaths.licenseFront);
 
     ui.Image? playerPhoto;
@@ -39,7 +79,19 @@ class LicenseGenerator {
         final bytes = await File(player.photoPath).readAsBytes();
         playerPhoto = await _decodeImageBytes(bytes);
       } on Exception {
-        // Silently fall back to initials avatar if photo is missing/corrupt.
+        // Silently fall back to initials if photo is missing/corrupt.
+      }
+    }
+
+    // Pre-load title icons for earned titles.
+    final titleImages = <DGTTitle, ui.Image>{};
+    for (final entry in player.titleCounts.entries) {
+      if (entry.value > 0) {
+        try {
+          titleImages[entry.key] = await _loadAssetImage(entry.key.iconPath);
+        } on Exception {
+          // Skip missing title assets gracefully.
+        }
       }
     }
 
@@ -51,7 +103,14 @@ class LicenseGenerator {
 
     _drawTemplate(canvas, templateImage);
     _drawPhotoOrInitials(canvas, playerPhoto, player);
-    _drawTextOverlays(canvas, player);
+    _drawFrontTextOverlays(canvas, player);
+    _drawFrontTitleIcons(canvas, titleImages, player.titleCounts);
+    if (podiumPosition != null && podiumPosition >= 1 && podiumPosition <= 3) {
+      _drawMedal(canvas, podiumPosition);
+    }
+    if (isColeccionista) {
+      _drawColeccionistaBadge(canvas);
+    }
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(
@@ -69,10 +128,43 @@ class LicenseGenerator {
 
   /// Generates the back-side license PNG for [player] and returns the file path.
   ///
-  /// Draws a round-by-round BAC table, fine log, total money lost, and
-  /// perfection score onto the back template (600×375 canvas).
-  static Future<String> generateBack(PlayerProfile player) async {
+  /// [environmentalAssetPath] draws the awarded sticker when provided (final
+  /// export only).
+  static Future<String> generateBack(
+    PlayerProfile player, {
+    String? environmentalAssetPath,
+  }) async {
     final templateImage = await _loadAssetImage(AssetPaths.licenseBack);
+
+    // Pre-load right-panel assets.
+    final titleImages = <DGTTitle, ui.Image>{};
+    for (final entry in player.titleCounts.entries) {
+      if (entry.value > 0) {
+        try {
+          titleImages[entry.key] = await _loadAssetImage(entry.key.iconPath);
+        } on Exception {
+          // Skip missing assets gracefully.
+        }
+      }
+    }
+
+    ui.Image? fineImage;
+    if (player.fineCount > 0) {
+      try {
+        fineImage = await _loadAssetImage(AssetPaths.fineIcon);
+      } on Exception {
+        // Skip if asset missing.
+      }
+    }
+
+    ui.Image? envImage;
+    if (environmentalAssetPath != null) {
+      try {
+        envImage = await _loadAssetImage(environmentalAssetPath);
+      } on Exception {
+        // Skip if asset missing.
+      }
+    }
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
@@ -81,7 +173,8 @@ class LicenseGenerator {
     );
 
     _drawTemplate(canvas, templateImage);
-    _drawBackContent(canvas, player);
+    _drawBackLeftPanel(canvas, player, titleImages, fineImage);
+    _drawBackRightPanel(canvas, envImage);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(
@@ -98,109 +191,375 @@ class LicenseGenerator {
   }
 
   // ---------------------------------------------------------------------------
-  // Back-side drawing helpers
+  // Front drawing helpers
   // ---------------------------------------------------------------------------
 
-  static void _drawBackContent(Canvas canvas, PlayerProfile player) {
-    const double leftCol = 20;
-    const double rightCol = 310;
-    const double topY = 20;
-    const double rowHeight = 22;
+  static void _drawPhotoOrInitials(
+    Canvas canvas,
+    ui.Image? photo,
+    PlayerProfile player,
+  ) {
+    final rrect = RRect.fromRectAndRadius(_photoRect, const Radius.circular(8));
 
-    // --- Section header: round-by-round table ---
+    if (photo != null) {
+      canvas.save();
+      canvas.clipRRect(rrect);
+      canvas.drawImageRect(
+        photo,
+        Rect.fromLTWH(0, 0, photo.width.toDouble(), photo.height.toDouble()),
+        _photoRect,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+      canvas.restore();
+    } else {
+      canvas.drawRRect(rrect, Paint()..color = DGTColors.primary);
+      final initials = '${player.name[0]}${player.surname[0]}'.toUpperCase();
+      _drawText(
+        canvas,
+        initials,
+        Offset(
+          _photoRect.left + _photoRect.width / 2 - 22,
+          _photoRect.top + _photoRect.height / 2 - 24,
+        ),
+        fontSize: 44,
+        bold: true,
+        color: DGTColors.textOnPrimary,
+      );
+    }
+  }
+
+  static void _drawFrontTextOverlays(Canvas canvas, PlayerProfile player) {
+    // 1. Name
     _drawText(
       canvas,
-      'HISTORIAL DE RONDAS',
-      const Offset(leftCol, topY),
-      fontSize: 11,
+      '${player.name} ${player.surname}'.toUpperCase(),
+      _nameOffset,
+      fontSize: 22,
+      bold: true,
+      color: DGTColors.textPrimary,
+      maxWidth: 340,
+    );
+
+    // 2. Points
+    _drawText(
+      canvas,
+      '${player.points} puntos',
+      _pointsOffset,
+      fontSize: 20,
       bold: true,
       color: DGTColors.primary,
     );
+
+    // 3. Rounds & readings count
+    final activeReadings = player.readings
+        .where((r) => r.isActiveRound)
+        .toList();
+    final roundNums = activeReadings.map((r) => r.roundNumber).toSet().length;
+    _drawText(
+      canvas,
+      'Rondas: $roundNums  |  Lecturas: ${activeReadings.length}',
+      _roundsOffset,
+      fontSize: 14,
+      color: DGTColors.textPrimary,
+    );
+
+    // 4. Total & precision
+    final perfScore = PointsCalculator.calculatePerfectionScore(
+      player.readings,
+    );
+    final perfLabel = perfScore.isFinite ? perfScore.toStringAsFixed(2) : '—';
+    _drawText(
+      canvas,
+      'Total perdido: ${player.moneyLost}€  |  Precisión: $perfLabel',
+      _totalsOffset,
+      fontSize: 13,
+      color: DGTColors.textPrimary,
+    );
+
+    // 5. Fine count
+    if (player.fineCount > 0) {
+      _drawText(
+        canvas,
+        '🚗 ${player.fineCount} multa${player.fineCount == 1 ? '' : 's'}',
+        _finesOffset,
+        fontSize: 14,
+        bold: true,
+        color: DGTColors.red,
+      );
+    }
+  }
+
+  static void _drawFrontTitleIcons(
+    Canvas canvas,
+    Map<DGTTitle, ui.Image> titleImages,
+    Map<DGTTitle, int> titleCounts,
+  ) {
+    if (titleImages.isEmpty) return;
+
+    double x = _titlesOffset.dx;
+    final double y = _titlesOffset.dy;
+
+    for (final entry in titleImages.entries) {
+      final destRect = Rect.fromLTWH(x, y, _titleIconSize, _titleIconSize);
+      canvas.drawImageRect(
+        entry.value,
+        Rect.fromLTWH(
+          0,
+          0,
+          entry.value.width.toDouble(),
+          entry.value.height.toDouble(),
+        ),
+        destRect,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+
+      final count = titleCounts[entry.key] ?? 0;
+      if (count > 1) {
+        _drawText(
+          canvas,
+          '×$count',
+          Offset(x + _titleIconSize - 10, y + _titleIconSize - 2),
+          fontSize: 10,
+          bold: true,
+          color: DGTColors.textPrimary,
+        );
+      }
+
+      x += _titleIconSize + _titleIconGap;
+      if (x + _titleIconSize > _cardWidth - 20) break;
+    }
+  }
+
+  static void _drawMedal(Canvas canvas, int position) {
+    final color = switch (position) {
+      1 => const Color(0xFFFFD700), // gold
+      2 => const Color(0xFFC0C0C0), // silver
+      _ => const Color(0xFFCD7F32), // bronze
+    };
+    final borderColor = switch (position) {
+      1 => const Color(0xFFB8860B),
+      2 => const Color(0xFF808080),
+      _ => const Color(0xFF8B4513),
+    };
+
+    canvas.drawCircle(_medalOffset, _medalRadius, Paint()..color = borderColor);
+    canvas.drawCircle(_medalOffset, _medalRadius - 3, Paint()..color = color);
+
+    final label = switch (position) {
+      1 => '1°',
+      2 => '2°',
+      _ => '3°',
+    };
+    _drawText(
+      canvas,
+      label,
+      Offset(_medalOffset.dx - 14, _medalOffset.dy - 14),
+      fontSize: 18,
+      bold: true,
+      color: Colors.white,
+    );
+  }
+
+  static void _drawColeccionistaBadge(Canvas canvas) {
+    _drawText(
+      canvas,
+      '👑',
+      Offset(
+        _coleccionistaOffset.dx - _coleccionistaSize / 2 + 4,
+        _coleccionistaOffset.dy - _coleccionistaSize / 2,
+      ),
+      fontSize: 36,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Back drawing helpers
+  // ---------------------------------------------------------------------------
+
+  static void _drawBackLeftPanel(
+    Canvas canvas,
+    PlayerProfile player,
+    Map<DGTTitle, ui.Image> titleImages,
+    ui.Image? fineImage,
+  ) {
+    double y = _bkStartY;
+
+    _drawText(
+      canvas,
+      'HISTORIAL DE RONDAS',
+      Offset(_bkLeftX, y),
+      fontSize: 14,
+      bold: true,
+      color: DGTColors.primary,
+      maxWidth: _bkLeftW,
+    );
+    y += _bkRowH + 4;
 
     final activeReadings =
         player.readings.where((r) => r.isActiveRound).toList()
           ..sort((a, b) => a.roundNumber.compareTo(b.roundNumber));
 
-    double y = topY + rowHeight;
-    for (final reading in activeReadings) {
-      final sign = reading.pointsChange >= 0 ? '+' : '';
-      final line =
-          'R${reading.roundNumber}: ${reading.formattedBAC} mg/L  '
-          '($sign${reading.pointsChange} pts)';
+    if (activeReadings.isEmpty) {
       _drawText(
         canvas,
-        line,
-        Offset(leftCol, y),
-        fontSize: 10,
-        color: reading.pointsChange >= 0 ? DGTColors.green : DGTColors.red,
+        'Sin lecturas aún',
+        Offset(_bkLeftX, y),
+        fontSize: 13,
+        color: DGTColors.textSecondary,
+        maxWidth: _bkLeftW,
       );
-      y += rowHeight - 2;
-      if (y > _cardHeight - 60) break; // guard against overflow
-    }
-
-    // --- Section header: fine log ---
-    _drawText(
-      canvas,
-      'MULTAS',
-      const Offset(rightCol, topY),
-      fontSize: 11,
-      bold: true,
-      color: DGTColors.red,
-    );
-
-    final fines = activeReadings
-        .where((r) => PointsCalculator.shouldIssueFine(r.pointsChange))
-        .toList();
-
-    double fy = topY + rowHeight;
-    if (fines.isEmpty) {
-      _drawText(
-        canvas,
-        'Sin multas 🎉',
-        Offset(rightCol, fy),
-        fontSize: 10,
-        color: DGTColors.green,
-      );
+      y += _bkRowH + 2;
     } else {
-      for (int i = 0; i < fines.length; i++) {
-        final fine = fines[i];
+      for (final r in activeReadings) {
+        final sign = r.pointsChange >= 0 ? '+' : '';
         _drawText(
           canvas,
-          'Multa ${i + 1} — Ronda ${fine.roundNumber} — 100€',
-          Offset(rightCol, fy),
-          fontSize: 10,
-          color: DGTColors.red,
+          'R${r.roundNumber}: ${r.formattedBAC} mg/L',
+          Offset(_bkLeftX, y),
+          fontSize: 13,
+          color: Colors.black,
+          maxWidth: _bkLeftW,
         );
-        fy += rowHeight - 2;
-        if (fy > _cardHeight - 60) break;
+        y += _bkRowH;
+        _drawText(
+          canvas,
+          '  $sign${r.pointsChange} pts',
+          Offset(_bkLeftX, y),
+          fontSize: 12,
+          color: r.pointsChange >= 0 ? DGTColors.primary : DGTColors.red,
+          maxWidth: _bkLeftW,
+        );
+        y += _bkRowH + 2;
+        if (y > 260) break;
       }
     }
 
-    // --- Footer: total money lost + perfection score ---
-    const double footerY = _cardHeight - 50;
+    y += 6;
 
+    // Total perdido
     _drawText(
       canvas,
       'Total perdido: ${player.moneyLost}€',
-      const Offset(leftCol, footerY),
-      fontSize: 11,
+      Offset(_bkLeftX, y),
+      fontSize: 13,
       bold: true,
-      color: DGTColors.textPrimary,
+      color: Colors.black,
+      maxWidth: _bkLeftW,
     );
+    y += _bkRowH + 4;
 
+    // Precision
     final perfScore = PointsCalculator.calculatePerfectionScore(
       player.readings,
-      player.sex,
-      player.bodySize,
     );
-    final perfLabel = perfScore == double.infinity
-        ? 'Sin datos'
-        : perfScore.toStringAsFixed(3);
-
+    final perfLabel = perfScore.isFinite
+        ? perfScore.toStringAsFixed(2)
+        : 'Sin datos';
     _drawText(
       canvas,
       'Precisión: $perfLabel',
-      const Offset(rightCol, footerY),
+      Offset(_bkLeftX, y),
+      fontSize: 13,
+      bold: true,
+      color: Colors.black,
+      maxWidth: _bkLeftW,
+    );
+    y += _bkRowH + 8;
+
+    // Title icons — small row below precision
+    if (titleImages.isNotEmpty) {
+      _drawText(
+        canvas,
+        'Títulos:',
+        Offset(_bkLeftX, y),
+        fontSize: 12,
+        bold: true,
+        color: DGTColors.primary,
+        maxWidth: _bkLeftW,
+      );
+      y += 16;
+
+      double x = _bkLeftX;
+      const double iconSize = 30;
+      const double iconGap = 4;
+
+      for (final entry in titleImages.entries) {
+        canvas.drawImageRect(
+          entry.value,
+          Rect.fromLTWH(
+            0,
+            0,
+            entry.value.width.toDouble(),
+            entry.value.height.toDouble(),
+          ),
+          Rect.fromLTWH(x, y, iconSize, iconSize),
+          Paint()..filterQuality = FilterQuality.high,
+        );
+        final count = player.titleCounts[entry.key] ?? 0;
+        if (count > 1) {
+          _drawText(
+            canvas,
+            '×$count',
+            Offset(x + iconSize - 8, y + iconSize - 2),
+            fontSize: 9,
+            bold: true,
+            color: DGTColors.textPrimary,
+          );
+        }
+        x += iconSize + iconGap;
+        if (x + iconSize > _bkLeftX + _bkLeftW) break;
+      }
+      y += iconSize + 8;
+    }
+
+    // Fine icon + count — inline, small
+    if (fineImage != null) {
+      const double fineSize = 28;
+      canvas.drawImageRect(
+        fineImage,
+        Rect.fromLTWH(
+          0,
+          0,
+          fineImage.width.toDouble(),
+          fineImage.height.toDouble(),
+        ),
+        Rect.fromLTWH(_bkLeftX, y, fineSize, fineSize),
+        Paint()..filterQuality = FilterQuality.high,
+      );
+      _drawText(
+        canvas,
+        ' ${player.fineCount} multa${player.fineCount == 1 ? '' : 's'}',
+        Offset(_bkLeftX + fineSize + 4, y + 4),
+        fontSize: 12,
+        bold: true,
+        color: DGTColors.red,
+        maxWidth: _bkLeftW - fineSize - 4,
+      );
+    }
+  }
+
+  // Right panel: environmental sticker only (awarded at export time)
+  static void _drawBackRightPanel(Canvas canvas, ui.Image? envImage) {
+    if (envImage == null) return;
+
+    canvas.drawImageRect(
+      envImage,
+      Rect.fromLTWH(
+        0,
+        0,
+        envImage.width.toDouble(),
+        envImage.height.toDouble(),
+      ),
+      const Rect.fromLTWH(_bkRightX, _bkStartY, _bkEnvIconSize, _bkEnvIconSize),
+      Paint()..filterQuality = FilterQuality.high,
+    );
+    _drawText(
+      canvas,
+      'Distintivo\nAmbiental',
+      const Offset(
+        _bkRightX + _bkEnvIconSize + 6,
+        _bkStartY + _bkEnvIconSize / 2 - 12,
+      ),
       fontSize: 11,
       bold: true,
       color: DGTColors.primary,
@@ -208,7 +567,7 @@ class LicenseGenerator {
   }
 
   // ---------------------------------------------------------------------------
-  // Drawing helpers
+  // Shared drawing helpers
   // ---------------------------------------------------------------------------
 
   static void _drawTemplate(Canvas canvas, ui.Image template) {
@@ -221,95 +580,8 @@ class LicenseGenerator {
         template.height.toDouble(),
       ),
       const Rect.fromLTWH(0, 0, _cardWidth, _cardHeight),
-      Paint(),
+      Paint()..filterQuality = FilterQuality.high,
     );
-  }
-
-  static void _drawPhotoOrInitials(
-    Canvas canvas,
-    ui.Image? photo,
-    PlayerProfile player,
-  ) {
-    if (photo != null) {
-      _clipCircle(canvas, _photoCenter, _photoRadius, () {
-        canvas.drawImageRect(
-          photo,
-          Rect.fromLTWH(0, 0, photo.width.toDouble(), photo.height.toDouble()),
-          Rect.fromCircle(center: _photoCenter, radius: _photoRadius),
-          Paint(),
-        );
-      });
-    } else {
-      canvas.drawCircle(
-        _photoCenter,
-        _photoRadius,
-        Paint()..color = DGTColors.primary,
-      );
-      _drawText(
-        canvas,
-        '${player.name[0]}${player.surname[0]}',
-        _photoCenter - const Offset(28, 22),
-        fontSize: 44,
-        bold: true,
-        color: DGTColors.textOnPrimary,
-      );
-    }
-  }
-
-  static void _drawTextOverlays(Canvas canvas, PlayerProfile player) {
-    _drawText(
-      canvas,
-      '${player.name} ${player.surname}'.toUpperCase(),
-      _nameOffset,
-      fontSize: 18,
-      bold: true,
-      color: DGTColors.textPrimary,
-    );
-
-    _drawText(
-      canvas,
-      '${player.points} puntos',
-      _pointsOffset,
-      fontSize: 16,
-      color: DGTColors.primary,
-    );
-
-    final earned = player.titleCounts.entries
-        .where((e) => e.value > 0)
-        .map((e) => e.key.emoji)
-        .join(' ');
-    if (earned.isNotEmpty) {
-      _drawText(canvas, earned, _titlesOffset, fontSize: 20);
-    }
-
-    if (player.fineCount > 0) {
-      _drawText(
-        canvas,
-        '🚗 ${player.fineCount} multa${player.fineCount == 1 ? '' : 's'}',
-        const Offset(200, 220),
-        fontSize: 14,
-        bold: true,
-        color: DGTColors.red,
-      );
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Low-level helpers
-  // ---------------------------------------------------------------------------
-
-  static void _clipCircle(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    void Function() draw,
-  ) {
-    canvas.save();
-    canvas.clipPath(
-      Path()..addOval(Rect.fromCircle(center: center, radius: radius)),
-    );
-    draw();
-    canvas.restore();
   }
 
   static void _drawText(
@@ -319,6 +591,7 @@ class LicenseGenerator {
     double fontSize = 14,
     bool bold = false,
     Color color = DGTColors.textPrimary,
+    double maxWidth = 380,
   }) {
     final builder =
         ui.ParagraphBuilder(
@@ -330,7 +603,7 @@ class LicenseGenerator {
           ..pushStyle(ui.TextStyle(color: color))
           ..addText(text);
     final paragraph = builder.build()
-      ..layout(const ui.ParagraphConstraints(width: 380));
+      ..layout(ui.ParagraphConstraints(width: maxWidth));
     canvas.drawParagraph(paragraph, offset);
   }
 

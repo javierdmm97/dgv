@@ -15,6 +15,7 @@ _$BACReadingImpl _$$BACReadingImplFromJson(Map<String, dynamic> json) =>
       roundNumber: (json['roundNumber'] as num).toInt(),
       entryMethod: $enumDecode(_$BACEntryMethodEnumMap, json['entryMethod']),
       pointsChange: (json['pointsChange'] as num?)?.toInt() ?? 0,
+      optimalBAC: (json['optimalBAC'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'] as String? ?? null,
     );
 
@@ -27,6 +28,7 @@ Map<String, dynamic> _$$BACReadingImplToJson(_$BACReadingImpl instance) =>
       'roundNumber': instance.roundNumber,
       'entryMethod': _$BACEntryMethodEnumMap[instance.entryMethod]!,
       'pointsChange': instance.pointsChange,
+      'optimalBAC': instance.optimalBAC,
       'notes': instance.notes,
     };
 

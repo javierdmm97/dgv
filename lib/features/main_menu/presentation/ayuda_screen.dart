@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dgv/core/constants/asset_paths.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/widgets/massive_button.dart';
 
@@ -23,16 +24,7 @@ class AyudaScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: DGTColors.primary,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Center(
-                  child: Text('🚔', style: TextStyle(fontSize: 80)),
-                ),
-              ),
+              Image.asset(AssetPaths.fine, height: 200, fit: BoxFit.contain),
               const SizedBox(height: 40),
               Text(
                 'Espabila y tómate una bien fría.',
@@ -42,9 +34,18 @@ class AyudaScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 12),
+              Text(
+                '— Estrella Ballester, Directora General de la DGV',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: DGTColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               Text(
-                'Si bebes, conduce.',
+                'El agua deshidrata, pero la cerveza no!.',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: DGTColors.primary,
                   fontStyle: FontStyle.italic,

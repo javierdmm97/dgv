@@ -63,12 +63,16 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
     title: '4 consejos para la subasta de la semana',
     summary: 'Si no te quieres quedar sin premio atento a nuestros Briconsejos',
     body:
-        'El Boletín Oficial del Estado ha publicado hoy la Orden DGV/2025/42, '
-        'que establece una sanción de 200 euros para aquellos conductores cuyo '
-        'índice de diversión sea inferior al mínimo reglamentario. '
-        'Las asociaciones de consumidores han mostrado su apoyo unánime '
-        'a la medida, calificándola de "necesaria y justa".',
-    date: '5 Jun 2025',
+        'Ante la gran puja de mañana, la Dirección General de Vitis recuerda que lo que pasa hoy en el '
+        'alcoholímetro define tu billetera de mañana. Cada vez que cruzas la línea, la DGV te endiña '
+        'una multa de 100 EstreDólares que van directos a mermar tu presupuesto de puja. '
+        'Para evitar la ruina, los expertos de Casa Vitis dejan 4 Briconsejos clave: '
+        '1. Mantente en la zona óptima: ganar los controles te hincha la cuenta corriente de dinero fresco. '
+        '2. Ojo con los picos peligrosos: una mala racha hoy y mañana verás la subasta desde la barrera. '
+        '3. Calcula tu resistencia: más vale coche inmovilizado a tiempo que bancarrota total. '
+        '4. Recuerda la Orden DGV/2025/42: la diversión es obligatoria, pero las tasas descontroladas se pagan '
+        'caras. ¡Asegura tus EstreDólares hoy para reventar el mercado mañana!',
+    date: '4 Jun 2026',
     imagePath: '',
   ),
   FakeNewsArticle(
@@ -86,17 +90,22 @@ const List<FakeNewsArticle> kFakeNewsArticles = [
     imagePath: '',
   ),
   FakeNewsArticle(
-    id: 'fn_005',
-    title: 'Récord histórico de conductores irresponsables',
+    id: 'fn_006',
+    title: 'Miguel Escudero tumba al gigante tecnológico BackMarket',
     summary:
-        'El último control DGV registra el mayor porcentaje de tasa de alcohol de la historia.',
+        'El conductor madrileño logra que le devuelvan más de 500 EstreDólares tras dos años de uso alegando errores de custodia.',
     body:
-        'El pasado fin de semana se registró un hito histórico: el 94% de los '
-        'conductores sometidos a control DGV presentaron tasas dentro de la '
-        'zona óptima. "Nunca habíamos visto cifras así", declaró emocionado '
-        'el inspector jefe. Los expertos atribuyen el éxito a la popularidad '
-        'creciente de la aplicación Operación DGV.',
-    date: '28 May 2025',
+        'Histórico precedente en los tribunales de la DGV. El ciudadano Miguel Escudero, '
+        'tras exprimir su iPhone durante dos años en diversos controles sorpresas, '
+        'abrió un caso de incidencia el último día de garantía. Ante la negativa de la '
+        'plataforma Back Market, que alegaba discrepancias con el IMEI, Escudero desplegó '
+        'una "chapa legal" redactada por Inteligencia Artificial que ha hecho temblar al sector. '
+        'Citando la Ley de Defensa de los Consumidores y amenazando con elevar la queja a la OMIC, '
+        'a la Comisión Europea y a los Cuerpos de Seguridad por "apropiación indebida", '
+        'el vendedor ecomobile claudicó de inmediato. El resultado: más de 500 pavos '
+        'directos a su cuenta para la subasta de mañana. "Cualquier error en sus almacenes '
+        'es fallo de su cadena de custodia", declaró el héroe local mientras se tomaba una fría.',
+    date: '30 May 2026',
     imagePath: '',
   ),
 ];
@@ -164,14 +173,15 @@ class DGTStrings {
   static const String titleVelocidadDeCrucero = 'Velocidad de Crucero';
   static const String titleMultaPorExceso = 'Multa por Exceso';
   static const String titleLDePracticas = 'L de Prácticas';
-  static const String titleVehiculoHibrido = 'Vehículo Híbrido';
+  static const String titleVehiculoHibrido = 'El favorito de la DGV';
   static const String titleITVPassed = 'ITV Pasada';
 
   // Title Descriptions
   static const String descVelocidadDeCrucero = 'Más cerca de la zona óptima';
-  static const String descMultaPorExceso = 'Mayor subida de tasa';
+  static const String descMultaPorExceso = 'Tasa más alta de la ronda';
   static const String descLDePracticas = 'Tasa más baja de la ronda';
-  static const String descVehiculoHibrido = 'Bajo la tasa (agua enjoyer)';
+  static const String descVehiculoHibrido =
+      'Bebe con responsabilidad (o no bebe)';
   static const String descITVPassed = 'Misma lectura dos veces';
 
   // Leaderboard

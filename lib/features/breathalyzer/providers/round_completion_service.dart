@@ -2,6 +2,7 @@ import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/utils/title_evaluator.dart';
 import 'package:dgv/data/repositories/player_repository.dart';
+import 'package:dgv/features/fake_id/services/license_update_service.dart';
 
 /// Evaluates and applies per-round title awards after all groups complete.
 ///
@@ -27,6 +28,7 @@ class RoundCompletionService {
 
       final updated = player.copyWith(titleCounts: newCounts);
       await repo.update(updated);
+      await LicenseUpdateService.updateForPlayer(player: updated, repo: repo);
     }
 
     return awards;

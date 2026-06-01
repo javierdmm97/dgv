@@ -41,7 +41,7 @@ class _DGTSliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 210,
       pinned: true,
       backgroundColor: DGTColors.primary,
       foregroundColor: DGTColors.textOnPrimary,

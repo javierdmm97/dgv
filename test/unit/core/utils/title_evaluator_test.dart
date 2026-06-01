@@ -17,6 +17,7 @@ PlayerProfile _playerWithReading({
   required int round,
   double? previousBac,
   int? previousRound,
+  int previousPointsChange = 0,
   bool crossedOptimalLine = false,
   int points = 15,
   Map<DGTTitle, int>? titleCounts,
@@ -32,6 +33,7 @@ PlayerProfile _playerWithReading({
         timestamp: DateTime(2025, 1, 1, 14, 0),
         roundNumber: previousRound,
         entryMethod: BACEntryMethod.manual,
+        pointsChange: previousPointsChange,
       ),
     );
   }
@@ -68,29 +70,31 @@ void main() {
 
     group('evaluateRound — velocidadDeCrucero', () {
       test('awards to player closest to their optimal zone', () {
-        // All players are medium male, round 1 optimal = 0.127
+        // Medium male, round 1 optimal ≈ 0.111
+        // 'a' is 0.004 above optimal (closest), 'c' is 0.010 below optimal (lowest drinker BAC)
         final players = [
           _playerWithReading(
             id: 'a',
-            bac: 0.127, // Exactly at optimal - distance 0.0
+            bac: 0.115, // above optimal, distance=0.004 → velocidadDeCrucero
             round: 1,
           ),
           _playerWithReading(
             id: 'b',
-            bac: 0.627, // 0.5 away from optimal
+            bac: 0.627, // far above optimal
             round: 1,
           ),
           _playerWithReading(
             id: 'c',
-            bac: 0.027, // 0.1 away from optimal (lowest BAC, gets lDePracticas)
+            bac:
+                0.101, // below optimal, distance=0.010; lowest BAC drinker → lDePracticas
             round: 1,
           ),
         ];
 
         final awards = TitleEvaluator.evaluateRound(players, 1);
-        // Player 'a' is closest to optimal
+        // Player 'a' is closest to optimal (distance 0.004 < 0.010)
         expect(awards['a'], equals(DGTTitle.velocidadDeCrucero));
-        // Player 'c' has lowest BAC
+        // Player 'c' has lowest BAC among drinkers
         expect(awards['c'], equals(DGTTitle.lDePracticas));
       });
 
@@ -149,7 +153,8 @@ void main() {
             crossedOptimalLine: false,
             points: 15,
           ),
-          // Third player has lowest BAC so lDePracticas goes to them, not Alice.
+          // Third player has a very high BAC so lDePracticas goes to Alice/Zebra.
+          // The point of this player is only to confirm the tie-breaking logic.
           PlayerProfile(
             id: 'id_carlos',
             name: 'Carlos',
@@ -162,7 +167,7 @@ void main() {
               BACReading(
                 id: 'id_carlos_r1',
                 playerId: 'id_carlos',
-                bac: 0.01, // lowest BAC — gets lDePracticas
+                bac: 0.80, // highest BAC — far above optimal
                 timestamp: DateTime(2025, 1, 1, 15, 0),
                 roundNumber: 1,
                 entryMethod: BACEntryMethod.manual,
@@ -178,63 +183,56 @@ void main() {
         // Both Alice and Zebra are equidistant; 'Alice' < 'Zebra' alphabetically → Alice wins
         expect(awards['id_alice'], equals(DGTTitle.velocidadDeCrucero));
         expect(awards['id_zebra'], isNot(equals(DGTTitle.velocidadDeCrucero)));
-        // Carlos gets lDePracticas (lowest BAC)
-        expect(awards['id_carlos'], equals(DGTTitle.lDePracticas));
+        // Carlos has highest BAC, not lowest — lDePracticas goes to Alice or Zebra, not Carlos
+        expect(awards['id_carlos'], isNot(equals(DGTTitle.lDePracticas)));
       });
     });
 
     // ── evaluateRound — lDePracticas ─────────────────────────────────────────
 
     group('evaluateRound — lDePracticas', () {
-      test('awards to player with lowest BAC in the round', () {
-        final players = [
-          _playerWithReading(id: 'a', bac: 2.0, round: 1),
-          _playerWithReading(id: 'b', bac: 0.5, round: 1), // lowest
-          _playerWithReading(id: 'c', bac: 1.5, round: 1),
-        ];
+      test(
+        'awards to player with lowest BAC not already holding another title',
+        () {
+          // optimal ≈ 0.111 for round 1 medium male
+          // 'a' (0.115) is closest to optimal → velocidadDeCrucero (distance 0.004)
+          // 'c' (0.20) is lowest BAC among non-awarded players → lDePracticas
+          // 'b' (0.50) is furthest
+          final players = [
+            _playerWithReading(id: 'a', bac: 0.115, round: 1),
+            _playerWithReading(id: 'b', bac: 0.50, round: 1),
+            _playerWithReading(id: 'c', bac: 0.20, round: 1),
+          ];
 
-        final awards = TitleEvaluator.evaluateRound(players, 1);
-        expect(awards['b'], equals(DGTTitle.lDePracticas));
-      });
+          final awards = TitleEvaluator.evaluateRound(players, 1);
+          expect(awards['a'], equals(DGTTitle.velocidadDeCrucero));
+          expect(awards['c'], equals(DGTTitle.lDePracticas));
+        },
+      );
     });
 
     // ── evaluateRound — vehiculoHibrido ──────────────────────────────────────
 
-    group('evaluateRound — vehiculoHibrido', () {
-      test('awards to all players whose BAC dropped from previous round', () {
-        // Note: vehiculoHibrido is now stubbed and returns empty
-        // This test will fail until the replacement title is defined
+    group('evaluateRound — vehiculoHibrido (El favorito de la DGV)', () {
+      test('awards to all sober players not already holding another title', () {
+        // 'd' (0.115) is closest to optimal → velocidadDeCrucero
+        // 'a' (0.00) and 'c' (0.08) are sober → both get vehiculoHibrido
+        // 'b' (0.35) is a drinker → does not get vehiculoHibrido
         final players = [
-          _playerWithReading(
-            id: 'a',
-            bac: 0.20,
-            round: 2,
-            previousBac: 0.30,
-            previousRound: 1,
-          ), // dropped
-          _playerWithReading(
-            id: 'b',
-            bac: 0.35,
-            round: 2,
-            previousBac: 0.20,
-            previousRound: 1,
-          ), // increased
-          _playerWithReading(
-            id: 'c',
-            bac: 0.18,
-            round: 2,
-            previousBac: 0.22,
-            previousRound: 1,
-          ), // dropped
+          _playerWithReading(id: 'a', bac: 0.00, round: 1),
+          _playerWithReading(id: 'b', bac: 0.35, round: 1),
+          _playerWithReading(id: 'c', bac: 0.08, round: 1),
+          _playerWithReading(id: 'd', bac: 0.115, round: 1),
         ];
 
-        final awards = TitleEvaluator.evaluateRound(players, 2);
-        // vehiculoHibrido is stubbed — no awards expected until replacement defined
-        expect(awards['a'], isNot(equals(DGTTitle.vehiculoHibrido)));
-        expect(awards['c'], isNot(equals(DGTTitle.vehiculoHibrido)));
+        final awards = TitleEvaluator.evaluateRound(players, 1);
+        expect(awards['a'], equals(DGTTitle.vehiculoHibrido));
+        expect(awards['c'], equals(DGTTitle.vehiculoHibrido));
+        expect(awards['b'], isNot(equals(DGTTitle.vehiculoHibrido)));
+        expect(awards['d'], equals(DGTTitle.velocidadDeCrucero));
       });
 
-      test('does not award vehiculoHibrido in round 1 (no previous round)', () {
+      test('does not award vehiculoHibrido when no sober players', () {
         final players = [
           _playerWithReading(id: 'a', bac: 1.5, round: 1),
           _playerWithReading(id: 'b', bac: 2.0, round: 1),
@@ -249,24 +247,31 @@ void main() {
 
     group('evaluateRound — itvPassed', () {
       test('awards to players back in zone after being out', () {
-        // ITV Passed logic: was out of zone last round AND now in zone
-        // Round 1 optimal = 0.111 (±10% = [0.100, 0.122])
+        // ITV Passed logic: lost points last round AND now back in zone
         // Round 2 optimal = 0.223 (±10% = [0.201, 0.245])
+        // 'b' is exactly at optimal → gets velocidadDeCrucero
+        // 'a' is in zone (0.21 ∈ [0.201, 0.245]) AND lost points → gets itvPassed
         final players = [
           _playerWithReading(
             id: 'a',
-            bac: 0.223, // Round 2: exactly optimal — in zone
+            bac: 0.21, // Round 2: in zone + lost points → itvPassed
             round: 2,
-            previousBac: 0.55, // Round 1: >80% above 0.111 — way out of zone
+            previousBac: 0.55,
             previousRound: 1,
+            previousPointsChange: -4,
           ),
           _playerWithReading(
             id: 'b',
-            bac: 0.223, // Round 2: in zone
+            bac: 0.223, // Round 2: exactly optimal → velocidadDeCrucero
             round: 2,
-            previousBac: 0.111, // Round 1: exactly optimal — already in zone
+            previousBac: 0.111,
             previousRound: 1,
+            previousPointsChange: 2,
           ),
+          // 'c' absorbs lDePracticas so 'a' is not claimed by it first
+          _playerWithReading(id: 'c', bac: 0.15, round: 2),
+          // 'd' absorbs multaPorExceso (highest BAC) so 'a' is free for itvPassed
+          _playerWithReading(id: 'd', bac: 0.80, round: 2),
         ];
 
         final awards = TitleEvaluator.evaluateRound(players, 2);
@@ -287,72 +292,39 @@ void main() {
     // ── evaluateRound — multaPorExceso ───────────────────────────────────────
 
     group('evaluateRound — multaPorExceso', () {
-      test('does not award multaPorExceso in round 1', () {
+      test('awards multaPorExceso to player with highest absolute BAC', () {
         final players = [
-          _playerWithReading(id: 'a', bac: 3.0, round: 1),
+          _playerWithReading(id: 'a', bac: 3.0, round: 1), // highest → multa
           _playerWithReading(id: 'b', bac: 2.0, round: 1),
         ];
 
         final awards = TitleEvaluator.evaluateRound(players, 1);
-        expect(awards.values.contains(DGTTitle.multaPorExceso), isFalse);
-      });
-
-      test('awards to player with highest BAC spike in round 2+', () {
-        final players = [
-          _playerWithReading(
-            id: 'a',
-            bac: 3.0,
-            round: 2,
-            previousBac: 1.0,
-            previousRound: 1,
-          ), // spike = 2.0
-          _playerWithReading(
-            id: 'b',
-            bac: 2.5,
-            round: 2,
-            previousBac: 1.5,
-            previousRound: 1,
-          ), // spike = 1.0
-        ];
-
-        final awards = TitleEvaluator.evaluateRound(players, 2);
         expect(awards['a'], equals(DGTTitle.multaPorExceso));
         expect(awards['b'], isNot(equals(DGTTitle.multaPorExceso)));
       });
 
-      test(
-        'awards multaPorExceso to all players sharing the maximum spike',
-        () {
-          final players = [
-            _playerWithReading(
-              id: 'a',
-              bac: 3.0,
-              round: 2,
-              previousBac: 1.0,
-              previousRound: 1,
-            ), // spike = 2.0
-            _playerWithReading(
-              id: 'b',
-              bac: 2.5,
-              round: 2,
-              previousBac: 0.5,
-              previousRound: 1,
-            ), // spike = 2.0 (tied)
-            _playerWithReading(
-              id: 'c',
-              bac: 2.0,
-              round: 2,
-              previousBac: 1.5,
-              previousRound: 1,
-            ), // spike = 0.5
-          ];
+      test('awards multaPorExceso in round 1 (no previous round needed)', () {
+        final players = [
+          _playerWithReading(id: 'a', bac: 2.5, round: 1),
+          _playerWithReading(id: 'b', bac: 3.5, round: 1), // highest
+        ];
 
-          final awards = TitleEvaluator.evaluateRound(players, 2);
-          expect(awards['a'], equals(DGTTitle.multaPorExceso));
-          expect(awards['b'], equals(DGTTitle.multaPorExceso));
-          expect(awards['c'], isNot(equals(DGTTitle.multaPorExceso)));
-        },
-      );
+        final awards = TitleEvaluator.evaluateRound(players, 1);
+        expect(awards['b'], equals(DGTTitle.multaPorExceso));
+      });
+
+      test('awards multaPorExceso to all players sharing the maximum BAC', () {
+        final players = [
+          _playerWithReading(id: 'a', bac: 3.0, round: 2), // tied highest
+          _playerWithReading(id: 'b', bac: 3.0, round: 2), // tied highest
+          _playerWithReading(id: 'c', bac: 2.0, round: 2),
+        ];
+
+        final awards = TitleEvaluator.evaluateRound(players, 2);
+        expect(awards['a'], equals(DGTTitle.multaPorExceso));
+        expect(awards['b'], equals(DGTTitle.multaPorExceso));
+        expect(awards['c'], isNot(equals(DGTTitle.multaPorExceso)));
+      });
     });
 
     // ── evaluateRound — empty players ────────────────────────────────────────

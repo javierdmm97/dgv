@@ -198,7 +198,7 @@ final playerCountProvider = AutoDisposeFutureProvider<int>.internal(
 // ignore: unused_element
 typedef PlayerCountRef = AutoDisposeFutureProviderRef<int>;
 String _$playerListNotifierHash() =>
-    r'673215f9b8493b11bf3af71df1da51fa99ba860b';
+    r'eeae7f32113bded610eeb9b7b6c8d7afdfb53598';
 
 /// Player list notifier (for mutations)
 ///

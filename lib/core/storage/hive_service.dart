@@ -22,6 +22,7 @@ class HiveService {
       Hive.openBox(AppConstants.hiveBoxGameState),
       Hive.openBox(AppConstants.hiveBoxCheckpoint),
       Hive.openBox(AppConstants.hiveBoxSettings),
+      Hive.openBox<Map<dynamic, dynamic>>('visual_style'),
     ]);
 
     _initialized = true;

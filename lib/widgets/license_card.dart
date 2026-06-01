@@ -18,41 +18,91 @@ import 'package:dgv/widgets/title_badge.dart';
 /// - Card with elevation 4, border radius 12, [DGTColors.licenseId] background
 /// - Wrapped in [GestureDetector] for [onTap]
 class LicenseCard extends StatelessWidget {
-  const LicenseCard({super.key, required this.player, this.onTap});
+  const LicenseCard({
+    super.key,
+    required this.player,
+    this.onTap,
+    this.onEdit,
+    this.onViewLicense,
+  });
 
   final PlayerProfile player;
   final VoidCallback? onTap;
+
+  /// Shows a pencil icon — used in main menu for editing a player.
+  final VoidCallback? onEdit;
+
+  /// Shows a credit-card icon — used to open the license viewer.
+  final VoidCallback? onViewLicense;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        elevation: 4,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-        color: DGTColors.licenseId,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _LicenseHeader(player: player),
-              const SizedBox(height: 8),
-              _PointsDisplay(points: player.points),
-              const SizedBox(height: 4),
-              LastMeasurementWidget(player: player),
-              const SizedBox(height: 8),
-              _BadgesRow(titleCounts: player.titleCounts),
-              if (player.fineCount > 0) ...[
-                const SizedBox(height: 8),
-                _FineCount(fineCount: player.fineCount),
-              ],
-            ],
+      child: Stack(
+        children: [
+          Card(
+            elevation: 4,
+            shape: const RoundedRectangleBorder(),
+            color: DGTColors.licenseId,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _LicenseHeader(
+                    player: player,
+                    onEdit: onEdit,
+                    onViewLicense: onViewLicense,
+                  ),
+                  const SizedBox(height: 8),
+                  _PointsDisplay(points: player.points),
+                  const SizedBox(height: 4),
+                  LastMeasurementWidget(player: player),
+                  const SizedBox(height: 8),
+                  _BadgesRow(titleCounts: player.titleCounts),
+                  if (player.fineCount > 0) ...[
+                    const SizedBox(height: 8),
+                    _FineCount(fineCount: player.fineCount),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (player.isIncautado)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.08),
+                  ),
+                  child: Transform.rotate(
+                    angle: -0.4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.red, width: 2),
+                      ),
+                      child: const Text(
+                        'INCAUTADO',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -63,9 +113,11 @@ class LicenseCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _LicenseHeader extends StatelessWidget {
-  const _LicenseHeader({required this.player});
+  const _LicenseHeader({required this.player, this.onEdit, this.onViewLicense});
 
   final PlayerProfile player;
+  final VoidCallback? onEdit;
+  final VoidCallback? onViewLicense;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +133,26 @@ class _LicenseHeader extends StatelessWidget {
             maxLines: 2,
           ),
         ),
+        if (onViewLicense != null)
+          IconButton(
+            icon: const Icon(Icons.credit_card_outlined, size: 22),
+            color: DGTColors.primary,
+            tooltip: 'Ver carnet de conducir',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: onViewLicense,
+          ),
+        if (onEdit != null) ...[
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            color: DGTColors.textSecondary,
+            tooltip: 'Editar',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: onEdit,
+          ),
+        ],
       ],
     );
   }
@@ -91,27 +163,42 @@ class _PlayerAvatar extends StatelessWidget {
 
   final PlayerProfile player;
 
+  static const double _size = 56;
+
   @override
   Widget build(BuildContext context) {
     final hasPhoto = player.photoPath.isNotEmpty;
 
     if (hasPhoto) {
       final isAsset = player.photoPath.startsWith('assets/');
-      final image = isAsset
+      final imageProvider = isAsset
           ? AssetImage(player.photoPath) as ImageProvider
           : FileImage(File(player.photoPath));
-      return CircleAvatar(
-        radius: 28,
-        backgroundImage: image,
-        onBackgroundImageError: (_, stackTrace) {},
-        child: null,
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image(
+          image: imageProvider,
+          width: _size,
+          height: _size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, e, st) => _initialsBox(context),
+        ),
       );
     }
 
+    return _initialsBox(context);
+  }
+
+  Widget _initialsBox(BuildContext context) {
     final initials = _buildInitials(player.name, player.surname);
-    return CircleAvatar(
-      radius: 28,
-      backgroundColor: DGTColors.primary,
+    return Container(
+      width: _size,
+      height: _size,
+      decoration: BoxDecoration(
+        color: DGTColors.primary,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      alignment: Alignment.center,
       child: Text(
         initials,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(

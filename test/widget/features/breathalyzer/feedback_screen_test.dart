@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
 import 'package:dgv/features/breathalyzer/presentation/feedback_screen.dart';
-import 'package:dgv/widgets/massive_button.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(theme: ThemeData.light(), home: child);
@@ -83,10 +82,12 @@ void main() {
       expect(find.textContaining('Multa'), findsNothing);
     });
 
-    testWidgets('shows Continuar button', (tester) async {
+    testWidgets('shows tap-to-dismiss hint instead of Continuar button', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap(FeedbackScreen(result: _makeResult())));
-      expect(find.byType(MassiveButton), findsOneWidget);
-      expect(find.text('Continuar'), findsOneWidget);
+      expect(find.text('Continuar'), findsNothing);
+      expect(find.textContaining('Toca'), findsOneWidget);
     });
 
     testWidgets('scaffold background matches result feedbackColor', (
@@ -109,7 +110,7 @@ void main() {
       expect(find.textContaining('🟢'), findsNothing);
     });
 
-    testWidgets('tapping Continuar closes screen', (tester) async {
+    testWidgets('tapping anywhere on the screen closes it', (tester) async {
       bool popped = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -137,7 +138,8 @@ void main() {
 
       expect(find.byType(FeedbackScreen), findsOneWidget);
 
-      await tester.tap(find.text('Continuar'));
+      // Tap anywhere on the scaffold to dismiss
+      await tester.tap(find.byType(Scaffold).last);
       await tester.pumpAndSettle();
 
       expect(popped, isTrue);

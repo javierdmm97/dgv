@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/game_state.dart';
+import 'player_providers.dart';
 import 'repository_providers.dart';
 
 part 'game_state_providers.g.dart';
@@ -29,16 +30,20 @@ class GameStateNotifier extends _$GameStateNotifier {
   }
 
   /// Start a new game
-  Future<void> startGame(List<String> playerIds) async {
+  Future<void> startGame(
+    List<String> playerIds, {
+    double preGameBeers = 0.0,
+  }) async {
     final repository = ref.read(gameStateRepositoryProvider);
 
     final newGame = GameState(
       id: const Uuid().v4(),
       startTime: DateTime.now(),
-      currentRound: 0, // Start with baseline round
+      currentRound: 0,
       isInProgress: true,
       playerIds: playerIds,
       lastCheckpointTime: DateTime.now(),
+      preGameBeers: preGameBeers,
     );
 
     await repository.save(newGame);
@@ -68,10 +73,10 @@ class GameStateNotifier extends _$GameStateNotifier {
 
   /// Finish game
   Future<void> finishGame() async {
-    final currentState = state.value;
+    final repository = ref.read(gameStateRepositoryProvider);
+    final currentState = state.value ?? await repository.getCurrent();
     if (currentState == null) return;
 
-    final repository = ref.read(gameStateRepositoryProvider);
     final updatedState = currentState.copyWith(
       isInProgress: false,
       isFinished: true,
@@ -79,6 +84,9 @@ class GameStateNotifier extends _$GameStateNotifier {
     );
 
     await repository.save(updatedState);
+    // Flush player cache so post-game screens (main menu, ceremony) see
+    // the final readings and title counts without stale data.
+    ref.invalidate(playerListNotifierProvider);
     ref.invalidateSelf();
   }
 

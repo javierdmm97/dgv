@@ -27,4 +27,16 @@ class AppRoutes {
 
   /// Requires `arguments: PlayerProfile` — full-screen two-sided license viewer
   static const licenseViewer = '/license-viewer';
+
+  /// Optional `arguments: PlayerProfile` — edit an existing player
+  static const playerEdit = '/player-edit';
+
+  /// Final ceremony screen — end of game
+  static const finalCeremony = '/final-ceremony';
+
+  /// Settings screen — BAC curve calibration
+  static const settings = '/settings';
+
+  /// Vehicle list screen — browse all registered players (2 per row)
+  static const vehicleList = '/vehicle-list';
 }

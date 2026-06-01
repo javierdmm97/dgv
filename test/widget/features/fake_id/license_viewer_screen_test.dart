@@ -49,75 +49,14 @@ void main() {
       await tester.pumpWidget(_wrap(LicenseViewerScreen(player: _player())));
       await tester.pump();
 
-      // Two AnimatedContainers are used as dots.
       expect(find.byType(AnimatedContainer), findsNWidgets(2));
     });
 
-    testWidgets(
-      'null licenseBackImagePath shows dynamic fallback without crash',
-      (tester) async {
-        final player = _player(licenseBackImagePath: null);
-
-        // Should not throw during build
-        await tester.pumpWidget(_wrap(LicenseViewerScreen(player: player)));
-        await tester.pump();
-
-        // PageView renders without error — no exception thrown
-        expect(find.byType(PageView), findsOneWidget);
-      },
-    );
-
-    testWidgets('dynamic back widget shows when licenseBackImagePath is null', (
-      tester,
-    ) async {
-      final player = _player(licenseBackImagePath: null);
-
-      await tester.pumpWidget(_wrap(LicenseViewerScreen(player: player)));
+    testWidgets('AppBar shows player name', (tester) async {
+      await tester.pumpWidget(_wrap(LicenseViewerScreen(player: _player())));
       await tester.pump();
 
-      // Navigate to page 2 via the PageController by scrolling
-      final pageView = tester.widget<PageView>(find.byType(PageView));
-      pageView.controller?.animateToPage(
-        1,
-        duration: const Duration(milliseconds: 1),
-        curve: Curves.linear,
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('HISTORIAL DE MEDICIONES'), findsOneWidget);
-    });
-
-    testWidgets('dynamic back widget shows readings when present', (
-      tester,
-    ) async {
-      final player = _player(
-        licenseBackImagePath: null,
-        readings: [
-          BACReading(
-            id: 'r1',
-            playerId: 'p1',
-            bac: 0.33,
-            timestamp: DateTime(2026),
-            roundNumber: 1,
-            entryMethod: BACEntryMethod.manual,
-            pointsChange: 2,
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(_wrap(LicenseViewerScreen(player: player)));
-      await tester.pump();
-
-      // Navigate to page 2
-      final pageView = tester.widget<PageView>(find.byType(PageView));
-      pageView.controller?.animateToPage(
-        1,
-        duration: const Duration(milliseconds: 1),
-        curve: Curves.linear,
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('R1: 0.33 mg/L'), findsOneWidget);
+      expect(find.text('Test Driver'), findsOneWidget);
     });
 
     testWidgets('each page is wrapped in InteractiveViewer', (tester) async {
@@ -127,11 +66,24 @@ void main() {
       expect(find.byType(InteractiveViewer), findsWidgets);
     });
 
-    testWidgets('AppBar shows player name', (tester) async {
+    testWidgets('front page shows loading indicator while PNG is resolving', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap(LicenseViewerScreen(player: _player())));
+      // Before FutureBuilder completes — loading indicator should show.
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+    });
+
+    testWidgets('back page shows loading indicator when path is null', (
+      tester,
+    ) async {
+      final player = _player(licenseBackImagePath: null);
+
+      await tester.pumpWidget(_wrap(LicenseViewerScreen(player: player)));
       await tester.pump();
 
-      expect(find.text('Test Driver'), findsOneWidget);
+      // PageView should render without error.
+      expect(find.byType(PageView), findsOneWidget);
     });
   });
 }

@@ -110,8 +110,8 @@ lib/
 
 ## 🎮 Core Features
 
-### ✅ Implemented (Phases 1–3, Waves 0–4)
-1. **Main Menu** - Persistent home screen with Start/Resume Game, Mis Vehículos, Fake News, Ayuda
+### ✅ Implemented (Phases 1–3 complete + Phase 5 ~95% complete)
+1. **Main Menu** - Persistent home screen with Start/Resume Game, player list (swipe-to-delete), Settings, Fake News, Ayuda
 2. **Fake News Screen** - Satirical DGT articles list + full article view
 3. **Fake Error Screen** - Satirical DGT error modal with close button
 4. **Ayuda Screen** - Satirical help screen ("Espabila y tómate una bien fría")
@@ -120,41 +120,44 @@ lib/
 7. **CustomKeypad** - 3×4 grid, 80×80px buttons, 0.XX format, no native keyboard
 8. **TitleBadge** - DGT title icon with ×N accumulation counter (cosmetic only)
 9. **LicenseCard** - Player license with circular photo, points, title badges
-10. **Player Registration** - Name + surname, sex/body size, photo capture, license auto-generated
+10. **Player Registration** - Name + surname, sex/body size, photo capture, license auto-generated; **edit mode** pre-populates fields
 11. **Round 0 (Baseline)** - Silent initial measurement, no feedback, no points
-12. **Manual BAC Entry** - Custom keypad entry (X.XX format), saved to Hive
+12. **Manual BAC Entry** - Custom keypad entry (X.XX format), saved to Hive (only BAC input method)
 13. **Round-Robin Flow** - "El Retén" player carousel, manual advance, progress indicator
 14. **Real-time Feedback** - Full-screen color-coded notifications after each measurement
 15. **Fine System** - Full-screen `fine.png` on -4 score; tracks `fineCount` + `moneyLost`
-16. **Checkpoint Timer UI** - `GroupCountdownCard` MM:SS, police siren flash + OS notification
+16. **Checkpoint Timer UI** - `GroupCountdownCard` MM:SS, police siren flash (visual-only) + OS notification
 17. **Points System** - Proportional 5-tier scale (-2/-1/0/+1/+2), 15-point hard cap
 18. **Leaderboard** - Sorted by points (tiebreaker: perfection score), top 3 medals 🥇🥈🥉
-19. **BAC Progression Graph** - `fl_chart` line chart with 5 colored zone bands (round-aware widths)
+19. **BAC Progression Graph** - Custom lollipop `Canvas` chart with zone bands (round-aware widths); no `fl_chart` dependency
 20. **License Generation** - `dart:ui` canvas pipeline, updated after every round (front + back sides)
 21. **OS Push Notifications** - `flutter_local_notifications` for checkpoint alerts
 22. **Debug Skip Button** - Gated behind `kDebugMode` for testing
-23. **OCR Camera ("El Radar")** - ML Kit text recognition with confidence scoring, auto-confirm > 0.90, bounding box overlay, 10s timeout fallback
-24. **Keypad Confirmation Step** - `BacConfirmationScreen` before saving any BAC reading; "Corregir" returns to keypad with pre-populated value
-25. **Graph Zone Visualization** - 5 `HorizontalRangeAnnotation` bands with round-aware thresholds (wider for rounds 1–2)
-26. **Last Measurement Display** - `LastMeasurementWidget` on leaderboard cards ("Último registro: 0.XX mg/L — Ronda N")
-27. **DGT Title Badges on Leaderboard** - `TitleBadge` widgets with `×N` counters on each player card
-28. **License Viewing (Two-Sided)** - Full-screen swipeable `PageView` (front + back) with `InteractiveViewer` pinch-to-zoom; dynamic fallback when back PNG not yet generated
-29. **Game State Recovery** - `RecoveryNotifier` reads Hive on launch and routes to correct screen with timer restored
-30. **BAC Curve Multiplier** - `CurveSettingsRepository` + `curveMultiplierProvider`; `BACCalculator` applies multiplier to all optimal targets
-
-### 🚧 Phase 3 — Remaining (Wave 5)
-31. **Player Edit & Delete** - Swipe-to-delete + edit screen (in progress)
-32. **"Finish Game" Button** - Enabled after Round 5, triggers Final Ceremony placeholder (in progress)
-33. **BAC Curve Calibration Settings** - `SettingsScreen` with slider (0.80–1.20×) (in progress)
+23. **Keypad Confirmation Step** - `BacConfirmationScreen` before saving any BAC reading; "Corregir" returns to keypad with pre-populated value
+24. **Last Measurement Display** - `LastMeasurementWidget` on leaderboard cards ("Último registro: 0.XX mg/L — Ronda N")
+25. **DGT Title Badges on Leaderboard** - `TitleBadge` widgets with `×N` counters on each player card
+26. **License Viewing (Two-Sided)** - Full-screen swipeable `PageView` (front + back) with `InteractiveViewer` pinch-to-zoom; dynamic fallback when back PNG not yet generated
+27. **Game State Recovery** - `RecoveryNotifier` reads Hive on launch and routes to correct screen with timer restored
+28. **BAC Curve Multiplier** - `CurveSettingsRepository` + `curveMultiplierProvider`; `BACCalculator` applies multiplier to all optimal targets
+29. **Player Edit & Delete** - Swipe-to-delete (`Dismissible`) on player list; edit mode in `PlayerRegistrationScreen`
+30. **"Finish Game" Button** - In `MainMenuScreen` → navigates to `FinalCeremonyScreen` placeholder
+31. **BAC Curve Calibration Settings** - `SettingsScreen` with slider (0.80–1.20×) wired to `curveMultiplierProvider`
+32. **Splash / Landing Screen** - Full-screen DGT-blue `SplashScreen` with DGV logo, "Acceder" button, auto-skip after 3s
+33. **App Branding** - Launcher icons (all densities), DGV transparent logo in `MainMenuScreen` header
 
 ### 🔥 Phase 4 (Planned — Developer C)
 34. **Firebase Sync** - Offline-first player data sync after each round
 35. **Web Leaderboard** - Real-time display screen with notification ticker
+36. **Checkpoint Sound** - `policia_control.mp3` played by web frontend via browser Audio API when checkpoint starts
 
-### 🎨 Phase 5 (Planned)
-36. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
-37. **Splash Screen** - DGT-blue landing screen with "Acceder" button
-38. **App Branding** - Logo + launcher icon
+### ✅ Phase 5 Additional (Complete)
+34. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
+35. **License Export (Batch)** - Export all licenses to gallery in one tap
+36. **Comprehensive Testing** - 80%+ coverage, physical device testing, crash recovery, performance
+37. **App Size Optimization** - Split-per-abi APK, WebP assets, < 40 MB per ABI
+
+### 🚧 Phase 5 (Remaining)
+38. **License Export (Single)** - Export individual player license to gallery + unit tests
 
 ---
 
@@ -164,9 +167,7 @@ lib/
 - **State Management:** Riverpod 2.0+ with code generation
 - **Local Storage:** Hive 2.0+
 - **Models:** Freezed for immutable data classes
-- **OCR:** Google ML Kit Text Recognition
-- **Charts:** fl_chart
-- **Audio:** audioplayers
+- **Charts:** Custom canvas painter (`dart:ui`) — `fl_chart` dependency retained but unused in app code
 
 ---
 
@@ -314,7 +315,7 @@ Round 4: Optimal 0.45  → Reading 0.38 mg/L → "+1: Cerca del óptimo" (yellow
 
 This project uses:
 - **Git workflow:** `main` (production), `develop` (integration), `feature/*`, `fix/*`
-- **Commit convention:** `type(scope): description` (e.g., `feat(breathalyzer): add OCR camera`)
+- **Commit convention:** `type(scope): description` (e.g., `feat(leaderboard): add player detail graph`)
 - **Automated checks:** Pre-commit hooks format and analyze code
 - **CI/CD:** GitHub Actions run tests and build on every PR
 
@@ -322,15 +323,14 @@ This project uses:
 
 | Developer | Role | Current Focus |
 |-----------|------|---------------|
-| **Developer A — Javier** | Core infrastructure, architecture | Phase 4 Firebase support |
-| **Developer B — Kristian** | UI/UX, screens, animations | Phase 3 advanced features |
-| **Developer C — Josema** | Firebase backend & Web frontend | Phase 4 lead |
+| **Developer A — Javier** | Core infrastructure, architecture | Phase 5 complete; Phase 4 support when unblocked |
+| **Developer B — Kristian** | UI/UX, screens, animations | Phase 5 complete |
+| **Developer C — Josema** | Firebase backend & Web frontend | Phase 4 lead (blocked on external dependency) |
 
 ### Development Phases
-- **Phases 1–2.5** ✅ Complete — core infrastructure, full game loop, mechanics revision
-- **Phase 3** 🚧 ~80% in progress — OCR, license viewing, game state recovery done; edit/delete, finish game, settings remaining
-- **Phase 4** 🔥 Planned — Firebase sync + web leaderboard (Developer C lead)
-- **Phase 5** 🎨 Planned — final ceremony, splash screen, release
+- **Phases 1–3** ✅ Complete — core infrastructure, full game loop, mechanics revision, player management, settings, splash
+- **Phase 4** ⏳ Blocked — Firebase sync + web leaderboard + checkpoint audio (external project dependency)
+- **Phase 5** 🚧 ~95% Complete — testing, optimisation, docs done; single-license export + APK release pending
 
 **See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.**
 
@@ -340,7 +340,7 @@ This project uses:
 
 | File | Purpose |
 |------|---------|
-| **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** | Complete project specification |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines (entry point) |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines |
 | **[ROADMAP.md](ROADMAP.md)** | Development plan and milestones |
 | **[CHANGELOG.md](CHANGELOG.md)** | Version history |

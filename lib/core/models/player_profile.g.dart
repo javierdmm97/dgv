@@ -34,6 +34,7 @@ _$PlayerProfileImpl _$$PlayerProfileImplFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['createdAt'] as String),
       licenseBackImagePath: json['licenseBackImagePath'] as String? ?? null,
+      isIncautado: json['isIncautado'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$PlayerProfileImplToJson(_$PlayerProfileImpl instance) =>
@@ -55,6 +56,7 @@ Map<String, dynamic> _$$PlayerProfileImplToJson(_$PlayerProfileImpl instance) =>
       'licenseImagePath': instance.licenseImagePath,
       'createdAt': instance.createdAt?.toIso8601String(),
       'licenseBackImagePath': instance.licenseBackImagePath,
+      'isIncautado': instance.isIncautado,
     };
 
 const _$SexEnumMap = {Sex.male: 'male', Sex.female: 'female'};

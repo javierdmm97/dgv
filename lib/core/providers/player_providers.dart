@@ -50,15 +50,27 @@ class PlayerListNotifier extends _$PlayerListNotifier {
 
   /// Delete a player
   Future<void> deletePlayer(String id) async {
+    // Optimistic update — removes from UI immediately so Dismissible clears.
+    final current = state.value ?? [];
+    state = AsyncData(current.where((p) => p.id != id).toList());
     final repository = ref.read(playerRepositoryProvider);
     await repository.delete(id);
-    ref.invalidateSelf();
   }
 
   /// Clear all players
   Future<void> clearAll() async {
     final repository = ref.read(playerRepositoryProvider);
     await repository.clearAll();
+    ref.invalidateSelf();
+  }
+
+  /// Mark a player as "Vehículo Incautado" — permanently excluded from rounds.
+  Future<void> markIncautado(String playerId) async {
+    final repository = ref.read(playerRepositoryProvider);
+    final player = await repository.getById(playerId);
+    if (player == null) return;
+    final updated = player.copyWith(isIncautado: true);
+    await repository.update(updated);
     ref.invalidateSelf();
   }
 }

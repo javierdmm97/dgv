@@ -74,6 +74,11 @@ class _PlayerList extends StatelessWidget {
               player: player,
               onTap: () => Navigator.pushNamed(
                 context,
+                AppRoutes.license,
+                arguments: player.id,
+              ),
+              onViewLicense: () => Navigator.pushNamed(
+                context,
                 AppRoutes.licenseViewer,
                 arguments: player,
               ),

@@ -15,7 +15,11 @@ import 'package:dgv/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:dgv/features/leaderboard/presentation/player_detail_screen.dart';
 import 'package:dgv/features/main_menu/presentation/ayuda_screen.dart';
 import 'package:dgv/features/main_menu/presentation/fake_news_screen.dart';
+import 'package:dgv/features/main_menu/presentation/final_ceremony_screen.dart';
 import 'package:dgv/features/main_menu/presentation/main_menu_screen.dart';
+import 'package:dgv/features/main_menu/presentation/settings_screen.dart';
+import 'package:dgv/features/main_menu/presentation/splash_screen.dart';
+import 'package:dgv/features/main_menu/presentation/vehicle_list_screen.dart';
 import 'package:dgv/features/player_registration/presentation/player_registration_screen.dart';
 import 'package:dgv/features/player_registration/presentation/player_selection_screen.dart';
 import 'package:dgv/features/scoring/presentation/fine_screen.dart';
@@ -32,16 +36,30 @@ class DGVApp extends ConsumerWidget {
       darkTheme: DGTTheme.darkTheme,
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: const _RecoveryGate(),
+      home: const SplashScreen(),
       onGenerateRoute: _generateRoute,
     );
   }
 
   static Route<dynamic>? _generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case '/':
+        return MaterialPageRoute<void>(
+          builder: (_) => const _RecoveryGate(),
+          settings: settings,
+        );
+
       case AppRoutes.playerRegistration:
         return MaterialPageRoute<void>(
           builder: (_) => const PlayerRegistrationScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.playerEdit:
+        final editingPlayer = settings.arguments as PlayerProfile;
+        return MaterialPageRoute<void>(
+          builder: (_) =>
+              PlayerRegistrationScreen(editingPlayer: editingPlayer),
           settings: settings,
         );
 
@@ -102,6 +120,24 @@ class DGVApp extends ConsumerWidget {
       case AppRoutes.ayuda:
         return MaterialPageRoute<void>(
           builder: (_) => const AyudaScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.finalCeremony:
+        return MaterialPageRoute<void>(
+          builder: (_) => const FinalCeremonyScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.settings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const SettingsScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.vehicleList:
+        return MaterialPageRoute<void>(
+          builder: (_) => const VehicleListScreen(),
           settings: settings,
         );
 

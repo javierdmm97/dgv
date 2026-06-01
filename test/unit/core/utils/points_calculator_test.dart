@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dgv/core/models/bac_reading.dart';
-import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/utils/points_calculator.dart';
 
 void main() {
@@ -152,18 +151,16 @@ void main() {
     group('calculateAverageDistanceFromOptimal', () {
       test('returns infinity for empty readings list', () {
         expect(
-          PointsCalculator.calculateAverageDistanceFromOptimal(
-            [],
-            Sex.male,
-            BodySize.medium,
-          ),
+          PointsCalculator.calculateAverageDistanceFromOptimal([]),
           equals(double.infinity),
         );
       });
 
       test('calculates average distance correctly', () {
-        // Round 1 optimal male medium = 0.111, reading 0.611 -> distance 0.5
-        // Round 2 optimal male medium = 0.223, reading 0.723 -> distance 0.5
+        // optimalBAC stored on each reading (as set at scoring time)
+        // Distance R1: |0.611 - 0.111| = 0.500
+        // Distance R2: |0.723 - 0.223| = 0.500
+        // Average: 0.500
         final readings = [
           BACReading(
             id: 'r1',
@@ -172,6 +169,7 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 1,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.111,
           ),
           BACReading(
             id: 'r2',
@@ -180,18 +178,11 @@ void main() {
             timestamp: DateTime.now(),
             roundNumber: 2,
             entryMethod: BACEntryMethod.manual,
+            optimalBAC: 0.223,
           ),
         ];
-        // M-M Round 1 optimal: 0.111, Round 2 optimal: 0.223
-        // Distance R1: |0.611 - 0.111| = 0.500
-        // Distance R2: |0.723 - 0.223| = 0.500
-        // Average: 0.500
         expect(
-          PointsCalculator.calculateAverageDistanceFromOptimal(
-            readings,
-            Sex.male,
-            BodySize.medium,
-          ),
+          PointsCalculator.calculateAverageDistanceFromOptimal(readings),
           closeTo(0.5, 0.0001),
         );
       });

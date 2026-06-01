@@ -24,6 +24,7 @@ class BACReading with _$BACReading {
     required int roundNumber,
     required BACEntryMethod entryMethod,
     @Default(0) int pointsChange,
+    @Default(0.0) double optimalBAC,
     @Default(null) String? notes,
   }) = _BACReading;
 

@@ -64,7 +64,7 @@ class CheckpointCalculator {
     if (playerCount <= 8) return 1;
     if (playerCount <= 16) return 2;
     if (playerCount <= 24) return 3;
-    return (playerCount / 8).ceil();
+    return (playerCount / 8).ceil().clamp(1, 7);
   }
 
   /// Format time remaining as MM:SS

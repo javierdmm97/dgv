@@ -29,6 +29,7 @@ mixin _$GameState {
   List<String> get playerIds => throw _privateConstructorUsedError;
   DateTime? get lastCheckpointTime => throw _privateConstructorUsedError;
   DateTime? get finishTime => throw _privateConstructorUsedError;
+  double get preGameBeers => throw _privateConstructorUsedError;
 
   /// Serializes this GameState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -54,6 +55,7 @@ abstract class $GameStateCopyWith<$Res> {
     List<String> playerIds,
     DateTime? lastCheckpointTime,
     DateTime? finishTime,
+    double preGameBeers,
   });
 }
 
@@ -80,6 +82,7 @@ class _$GameStateCopyWithImpl<$Res, $Val extends GameState>
     Object? playerIds = null,
     Object? lastCheckpointTime = freezed,
     Object? finishTime = freezed,
+    Object? preGameBeers = null,
   }) {
     return _then(
       _value.copyWith(
@@ -115,6 +118,10 @@ class _$GameStateCopyWithImpl<$Res, $Val extends GameState>
                 ? _value.finishTime
                 : finishTime // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            preGameBeers: null == preGameBeers
+                ? _value.preGameBeers
+                : preGameBeers // ignore: cast_nullable_to_non_nullable
+                      as double,
           )
           as $Val,
     );
@@ -139,6 +146,7 @@ abstract class _$$GameStateImplCopyWith<$Res>
     List<String> playerIds,
     DateTime? lastCheckpointTime,
     DateTime? finishTime,
+    double preGameBeers,
   });
 }
 
@@ -164,6 +172,7 @@ class __$$GameStateImplCopyWithImpl<$Res>
     Object? playerIds = null,
     Object? lastCheckpointTime = freezed,
     Object? finishTime = freezed,
+    Object? preGameBeers = null,
   }) {
     return _then(
       _$GameStateImpl(
@@ -199,6 +208,10 @@ class __$$GameStateImplCopyWithImpl<$Res>
             ? _value.finishTime
             : finishTime // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        preGameBeers: null == preGameBeers
+            ? _value.preGameBeers
+            : preGameBeers // ignore: cast_nullable_to_non_nullable
+                  as double,
       ),
     );
   }
@@ -216,6 +229,7 @@ class _$GameStateImpl implements _GameState {
     final List<String> playerIds = const [],
     this.lastCheckpointTime = null,
     this.finishTime = null,
+    this.preGameBeers = 0.0,
   }) : _playerIds = playerIds;
 
   factory _$GameStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -248,10 +262,13 @@ class _$GameStateImpl implements _GameState {
   @override
   @JsonKey()
   final DateTime? finishTime;
+  @override
+  @JsonKey()
+  final double preGameBeers;
 
   @override
   String toString() {
-    return 'GameState(id: $id, startTime: $startTime, currentRound: $currentRound, isInProgress: $isInProgress, isFinished: $isFinished, playerIds: $playerIds, lastCheckpointTime: $lastCheckpointTime, finishTime: $finishTime)';
+    return 'GameState(id: $id, startTime: $startTime, currentRound: $currentRound, isInProgress: $isInProgress, isFinished: $isFinished, playerIds: $playerIds, lastCheckpointTime: $lastCheckpointTime, finishTime: $finishTime, preGameBeers: $preGameBeers)';
   }
 
   @override
@@ -275,7 +292,9 @@ class _$GameStateImpl implements _GameState {
             (identical(other.lastCheckpointTime, lastCheckpointTime) ||
                 other.lastCheckpointTime == lastCheckpointTime) &&
             (identical(other.finishTime, finishTime) ||
-                other.finishTime == finishTime));
+                other.finishTime == finishTime) &&
+            (identical(other.preGameBeers, preGameBeers) ||
+                other.preGameBeers == preGameBeers));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -290,6 +309,7 @@ class _$GameStateImpl implements _GameState {
     const DeepCollectionEquality().hash(_playerIds),
     lastCheckpointTime,
     finishTime,
+    preGameBeers,
   );
 
   /// Create a copy of GameState
@@ -316,6 +336,7 @@ abstract class _GameState implements GameState {
     final List<String> playerIds,
     final DateTime? lastCheckpointTime,
     final DateTime? finishTime,
+    final double preGameBeers,
   }) = _$GameStateImpl;
 
   factory _GameState.fromJson(Map<String, dynamic> json) =
@@ -337,6 +358,8 @@ abstract class _GameState implements GameState {
   DateTime? get lastCheckpointTime;
   @override
   DateTime? get finishTime;
+  @override
+  double get preGameBeers;
 
   /// Create a copy of GameState
   /// with the given fields replaced by the non-null parameter values.

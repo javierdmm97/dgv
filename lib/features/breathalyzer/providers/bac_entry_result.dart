@@ -42,8 +42,16 @@ class BACEntryResult {
 
 /// Arguments passed when pushing the round-robin route.
 class RoundRobinArgs {
-  const RoundRobinArgs({required this.players, required this.round});
+  const RoundRobinArgs({
+    required this.players,
+    required this.round,
+    this.intervalMinutes,
+  });
 
   final List<PlayerProfile> players;
   final int round;
+
+  /// Only set for round 0 — used to initialize the checkpoint timer after
+  /// baseline measurements complete.
+  final int? intervalMinutes;
 }
