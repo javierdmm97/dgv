@@ -57,6 +57,7 @@ class NotificationService {
         >();
 
     await androidImpl?.requestNotificationsPermission();
+    await androidImpl?.requestExactAlarmsPermission();
   }
 
   /// Show (or replace) an ongoing countdown notification for [groupIndex].
@@ -186,13 +187,21 @@ class NotificationService {
         colorized: true,
         channelShowBadge: false,
       );
+      final androidImpl = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final canExact =
+          await androidImpl?.canScheduleExactNotifications() ?? false;
       await _plugin.zonedSchedule(
         _baseId + groupIndex,
         '🚨 $groupLabel — Ronda $round',
         '¡Puedes medir al $groupLabel ahora!',
         scheduledTZ,
         NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexact,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );

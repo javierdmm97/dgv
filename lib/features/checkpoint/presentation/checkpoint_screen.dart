@@ -342,7 +342,7 @@ class _TimersBody extends StatelessWidget {
                 group: group,
                 groupNumber: group.groupIndex + 1,
                 players: groupPlayers,
-                onMeasure: group.isDue ? () => onGoReten(group, state) : null,
+                onMeasure: () => onGoReten(group, state),
               );
             },
           ),

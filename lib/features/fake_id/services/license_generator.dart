@@ -442,27 +442,35 @@ class LicenseGenerator {
       );
       y += _bkRowH + 2;
     } else {
-      for (final r in activeReadings) {
-        final sign = r.pointsChange >= 0 ? '+' : '';
-        _drawText(
-          canvas,
-          'R${r.roundNumber}: ${r.formattedBAC} mg/L',
-          Offset(_bkLeftX, y),
-          fontSize: 13,
-          color: Colors.black,
-          maxWidth: _bkLeftW,
-        );
-        y += _bkRowH;
-        _drawText(
-          canvas,
-          '  $sign${r.pointsChange} pts',
-          Offset(_bkLeftX, y),
-          fontSize: 12,
-          color: r.pointsChange >= 0 ? DGTColors.primary : DGTColors.red,
-          maxWidth: _bkLeftW,
-        );
-        y += _bkRowH + 2;
+      const colW = (_bkLeftW - 6) / 2;
+      for (int i = 0; i < activeReadings.length; i += 2) {
         if (y > 260) break;
+        final columns = [
+          activeReadings[i],
+          if (i + 1 < activeReadings.length) activeReadings[i + 1],
+        ];
+        for (int col = 0; col < columns.length; col++) {
+          final r = columns[col];
+          final sign = r.pointsChange >= 0 ? '+' : '';
+          final xOff = _bkLeftX + col * (colW + 6);
+          _drawText(
+            canvas,
+            'R${r.roundNumber}: ${r.formattedBAC}',
+            Offset(xOff, y),
+            fontSize: 11,
+            color: Colors.black,
+            maxWidth: colW,
+          );
+          _drawText(
+            canvas,
+            '$sign${r.pointsChange} pts',
+            Offset(xOff, y + _bkRowH - 4),
+            fontSize: 10,
+            color: r.pointsChange >= 0 ? DGTColors.primary : DGTColors.red,
+            maxWidth: colW,
+          );
+        }
+        y += _bkRowH + 10;
       }
     }
 
