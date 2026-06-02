@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/game_state.dart';
 import 'player_providers.dart';
 import 'repository_providers.dart';
+import 'package:dgv/features/firebase/providers/firebase_providers.dart';
 
 part 'game_state_providers.g.dart';
 
@@ -47,6 +50,7 @@ class GameStateNotifier extends _$GameStateNotifier {
     );
 
     await repository.save(newGame);
+    unawaited(ref.read(firebaseSyncServiceProvider).syncSessionCreate(newGame));
     ref.invalidateSelf();
   }
 
@@ -84,6 +88,13 @@ class GameStateNotifier extends _$GameStateNotifier {
     );
 
     await repository.save(updatedState);
+    final playerRepo = ref.read(playerRepositoryProvider);
+    final syncService = ref.read(firebaseSyncServiceProvider);
+    unawaited(
+      playerRepo.getAll().then(
+        (p) => syncService.syncGameFinish(updatedState, p),
+      ),
+    );
     // Flush player cache so post-game screens (main menu, ceremony) see
     // the final readings and title counts without stale data.
     ref.invalidate(playerListNotifierProvider);

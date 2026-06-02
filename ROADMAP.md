@@ -292,7 +292,7 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 
 ---
 
-### 🔥 Phase 4: Firebase & Web Frontend (Josema Lead — ⚠️ Blocked on external project dependency)
+### 🔥 Phase 4: Firebase & Web Frontend (Josema Lead — 🚧 App side complete, web frontend pending)
 
 **Goal:** Add real-time Firebase sync and a companion web frontend for the leaderboard display screen
 
@@ -301,49 +301,40 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 #### Tasks
 
 **4.1 Firebase Setup**
-- [ ] Add `firebase_core`, `cloud_firestore` dependencies
-- [ ] Configure Firebase project (Android only initially)
-- [ ] Implement connectivity check before any Firestore write
-- [ ] Write Firebase service with offline-first wrapper
+- [x] Add `firebase_core`, `cloud_firestore`, `firebase_storage`, `connectivity_plus` dependencies
+- [x] Configure Firebase project (Android — `flutterfire configure`)
+- [x] Write Firebase service with offline-first wrapper (`FirebaseSyncService._safeWrite` + Firestore persistence)
+- [x] Firestore security rules deployed (players, sessions, notifications collections)
 
 **4.2 Firestore Data Schema**
 
-*Players collection:*
+*Implemented collections:*
 ```
-players/{unique_id}
-  name: String
-  surname: String
-  photoUrl: String (Firebase Storage URL)
-  points: int
-  pointsHistory: List<int>        # points after each round
-  bacHistory: List<double>        # BAC readings per round
-  fineCount: int
-  moneyLost: int
-  timestamp: Timestamp
-```
+sessions/{sessionId}
+  startTime, currentRound, isFinished, isInProgress, playerIds[], preGameBeers
 
-*Notifications collection:*
-```
+players/{playerId}
+  name, surname, photoUrl (base64 data URL), points
+  bacHistory[], optimalBACHistory[], titleCounts{}
+  fineCount, moneyLost, crossedOptimalLine, isIncautado
+
 notifications/{id}
-  text: String
-  imageUrl: String?               # optional
-  timestamp: Timestamp
-  status: String                  # "pending" | "read"
+  text, imageUrl?, timestamp, status ("pending"|"read"), type, targetPlayerId?
 ```
 
 **4.3 App → Firebase Sync**
-- [ ] Sync player data after each round (points, BAC, fines)
-- [ ] Upload player photo to Firebase Storage on registration
-- [ ] Auto-sync Notification writes from in-app events (new fine, streaks, etc.)
+- [x] Sync session doc on game start (`GameStateNotifier.startGame`)
+- [x] Sync all players + session round after each round (`CheckpointNotifier._onRoundComplete`)
+- [x] Sync individual player after each BAC entry (`BACEntryNotifier.submitBAC`)
+- [x] Sync player on registration with compressed base64 photo (`RegistrationNotifier._submitCreate`)
+- [x] Sync final state + all players on game finish (`GameStateNotifier.finishGame`)
+- [x] Auto-fire fine notification when `multaPorExceso` title awarded
 
 **4.4 In-App Notification Sender**
-- [ ] Build notification compose screen (custom text, optional image)
-- [ ] Predefined notification templates:
-  - New fine issued
-  - Player on streak (3+ rounds over the line)
-  - MOAB alert (Mother Of All Beers — extended streak, MW joke reference)
-  - Congratulations on zone entry
-- [ ] Writing a notification = writing to Firestore `notifications` collection
+- [x] `NotificationComposerScreen` with free-text + 4 predefined templates
+- [x] Player selector chips — target a specific player per notification
+- [x] Accessible from sidebar drawer (game-in-progress only)
+- [x] Writes to Firestore `notifications` collection
 
 **4.5 Web Frontend (Leaderboard Screen)**
 - [ ] Real-time leaderboard with player stats (points, BAC, fines)
@@ -358,9 +349,9 @@ notifications/{id}
 **Deliverables:**
 - ✅ Firebase integration with offline-first behavior
 - ✅ Real-time player sync after each round
-- ✅ In-app notification sender (custom + predefined)
-- ✅ Web frontend leaderboard with notification ticker
+- ✅ In-app notification sender (custom + predefined + player-targeted)
 - ✅ App works fully without internet
+- 🔜 Web frontend leaderboard with notification ticker (Josema)
 
 **Estimated Completion:** Parallel to / after Phase 3
 

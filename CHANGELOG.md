@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] - 2026-06-02
+
+### Added — Phase 4 Firebase Sync (June 2, 2026)
+- `FirebaseSyncService` — fire-and-forget Firestore writer with `_safeWrite` wrapper; all writes silently no-op if Firebase is unavailable
+- `FirebaseStorageService` — compresses player photo to 200×200 JPEG (quality 60) and stores as base64 data URL in Firestore player doc
+- `firebase_providers.dart` — manual Riverpod `Provider<T>` wrappers (no codegen required)
+- `NotificationPayload` — plain Dart model for the Firestore `notifications` collection
+- `NotificationComposerScreen` — in-app notification sender with 4 predefined templates, free-text field, and player selector chips; accessible from sidebar drawer during an active game
+- Firestore offline persistence enabled (`persistenceEnabled: true`) — writes buffer locally and flush automatically on reconnect
+- Firebase init in `main.dart` — gracefully disabled if `google-services.json` is absent
+- Firestore security rules deployed: `players`, `sessions`, `notifications` collections with field validation
+
+### Changed — Phase 4 Firebase Sync (June 2, 2026)
+- `GameStateNotifier.startGame` — syncs new session doc to Firestore on game start
+- `GameStateNotifier.finishGame` — syncs final session state + all player docs on game finish
+- `CheckpointNotifier._onRoundComplete` — batch-syncs all players + session round after each round; auto-fires fine notification when `multaPorExceso` title is awarded
+- `BACEntryNotifier.submitBAC` — syncs individual player doc after each BAC entry
+- `RegistrationNotifier._submitCreate` — uploads compressed photo and syncs player doc on registration
+- Sidebar drawer — "Enviar Notificación" item added under game-in-progress section
+
 ### Fixed
 - License back side: Distintivo Ambiental sticker moved from right panel to left panel, below Títulos row
 - License export: profile photo no longer stretches — uses cover-fit crop centred on the subject

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show Color;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dgv/features/firebase/providers/firebase_providers.dart';
 
 import 'package:dgv/core/constants/app_constants.dart';
 import 'package:dgv/core/models/bac_reading.dart';
@@ -136,6 +139,9 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     );
 
     await repo.update(updatedPlayer);
+    unawaited(
+      ref.read(firebaseSyncServiceProvider).syncPlayerUpdate(updatedPlayer),
+    );
     await LicenseUpdateService.updateForPlayer(
       player: updatedPlayer,
       repo: repo,

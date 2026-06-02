@@ -10,6 +10,7 @@ import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/providers/repository_providers.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
+import 'package:dgv/features/firebase/presentation/notification_composer_screen.dart';
 import 'package:dgv/features/main_menu/presentation/widgets/fake_error_notification.dart';
 import 'package:dgv/features/main_menu/presentation/widgets/fake_news_section.dart';
 import 'package:dgv/features/main_menu/providers/main_menu_provider.dart';
@@ -72,6 +73,14 @@ class _AppDrawer extends ConsumerWidget {
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.pushNamed(context, AppRoutes.leaderboard);
+                      },
+                    ),
+                    _DrawerItem(
+                      icon: Icons.campaign_outlined,
+                      label: 'Enviar Notificación',
+                      onTap: () {
+                        Navigator.pop(context);
+                        NotificationComposerScreen.show(context);
                       },
                     ),
                   ],

@@ -98,7 +98,12 @@ class LicenseGenerator {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
-      const Rect.fromLTWH(0, 0, _cardWidth * _pixelRatio, _cardHeight * _pixelRatio),
+      const Rect.fromLTWH(
+        0,
+        0,
+        _cardWidth * _pixelRatio,
+        _cardHeight * _pixelRatio,
+      ),
     );
     canvas.scale(_pixelRatio, _pixelRatio);
 
@@ -170,7 +175,12 @@ class LicenseGenerator {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
-      const Rect.fromLTWH(0, 0, _cardWidth * _pixelRatio, _cardHeight * _pixelRatio),
+      const Rect.fromLTWH(
+        0,
+        0,
+        _cardWidth * _pixelRatio,
+        _cardHeight * _pixelRatio,
+      ),
     );
     canvas.scale(_pixelRatio, _pixelRatio);
 
@@ -532,7 +542,12 @@ class LicenseGenerator {
     if (envImage != null) {
       canvas.drawImageRect(
         envImage,
-        Rect.fromLTWH(0, 0, envImage.width.toDouble(), envImage.height.toDouble()),
+        Rect.fromLTWH(
+          0,
+          0,
+          envImage.width.toDouble(),
+          envImage.height.toDouble(),
+        ),
         Rect.fromLTWH(_bkLeftX, y, _bkEnvIconSize, _bkEnvIconSize),
         Paint()..filterQuality = FilterQuality.high,
       );

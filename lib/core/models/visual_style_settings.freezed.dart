@@ -66,10 +66,7 @@ class _$VisualStyleSettingsCopyWithImpl<$Res, $Val extends VisualStyleSettings>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? borderRadiusStyle = null,
-    Object? fontFamily = null,
-  }) {
+  $Res call({Object? borderRadiusStyle = null, Object? fontFamily = null}) {
     return _then(
       _value.copyWith(
             borderRadiusStyle: null == borderRadiusStyle
@@ -114,10 +111,7 @@ class __$$VisualStyleSettingsImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? borderRadiusStyle = null,
-    Object? fontFamily = null,
-  }) {
+  $Res call({Object? borderRadiusStyle = null, Object? fontFamily = null}) {
     return _then(
       _$VisualStyleSettingsImpl(
         borderRadiusStyle: null == borderRadiusStyle
@@ -172,8 +166,7 @@ class _$VisualStyleSettingsImpl implements _VisualStyleSettings {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, borderRadiusStyle, fontFamily);
+  int get hashCode => Object.hash(runtimeType, borderRadiusStyle, fontFamily);
 
   /// Create a copy of VisualStyleSettings
   /// with the given fields replaced by the non-null parameter values.

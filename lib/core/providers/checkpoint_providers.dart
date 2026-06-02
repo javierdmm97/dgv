@@ -13,6 +13,9 @@ import 'package:dgv/core/providers/repository_providers.dart';
 import 'package:dgv/core/utils/checkpoint_calculator.dart';
 import 'package:dgv/core/services/notification_service.dart';
 import 'package:dgv/features/breathalyzer/providers/round_completion_service.dart';
+import 'package:dgv/features/firebase/models/notification_payload.dart';
+import 'package:dgv/features/firebase/providers/firebase_providers.dart';
+import 'package:uuid/uuid.dart';
 
 part 'checkpoint_providers.g.dart';
 
@@ -172,6 +175,10 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     // a cached snapshot that predates the round's BAC submissions.
     final playerRepo = ref.read(playerRepositoryProvider);
     final players = await playerRepo.getAll();
+    // Capture before the unawaited block — avoids calling ref.read() inside
+    // async callbacks where the provider tree may have changed.
+    final sessionId = ref.read(gameStateNotifierProvider).value?.id ?? '';
+    final syncService = ref.read(firebaseSyncServiceProvider);
 
     unawaited(
       RoundCompletionService.evaluateAndApply(
@@ -183,6 +190,35 @@ class CheckpointNotifier extends _$CheckpointNotifier {
         // Expose awards so CheckpointScreen can show the round summary sheet.
         if (awards.isNotEmpty) {
           ref.read(lastRoundAwardsProvider.notifier).state = awards;
+        }
+        // Sync round snapshot + auto-fire fine notifications.
+        unawaited(
+          syncService.syncRoundComplete(
+            sessionId: sessionId,
+            players: players,
+            round: completedRound,
+          ),
+        );
+        for (final entry in awards.entries) {
+          if (entry.value == DGTTitle.multaPorExceso) {
+            final playerName =
+                players
+                    .where((p) => p.id == entry.key)
+                    .map((p) => p.name)
+                    .firstOrNull ??
+                entry.key;
+            unawaited(
+              syncService.sendNotification(
+                NotificationPayload(
+                  id: const Uuid().v4(),
+                  text: '🚔 Multa para $playerName',
+                  timestamp: DateTime.now(),
+                  type: 'fine',
+                  targetPlayerId: entry.key,
+                ),
+              ),
+            );
+          }
         }
       }),
     );

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dgv/features/firebase/providers/firebase_providers.dart';
 
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/player_providers.dart';
@@ -135,6 +138,19 @@ class RegistrationNotifier extends _$RegistrationNotifier {
       );
 
       await ref.read(playerListNotifierProvider.notifier).addPlayer(profile);
+      final storageService = ref.read(firebaseStorageServiceProvider);
+      final syncService = ref.read(firebaseSyncServiceProvider);
+      unawaited(
+        storageService
+            .uploadPlayerPhoto(profile.id, profile.photoPath)
+            .then(
+              (url) => syncService.syncPlayerRegistration(
+                url != profile.photoPath
+                    ? profile.copyWith(photoPath: url)
+                    : profile,
+              ),
+            ),
+      );
       state = const RegistrationFormState();
     } on Exception catch (e) {
       state = s.copyWith(isLoading: false, error: e.toString());
