@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Checkpoint interval picker now offers 3 minutes instead of 30 minutes, keeping 45 and 60 minute options unchanged.
 - Firebase player sync now separates global profile data from session gameplay data: `players/{playerId}` stores identity fields, while `sessions/{sessionId}/players/{playerId}` stores points, readings, fines, titles, and BAC history.
 
+### Changed
+- License back round history now renders two rounds per row in a two-column layout, halving the vertical space used by the `HISTORIAL DE RONDAS` section.
+- "Ir al Retén" button on the checkpoint screen is now always enabled regardless of group due-state, letting the host open the retén manually at any time.
+
 ### Fixed
 - Updated checkpoint calculator and provider tests to match the new max-5 grouping behavior, including the 25-player case producing five balanced groups of five.
 - Overdue checkpoint groups now restore as waiting to be measured instead of being pushed forward by another interval; opening the app late keeps "Ir al Retén" active until the group is actually measured.
@@ -20,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Checkpoint round completion now derives from persisted player readings instead of only in-memory group tracking, so provider rebuilds cannot lose a previously measured group.
 - DGT title awards are delayed until the checkpoint screen is visible and scheduled after Navigator unlocks, preventing the Retén pop from accidentally dismissing or racing the awards sheet.
 - Environmental distinctive stickers on exported license backs now match ceremony ranking: the highest-BAC player receives `sin pegatina`, and the lowest ranked receives `0 emisiones`.
+- Notification service now requests `SCHEDULE_EXACT_ALARM` permission on Android 12+ at startup and falls back to `AndroidScheduleMode.inexact` when the permission is denied, preventing a crash on restricted devices.
 
 ---
 
