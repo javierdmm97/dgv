@@ -173,7 +173,12 @@ class BACEntryNotifier extends _$BACEntryNotifier {
 
     await repo.update(updatedPlayer);
     unawaited(
-      ref.read(firebaseSyncServiceProvider).syncPlayerUpdate(updatedPlayer),
+      ref
+          .read(firebaseSyncServiceProvider)
+          .syncPlayerUpdate(
+            sessionId: gameState?.id ?? '',
+            player: updatedPlayer,
+          ),
     );
     ref.invalidate(playerListNotifierProvider);
 

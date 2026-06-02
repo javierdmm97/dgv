@@ -148,8 +148,10 @@ Map<String, dynamic> _buildCeremony(List<PlayerProfile> players) {
             'playerId': coleccionista.id,
             'name': coleccionista.name,
             'surname': coleccionista.surname,
-            'totalTitles': coleccionista.titleCounts.values
-                .fold(0, (s, c) => s + c),
+            'totalTitles': coleccionista.titleCounts.values.fold(
+              0,
+              (s, c) => s + c,
+            ),
           },
     'environmentals': [
       for (var i = 0; i < environmentals.length; i++)

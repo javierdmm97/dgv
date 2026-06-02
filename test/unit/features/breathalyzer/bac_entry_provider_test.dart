@@ -274,40 +274,43 @@ void main() {
         expect(repo.lastUpdated!.readings.single.roundNumber, equals(1));
       });
 
-      test('does not append or score duplicate reading for same round', () async {
-        final existingReading = BACReading(
-          id: 'r1',
-          playerId: 'p1',
-          bac: 0.111,
-          timestamp: DateTime(2026, 6, 2, 10),
-          roundNumber: 1,
-          entryMethod: BACEntryMethod.manual,
-          pointsChange: 2,
-        );
-        final player = _makePlayer(points: 12).copyWith(
-          readings: [existingReading],
-        );
-        final repo = _FakePlayerRepo()..seed(player);
-        final checkFake = _FakeCheckpointNotifier();
-        final container = _makeContainer(
-          repo: repo,
-          currentRound: 2,
-          checkpointFake: checkFake,
-        );
-        addTearDown(container.dispose);
+      test(
+        'does not append or score duplicate reading for same round',
+        () async {
+          final existingReading = BACReading(
+            id: 'r1',
+            playerId: 'p1',
+            bac: 0.111,
+            timestamp: DateTime(2026, 6, 2, 10),
+            roundNumber: 1,
+            entryMethod: BACEntryMethod.manual,
+            pointsChange: 2,
+          );
+          final player = _makePlayer(
+            points: 12,
+          ).copyWith(readings: [existingReading]);
+          final repo = _FakePlayerRepo()..seed(player);
+          final checkFake = _FakeCheckpointNotifier();
+          final container = _makeContainer(
+            repo: repo,
+            currentRound: 2,
+            checkpointFake: checkFake,
+          );
+          addTearDown(container.dispose);
 
-        final result = await container
-            .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 0.35, roundNumber: 1);
+          final result = await container
+              .read(bACEntryNotifierProvider.notifier)
+              .submitBAC('p1', 0.35, roundNumber: 1);
 
-        final stored = await repo.getById('p1');
-        expect(result.bac, equals(0.111));
-        expect(result.roundNumber, equals(1));
-        expect(stored!.points, equals(12));
-        expect(stored.readings, hasLength(1));
-        expect(repo.lastUpdated, isNull);
-        expect(checkFake.measuredIds, contains('p1'));
-      });
+          final stored = await repo.getById('p1');
+          expect(result.bac, equals(0.111));
+          expect(result.roundNumber, equals(1));
+          expect(stored!.points, equals(12));
+          expect(stored.readings, hasLength(1));
+          expect(repo.lastUpdated, isNull);
+          expect(checkFake.measuredIds, contains('p1'));
+        },
+      );
     });
   });
 }

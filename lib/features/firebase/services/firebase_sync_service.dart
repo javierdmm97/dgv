@@ -26,6 +26,16 @@ class FirebaseSyncService {
 
   static bool get isAvailable => _initialized;
 
+  @visibleForTesting
+  static Map<String, dynamic> buildPlayerProfileDocForTest(
+    PlayerProfile player,
+  ) => _buildPlayerProfileDoc(player);
+
+  @visibleForTesting
+  static Map<String, dynamic> buildSessionPlayerDocForTest(
+    PlayerProfile player,
+  ) => _buildSessionPlayerDoc(player);
+
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
@@ -47,7 +57,10 @@ class FirebaseSyncService {
   /// Register a player — creates their top-level [players/{id}] doc.
   Future<void> syncPlayerRegistration(PlayerProfile player) async {
     await _safeWrite(
-      () => _db.collection('players').doc(player.id).set(_playerDoc(player)),
+      () => _db
+          .collection('players')
+          .doc(player.id)
+          .set(_buildPlayerProfileDoc(player), SetOptions(merge: true)),
     );
   }
 
@@ -69,23 +82,43 @@ class FirebaseSyncService {
       for (final player in players) {
         batch.set(
           _db.collection('players').doc(player.id),
-          _playerDoc(player),
+          _buildPlayerProfileDoc(player),
           SetOptions(merge: true),
         );
+        if (sessionId.isNotEmpty) {
+          batch.set(
+            _sessionPlayerRef(sessionId, player.id),
+            _buildSessionPlayerDoc(player),
+            SetOptions(merge: true),
+          );
+        }
       }
 
       await batch.commit();
     });
   }
 
-  /// Update a single player after a BAC entry.
-  Future<void> syncPlayerUpdate(PlayerProfile player) async {
-    await _safeWrite(
-      () => _db
-          .collection('players')
-          .doc(player.id)
-          .set(_playerDoc(player), SetOptions(merge: true)),
-    );
+  /// Update a single player's session-scoped gameplay state after a BAC entry.
+  Future<void> syncPlayerUpdate({
+    required String sessionId,
+    required PlayerProfile player,
+  }) async {
+    await _safeWrite(() async {
+      final batch = _db.batch();
+      batch.set(
+        _db.collection('players').doc(player.id),
+        _buildPlayerProfileDoc(player),
+        SetOptions(merge: true),
+      );
+      if (sessionId.isNotEmpty) {
+        batch.set(
+          _sessionPlayerRef(sessionId, player.id),
+          _buildSessionPlayerDoc(player),
+          SetOptions(merge: true),
+        );
+      }
+      await batch.commit();
+    });
   }
 
   /// Mark session as finished, write ceremony results, and do a final player sync.
@@ -109,7 +142,12 @@ class FirebaseSyncService {
       for (final player in players) {
         batch.set(
           _db.collection('players').doc(player.id),
-          _playerDoc(player),
+          _buildPlayerProfileDoc(player),
+          SetOptions(merge: true),
+        );
+        batch.set(
+          _sessionPlayerRef(gameState.id, player.id),
+          _buildSessionPlayerDoc(player),
           SetOptions(merge: true),
         );
       }
@@ -149,11 +187,39 @@ class FirebaseSyncService {
     }
   }
 
-  Map<String, dynamic> _playerDoc(PlayerProfile player) {
-    return {
+  DocumentReference<Map<String, dynamic>> _sessionPlayerRef(
+    String sessionId,
+    String playerId,
+  ) {
+    return _db
+        .collection('sessions')
+        .doc(sessionId)
+        .collection('players')
+        .doc(playerId);
+  }
+
+  static Map<String, dynamic> _buildPlayerProfileDoc(PlayerProfile player) {
+    final doc = <String, dynamic>{
       'name': player.name,
       'surname': player.surname,
-      'photoUrl': player.photoPath,
+      'sex': player.sex.name,
+      'bodySize': player.bodySize.name,
+      'createdAt': player.createdAt == null
+          ? null
+          : Timestamp.fromDate(player.createdAt!),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (_isRemotePhoto(player.photoPath)) {
+      doc['photoUrl'] = player.photoPath;
+    }
+
+    return doc;
+  }
+
+  static Map<String, dynamic> _buildSessionPlayerDoc(PlayerProfile player) {
+    final doc = <String, dynamic>{
+      'playerId': player.id,
       'points': player.points,
       'fineCount': player.fineCount,
       'moneyLost': player.moneyLost,
@@ -162,20 +228,52 @@ class FirebaseSyncService {
       'titleCounts': player.titleCounts.map((k, v) => MapEntry(k.name, v)),
       'titleDetails': player.titleCounts.entries
           .where((e) => e.value > 0)
-          .map((e) => {
-                'key': e.key.name,
-                'displayName': e.key.displayName,
-                'emoji': e.key.emoji,
-                'count': e.value,
-              })
+          .map(
+            (e) => {
+              'key': e.key.name,
+              'displayName': e.key.displayName,
+              'emoji': e.key.emoji,
+              'count': e.value,
+            },
+          )
           .toList(),
+      'readings': _readingDocs(player.readings),
       'bacHistory': _bacHistory(player.readings),
       'optimalBACHistory': _optimalBACHistory(player.readings),
       'updatedAt': FieldValue.serverTimestamp(),
     };
+
+    if (_isRemotePhoto(player.photoPath)) {
+      doc['photoUrl'] = player.photoPath;
+    }
+
+    return doc;
   }
 
-  List<double> _bacHistory(List<BACReading> readings) {
+  static bool _isRemotePhoto(String photoPath) {
+    return photoPath.startsWith('data:image/') ||
+        photoPath.startsWith('http://') ||
+        photoPath.startsWith('https://');
+  }
+
+  static List<Map<String, dynamic>> _readingDocs(List<BACReading> readings) {
+    return readings
+        .map(
+          (reading) => {
+            'id': reading.id,
+            'bac': reading.bac,
+            'timestamp': Timestamp.fromDate(reading.timestamp),
+            'roundNumber': reading.roundNumber,
+            'entryMethod': reading.entryMethod.name,
+            'pointsChange': reading.pointsChange,
+            'optimalBAC': reading.optimalBAC,
+            'notes': reading.notes,
+          },
+        )
+        .toList();
+  }
+
+  static List<double> _bacHistory(List<BACReading> readings) {
     final byRound = <int, double>{};
     for (final r in readings.where((r) => r.isActiveRound)) {
       byRound[r.roundNumber] = r.bac;
@@ -184,7 +282,7 @@ class FirebaseSyncService {
     return rounds.map((k) => byRound[k]!).toList();
   }
 
-  List<double> _optimalBACHistory(List<BACReading> readings) {
+  static List<double> _optimalBACHistory(List<BACReading> readings) {
     final byRound = <int, double>{};
     for (final r in readings.where((r) => r.isActiveRound)) {
       byRound[r.roundNumber] = r.optimalBAC;

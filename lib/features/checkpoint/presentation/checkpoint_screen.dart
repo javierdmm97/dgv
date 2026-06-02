@@ -31,6 +31,7 @@ class CheckpointScreen extends ConsumerStatefulWidget {
 class _CheckpointScreenState extends ConsumerState<CheckpointScreen>
     with RouteAware {
   bool _isShowingAwards = false;
+  bool _isAwardsShowScheduled = false;
 
   @override
   void initState() {
@@ -66,12 +67,18 @@ class _CheckpointScreenState extends ConsumerState<CheckpointScreen>
   }
 
   void _showPendingAwardsIfVisible() {
-    if (!mounted || _isShowingAwards) return;
-    if (ModalRoute.of(context)?.isCurrent != true) return;
+    if (!mounted || _isShowingAwards || _isAwardsShowScheduled) return;
 
-    final awards = ref.read(lastRoundAwardsProvider);
-    if (awards == null || awards.isEmpty) return;
-    _showAwardsSheet(awards);
+    _isAwardsShowScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _isAwardsShowScheduled = false;
+      if (!mounted || _isShowingAwards) return;
+      if (ModalRoute.of(context)?.isCurrent != true) return;
+
+      final awards = ref.read(lastRoundAwardsProvider);
+      if (awards == null || awards.isEmpty) return;
+      _showAwardsSheet(awards);
+    });
   }
 
   void _showAwardsSheet(Map<String, DGTTitle> awards) {

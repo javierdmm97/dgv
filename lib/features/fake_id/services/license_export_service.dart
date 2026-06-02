@@ -2,6 +2,7 @@ import 'package:dgv/core/constants/asset_paths.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/utils/title_evaluator.dart';
 import 'package:dgv/features/fake_id/services/license_generator.dart';
+import 'package:flutter/foundation.dart';
 
 /// Generates final PNG licenses for all players with end-of-game awards baked in.
 ///
@@ -10,6 +11,10 @@ import 'package:dgv/features/fake_id/services/license_generator.dart';
 /// environmental stickers. Returns all file paths for sharing.
 class LicenseExportService {
   LicenseExportService._();
+
+  @visibleForTesting
+  static String? environmentalPathForTest(int index) =>
+      _environmentalPathFor(index);
 
   /// Regenerates front and back PNGs for every player with final awards.
   ///
@@ -49,11 +54,11 @@ class LicenseExportService {
 
   static String? _environmentalPathFor(int index) {
     return switch (index) {
-      0 => AssetPaths.pegatina0Emisiones,
-      1 => AssetPaths.pegatinaEco,
-      2 => AssetPaths.pegatinab,
-      3 => AssetPaths.pegatinac,
-      4 => AssetPaths.sinPegatina,
+      0 => AssetPaths.sinPegatina,
+      1 => AssetPaths.pegatinab,
+      2 => AssetPaths.pegatinac,
+      3 => AssetPaths.pegatinaEco,
+      4 => AssetPaths.pegatina0Emisiones,
       _ => null,
     };
   }

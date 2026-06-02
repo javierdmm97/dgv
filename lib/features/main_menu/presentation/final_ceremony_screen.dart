@@ -506,13 +506,13 @@ class _ColeccionistaRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              if (totalTitles > 0)
-                Text(
-                  '$totalTitles títulos',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: DGTColors.textSecondary,
+                if (totalTitles > 0)
+                  Text(
+                    '$totalTitles títulos',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: DGTColors.textSecondary,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

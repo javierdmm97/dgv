@@ -16,11 +16,9 @@ class NotificationComposerScreen extends ConsumerStatefulWidget {
   const NotificationComposerScreen({super.key});
 
   static Future<void> show(BuildContext context) => Navigator.push<void>(
-        context,
-        MaterialPageRoute<void>(
-          builder: (_) => const NotificationComposerScreen(),
-        ),
-      );
+    context,
+    MaterialPageRoute<void>(builder: (_) => const NotificationComposerScreen()),
+  );
 
   @override
   ConsumerState<NotificationComposerScreen> createState() =>
@@ -149,8 +147,10 @@ class _NotificationComposerScreenState
                           _controller.text = '$prefix$emoji $label';
                           _send(type);
                         },
-                  child: Text('$emoji $label',
-                      style: const TextStyle(fontSize: 16)),
+                  child: Text(
+                    '$emoji $label',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
 

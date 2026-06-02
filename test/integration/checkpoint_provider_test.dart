@@ -321,7 +321,7 @@ void main() {
     final keepAlive = _keepAlive(container);
     addTearDown(keepAlive.close);
 
-      // Initialize with 3 players (1 group since ≤5)
+    // Initialize with 3 players (1 group since ≤5)
     final players = _makePlayers(3);
     final notifier = container.read(checkpointNotifierProvider.notifier);
     await notifier.initialize(players: players, intervalMinutes: 45);

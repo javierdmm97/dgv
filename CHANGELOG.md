@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Checkpoint grouping now targets a maximum of 5 players per group instead of 8, so 20 players create 4 groups and 21–25 players create 5 groups.
 - Checkpoint interval picker now offers 3 minutes instead of 30 minutes, keeping 45 and 60 minute options unchanged.
+- Firebase player sync now separates global profile data from session gameplay data: `players/{playerId}` stores identity fields, while `sessions/{sessionId}/players/{playerId}` stores points, readings, fines, titles, and BAC history.
 
 ### Fixed
 - Updated checkpoint calculator and provider tests to match the new max-5 grouping behavior, including the 25-player case producing five balanced groups of five.
@@ -17,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Retén group confirmation is now one-shot and round-stable: duplicate taps cannot write the same staged measurements into a later round.
 - BAC submission is idempotent per player/round, preventing duplicate readings, double scoring, duplicate fines, and repeated checkpoint completion from the same Retén screen.
 - Checkpoint round completion now derives from persisted player readings instead of only in-memory group tracking, so provider rebuilds cannot lose a previously measured group.
-- DGT title awards are delayed until the checkpoint screen is visible, preventing the Retén pop from accidentally dismissing the awards sheet.
+- DGT title awards are delayed until the checkpoint screen is visible and scheduled after Navigator unlocks, preventing the Retén pop from accidentally dismissing or racing the awards sheet.
+- Environmental distinctive stickers on exported license backs now match ceremony ranking: the highest-BAC player receives `sin pegatina`, and the lowest ranked receives `0 emisiones`.
 
 ---
 
