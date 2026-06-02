@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DGT title awards are delayed until the checkpoint screen is visible and scheduled after Navigator unlocks, preventing the Retén pop from accidentally dismissing or racing the awards sheet.
 - Environmental distinctive stickers on exported license backs now match ceremony ranking: the highest-BAC player receives `sin pegatina`, and the lowest ranked receives `0 emisiones`.
 - Notification service now requests `SCHEDULE_EXACT_ALARM` permission on Android 12+ at startup and falls back to `AndroidScheduleMode.inexact` when the permission is denied, preventing a crash on restricted devices.
+- Classification graph and table now use the prebeer-adjusted optimal BAC stored on each reading (`BACReading.optimalBAC`) instead of recalculating the base target, so the target line and comparison column correctly reflect the prebeer offset.
 
 ---
 

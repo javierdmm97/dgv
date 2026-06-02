@@ -374,9 +374,7 @@ class _LollipopPainter extends CustomPainter {
     final chartH = size.height - _topPad - _bottomPad;
 
     // Compute optimal values and overall Y range.
-    final optimalValues = readings.map((r) {
-      return BACCalculator.calculateOptimalBrAC(r.roundNumber, sex, bodySize);
-    }).toList();
+    final optimalValues = readings.map((r) => r.optimalBAC).toList();
 
     final allY = [...readings.map((r) => r.bac), ...optimalValues];
     final maxY = (allY.reduce((a, b) => a > b ? a : b) + 0.15).clamp(
@@ -597,11 +595,7 @@ class _MeasurementTable extends StatelessWidget {
                 );
               }
 
-              final optimal = BACCalculator.calculateOptimalBrAC(
-                reading.roundNumber,
-                player.sex,
-                player.bodySize,
-              );
+              final optimal = reading.optimalBAC;
               final diff = reading.bac - optimal;
               final sign = diff >= 0 ? '+' : '';
               final diffColor = diff.abs() <= optimal * 0.1
