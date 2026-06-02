@@ -37,6 +37,7 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
   final Map<String, double> _stagedBac = {};
   String? _measuringId;
   bool _isSubmitting = false;
+  bool _submittedSuccessfully = false;
 
   List<PlayerProfile> get _players => widget.args.players;
   int get _round => widget.args.round;
@@ -114,7 +115,7 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
   }
 
   Future<void> _submitAll() async {
-    if (!_allStaged || _isSubmitting) return;
+    if (!_allStaged || _isSubmitting || _submittedSuccessfully) return;
     setState(() => _isSubmitting = true);
 
     try {
@@ -126,7 +127,7 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
       for (final player in _activePlayers) {
         final bac = _stagedBac[player.id];
         if (bac == null) continue;
-        await notifier.submitBAC(player.id, bac);
+        await notifier.submitBAC(player.id, bac, roundNumber: _round);
       }
 
       // Incautado players are auto-skipped in the checkpoint.
@@ -136,9 +137,12 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
         }
       }
 
+      _submittedSuccessfully = true;
       await _finishGroup();
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted && !_submittedSuccessfully) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -179,6 +183,7 @@ class _RoundRobinScreenState extends ConsumerState<RoundRobinScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      await ref.read(checkpointNotifierProvider.notifier).reset();
       await ref.read(gameStateNotifierProvider.notifier).deleteGame();
       if (mounted) Navigator.pop(context);
     }

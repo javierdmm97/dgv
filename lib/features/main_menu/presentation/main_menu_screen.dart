@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:dgv/core/constants/dgt_strings.dart';
 import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/providers/checkpoint_providers.dart';
 import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/providers/repository_providers.dart';
@@ -64,7 +65,11 @@ class _AppDrawer extends ConsumerWidget {
                       label: 'Control Activo',
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, AppRoutes.game);
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.game,
+                          (r) => r.isFirst,
+                        );
                       },
                     ),
                     _DrawerItem(
@@ -72,7 +77,11 @@ class _AppDrawer extends ConsumerWidget {
                       label: 'Clasificación',
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, AppRoutes.leaderboard);
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.leaderboard,
+                          (r) => r.isFirst,
+                        );
                       },
                     ),
                     _DrawerItem(
@@ -673,6 +682,8 @@ class _DebugSeedSection extends ConsumerWidget {
   }
 
   Future<void> _clear(WidgetRef ref) async {
+    await ref.read(checkpointNotifierProvider.notifier).reset();
+    await ref.read(gameStateNotifierProvider.notifier).deleteGame();
     final repo = ref.read(playerRepositoryProvider);
     await repo.clearAll();
     ref.invalidate(playerListNotifierProvider);

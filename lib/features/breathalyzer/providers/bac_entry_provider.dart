@@ -30,7 +30,11 @@ class BACEntryNotifier extends _$BACEntryNotifier {
   @override
   void build() {}
 
-  Future<BACEntryResult> submitBAC(String playerId, double bac) async {
+  Future<BACEntryResult> submitBAC(
+    String playerId,
+    double bac, {
+    int? roundNumber,
+  }) async {
     final repo = ref.read(playerRepositoryProvider);
     final player = await repo.getById(playerId);
     if (player == null) {
@@ -38,8 +42,37 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     }
 
     final gameState = await ref.read(currentGameStateProvider.future);
-    final currentRound = gameState?.currentRound ?? 0;
+    final currentRound = roundNumber ?? gameState?.currentRound ?? 0;
     final now = DateTime.now();
+    final existingReading = player.latestReadingForRound(currentRound);
+    if (existingReading != null) {
+      if (currentRound > 0) {
+        await ref
+            .read(checkpointNotifierProvider.notifier)
+            .recordPlayerMeasurement(playerId);
+      }
+
+      final feedbackMessage = currentRound == 0
+          ? 'Lectura registrada'
+          : PointsCalculator.getFeedbackMessage(existingReading.pointsChange);
+      final feedbackColor = currentRound == 0
+          ? DGTColors.background
+          : _colorFromEnum(
+              PointsCalculator.getFeedbackColor(existingReading.pointsChange),
+            );
+
+      return BACEntryResult(
+        playerId: playerId,
+        playerName: '${player.name} ${player.surname}',
+        bac: existingReading.bac,
+        roundNumber: currentRound,
+        pointsChange: existingReading.pointsChange,
+        feedbackMessage: feedbackMessage,
+        feedbackColor: feedbackColor,
+        fineCount: player.fineCount,
+        moneyLost: player.moneyLost,
+      );
+    }
 
     // -----------------------------------------------------------------------
     // Round 0 — baseline, no feedback, no points
@@ -141,10 +174,6 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     await repo.update(updatedPlayer);
     unawaited(
       ref.read(firebaseSyncServiceProvider).syncPlayerUpdate(updatedPlayer),
-    );
-    await LicenseUpdateService.updateForPlayer(
-      player: updatedPlayer,
-      repo: repo,
     );
     ref.invalidate(playerListNotifierProvider);
 

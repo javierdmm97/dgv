@@ -71,6 +71,7 @@ class MainMenuNotifier extends _$MainMenuNotifier {
           crossedOptimalLine: false,
           fineCount: 0,
           moneyLost: 0,
+          isIncautado: false,
           licenseImagePath: '',
           licenseBackImagePath: '',
         ),

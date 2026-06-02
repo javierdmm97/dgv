@@ -100,6 +100,13 @@ void main() {
         expect(groups[2].length, equals(6));
       });
 
+      test('25 players into 5 groups → sizes [5, 5, 5, 5, 5]', () {
+        final players = _makePlayers(25);
+        final groups = CheckpointCalculator.divideIntoGroups(players, 5);
+        expect(groups.length, equals(5));
+        expect(groups.map((g) => g.length), equals([5, 5, 5, 5, 5]));
+      });
+
       test('1 player into 1 group', () {
         final players = _makePlayers(1);
         final groups = CheckpointCalculator.divideIntoGroups(players, 1);
@@ -133,28 +140,28 @@ void main() {
     // ── suggestNumberOfGroups ────────────────────────────────────────────────
 
     group('suggestNumberOfGroups', () {
-      test('returns 1 for 8 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(8), equals(1));
+      test('returns 1 for 5 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(5), equals(1));
       });
 
-      test('returns 2 for 9 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(9), equals(2));
+      test('returns 2 for 6 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(6), equals(2));
       });
 
-      test('returns 2 for 16 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(16), equals(2));
+      test('returns 4 for 20 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(20), equals(4));
       });
 
-      test('returns 3 for 17 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(17), equals(3));
+      test('returns 5 for 21 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(21), equals(5));
       });
 
-      test('returns 3 for 24 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(24), equals(3));
+      test('returns 5 for 24 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(24), equals(5));
       });
 
-      test('returns 4 for 25 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(25), equals(4));
+      test('returns 5 for 25 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(25), equals(5));
       });
 
       test('returns 1 for 1 player', () {

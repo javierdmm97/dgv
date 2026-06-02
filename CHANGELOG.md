@@ -7,9 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Checkpoint grouping now targets a maximum of 5 players per group instead of 8, so 20 players create 4 groups and 21–25 players create 5 groups.
+- Checkpoint interval picker now offers 3 minutes instead of 30 minutes, keeping 45 and 60 minute options unchanged.
+
+### Fixed
+- Updated checkpoint calculator and provider tests to match the new max-5 grouping behavior, including the 25-player case producing five balanced groups of five.
+- Overdue checkpoint groups now restore as waiting to be measured instead of being pushed forward by another interval; opening the app late keeps "Ir al Retén" active until the group is actually measured.
+- Retén group confirmation is now one-shot and round-stable: duplicate taps cannot write the same staged measurements into a later round.
+- BAC submission is idempotent per player/round, preventing duplicate readings, double scoring, duplicate fines, and repeated checkpoint completion from the same Retén screen.
+- Checkpoint round completion now derives from persisted player readings instead of only in-memory group tracking, so provider rebuilds cannot lose a previously measured group.
+- DGT title awards are delayed until the checkpoint screen is visible, preventing the Retén pop from accidentally dismissing the awards sheet.
+
 ---
 
-## [1.0.0] - 2026-06-02
+## [1.0.2] - 2026-06-02
+
+### Fixed — Stability Audit (Passes 1–5)
+
+**Critical**
+- `CheckpointNotifier.build()` sanitizes stale `nextCheckpoint` timestamps on restore — groups whose timer expired while the app was dead are pushed forward by one interval instead of immediately firing "Ir al Retén"
+- Recovery provider now reads `isCheckpointActive` from the notifier's sanitized future instead of raw Hive — ISSUE-01 and ISSUE-12 fixed coherently
+- `resetGame()` now includes `isIncautado: false` — impounded players no longer carry their flag into a new game
+- Skip-timer FAB wrapped in `kDebugMode` guard — invisible and dead code in release builds
+- `3 min` option removed from `availableIntervalMinutes` — production interval picker shows 30/45/60 min only
+- Background checkpoint notifications restored: `NotificationService.scheduleGroupDue` uses `zonedSchedule` with `AndroidScheduleMode.exactAllowWhileIdle` — OS fires the "¡Medir ahora!" alarm and vibration at the exact expiry time even when the screen is off or the app is backgrounded; replaces the negative-ticking chronometer atomically via the same notification ID
+
+**Medium**
+- `_cancelGame` (round 0) now calls `checkpointNotifier.reset()` before `deleteGame()` — no orphaned timer survives a cancel
+- Round awards bottom sheet: `isDismissible: false` + `enableDrag: false` + `.whenComplete()` safety net — `lastRoundAwardsProvider` is always cleared, preventing a second sheet stacking on round N+1
+- Debug "Borrar todos" now calls `checkpoint.reset()` and `deleteGame()` before wiping players — timer and game state are fully cleared before re-seeding
+
+**Performance**
+- `LicenseUpdateService.updateForPlayer` removed from `submitBAC`; `RoundCompletionService.evaluateAndApply` now handles all players in one pass (one license write per player per round instead of two for titled players)
+- Group timer jitter changed from independent random draws (collision-prone with 7 groups) to evenly-spaced offsets across 10–40 s — guaranteed unique for any N
+
+**Hardening**
+- `LicenseGenerator.generate` / `generateBack`: `byteData!` force-unwrap replaced with explicit null-check + `StateError` — caught upstream by `LicenseUpdateService`'s bare `catch`
+- `firebaseSyncServiceProvider` falls back to a `_DisabledFirestore` stub when `Firebase.initializeApp()` has not been called — safe in test environments without platform channel setup
+- `_onRoundComplete` now awaits `evaluateAndApply` before `advanceRound()` — titles are always committed before the round counter advances
+- `syncRoundComplete` re-reads players from repo after `evaluateAndApply` — Firebase receives updated title counts for the completed round, not the pre-evaluation snapshot
+
+**Navigation**
+- Drawer "Control Activo" and "Clasificación" use `pushNamedAndRemoveUntil(..., (r) => r.isFirst)` — stack no longer grows on repeated drawer taps mid-session
+
+### Removed
+- `SirenAlertOverlay` widget deleted — was dead code with no call site
+- `FirebaseStorageService` and `firebaseStorageServiceProvider` deleted — free-tier decision; no Firebase Storage bucket usage
+- `firebase_storage` SDK import removed from `firebase_providers.dart`
+
+### Changed — Firebase Data Enrichment
+- `_playerDoc` now includes `titleDetails[]` with `key`, `displayName` (Spanish name), `emoji`, and `count` per earned title — frontend no longer needs to resolve display names from raw keys
+- `syncGameFinish` writes a `ceremony` sub-document to the session: `podium` (top 3 with rank/points), `coleccionista` (most titles), `environmentals` (rank + `stickerKey` + `maxBAC`) — frontend can render the ceremony without recomputing from raw data
+- Player photo sync restored: registration provider compresses to 200×200 JPEG at 60% quality and encodes as `data:image/jpeg;base64,...` before syncing — was previously sending a local filesystem path unusable by the web frontend
+
+---
+
+## [1.0.1] - 2026-06-02
 
 ### Added — Phase 4 Firebase Sync (June 2, 2026)
 - `FirebaseSyncService` — fire-and-forget Firestore writer with `_safeWrite` wrapper; all writes silently no-op if Firebase is unavailable
@@ -39,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-06-01
 
 ### Added — Phase 5 Completion (June 1, 2026)
+
 
 **Documentation & Release Prep (5.9)**
 - ROADMAP.md updated: Phase 5 ~95% complete, duplicate 5.8 renamed to 5.8b, Phase 4 marked as blocked on external dependency

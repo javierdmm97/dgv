@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dgv/core/models/bac_reading.dart';
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/models/game_state.dart';
 import 'package:dgv/core/models/player_profile.dart';
@@ -258,6 +259,54 @@ void main() {
             .submitBAC('p1', 0.111);
 
         expect(repo.lastUpdated!.points, equals(15));
+      });
+
+      test('uses explicit roundNumber instead of mutable game round', () async {
+        final repo = _FakePlayerRepo()..seed(_makePlayer(points: 10));
+        final container = _makeContainer(repo: repo, currentRound: 2);
+        addTearDown(container.dispose);
+
+        await container
+            .read(bACEntryNotifierProvider.notifier)
+            .submitBAC('p1', 0.111, roundNumber: 1);
+
+        expect(repo.lastUpdated, isNotNull);
+        expect(repo.lastUpdated!.readings.single.roundNumber, equals(1));
+      });
+
+      test('does not append or score duplicate reading for same round', () async {
+        final existingReading = BACReading(
+          id: 'r1',
+          playerId: 'p1',
+          bac: 0.111,
+          timestamp: DateTime(2026, 6, 2, 10),
+          roundNumber: 1,
+          entryMethod: BACEntryMethod.manual,
+          pointsChange: 2,
+        );
+        final player = _makePlayer(points: 12).copyWith(
+          readings: [existingReading],
+        );
+        final repo = _FakePlayerRepo()..seed(player);
+        final checkFake = _FakeCheckpointNotifier();
+        final container = _makeContainer(
+          repo: repo,
+          currentRound: 2,
+          checkpointFake: checkFake,
+        );
+        addTearDown(container.dispose);
+
+        final result = await container
+            .read(bACEntryNotifierProvider.notifier)
+            .submitBAC('p1', 0.35, roundNumber: 1);
+
+        final stored = await repo.getById('p1');
+        expect(result.bac, equals(0.111));
+        expect(result.roundNumber, equals(1));
+        expect(stored!.points, equals(12));
+        expect(stored.readings, hasLength(1));
+        expect(repo.lastUpdated, isNull);
+        expect(checkFake.measuredIds, contains('p1'));
       });
     });
   });

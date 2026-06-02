@@ -301,7 +301,8 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 #### Tasks
 
 **4.1 Firebase Setup**
-- [x] Add `firebase_core`, `cloud_firestore`, `firebase_storage`, `connectivity_plus` dependencies
+- [x] Add `firebase_core`, `cloud_firestore`, `connectivity_plus` dependencies
+- ~~`firebase_storage`~~ removed — free-tier decision; photos are base64-encoded in Firestore
 - [x] Configure Firebase project (Android — `flutterfire configure`)
 - [x] Write Firebase service with offline-first wrapper (`FirebaseSyncService._safeWrite` + Firestore persistence)
 - [x] Firestore security rules deployed (players, sessions, notifications collections)
@@ -312,10 +313,17 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 ```
 sessions/{sessionId}
   startTime, currentRound, isFinished, isInProgress, playerIds[], preGameBeers
+  ceremony: {
+    podium: [{rank, playerId, name, surname, points}]        ← top 3
+    coleccionista: {playerId, name, surname, totalTitles}    ← or null
+    environmentals: [{rank, stickerKey, playerId, name, surname, maxBAC}]
+  }
 
 players/{playerId}
   name, surname, photoUrl (base64 data URL), points
-  bacHistory[], optimalBACHistory[], titleCounts{}
+  bacHistory[], optimalBACHistory[]
+  titleCounts{}                                              ← {key: count}
+  titleDetails[]                                            ← [{key, displayName, emoji, count}]
   fineCount, moneyLost, crossedOptimalLine, isIncautado
 
 notifications/{id}
@@ -327,7 +335,7 @@ notifications/{id}
 - [x] Sync all players + session round after each round (`CheckpointNotifier._onRoundComplete`)
 - [x] Sync individual player after each BAC entry (`BACEntryNotifier.submitBAC`)
 - [x] Sync player on registration with compressed base64 photo (`RegistrationNotifier._submitCreate`)
-- [x] Sync final state + all players on game finish (`GameStateNotifier.finishGame`)
+- [x] Sync final state + all players + ceremony results on game finish (`GameStateNotifier.finishGame`)
 - [x] Auto-fire fine notification when `multaPorExceso` title awarded
 
 **4.4 In-App Notification Sender**
@@ -404,6 +412,7 @@ notifications/{id}
 - [x] Test persistent state (app restart, crash recovery)
 - [x] Fix all bugs discovered during testing
 - [x] Performance optimization (60fps animations)
+- [x] Stability Audit (5 passes, 20 issues) — all critical and high issues resolved (see CHANGELOG v1.0.2)
 
 **5.8b App Size Optimization**
 - [x] Audit APK with `flutter build apk --analyze-size`

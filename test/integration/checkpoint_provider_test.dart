@@ -118,7 +118,7 @@ void main() {
   // Requirement 15.1
 
   test(
-    'Scenario 1: initialize() with 3 groups persists CheckpointState to Hive',
+    'Scenario 1: initialize() with 5 groups persists CheckpointState to Hive',
     () async {
       final container = _makeContainer();
       addTearDown(container.dispose);
@@ -135,7 +135,7 @@ void main() {
       final persisted = await repo.getCurrent();
 
       expect(persisted, isNotNull);
-      expect(persisted!.groups.length, equals(3));
+      expect(persisted!.groups.length, equals(5));
       expect(persisted.intervalMinutes, equals(45));
 
       // Total players across all groups equals 24
@@ -190,6 +190,73 @@ void main() {
     },
   );
 
+  test(
+    'Scenario 2b: overdue groups restore as waiting to be measured',
+    () async {
+      final container = _makeContainer();
+      addTearDown(container.dispose);
+
+      final overdueAt = DateTime.now().subtract(const Duration(minutes: 5));
+      final lastMeasurement = DateTime.now().subtract(
+        const Duration(minutes: 35),
+      );
+      final savedState = CheckpointState(
+        currentRound: 1,
+        intervalMinutes: 30,
+        groups: [
+          GroupCheckpoint(
+            groupIndex: 0,
+            playerIds: const ['p0', 'p1'],
+            lastMeasurement: lastMeasurement,
+            intervalMinutes: 30,
+            nextCheckpoint: overdueAt,
+          ),
+          GroupCheckpoint(
+            groupIndex: 1,
+            playerIds: const ['p2', 'p3'],
+            lastMeasurement: lastMeasurement,
+            intervalMinutes: 30,
+            nextCheckpoint: overdueAt,
+          ),
+        ],
+      );
+
+      final repo = container.read(checkpointRepositoryProvider);
+      await repo.save(savedState);
+
+      final keepAlive = _keepAlive(container);
+      addTearDown(keepAlive.close);
+
+      final restored = await _awaitState(container);
+
+      expect(restored, isNotNull);
+      expect(restored!.isCheckpointActive, isTrue);
+      expect(restored.activeGroupIndex, equals(0));
+      expect(restored.groups.every((g) => g.isDue), isTrue);
+      expect(restored.groups[0].nextCheckpoint, equals(overdueAt));
+      expect(restored.groups[1].nextCheckpoint, equals(overdueAt));
+
+      await container
+          .read(checkpointNotifierProvider.notifier)
+          .completeGroupMeasurement(0);
+
+      final afterGroup0 = container.read(checkpointNotifierProvider).value;
+      expect(afterGroup0, isNotNull);
+      expect(afterGroup0!.isCheckpointActive, isTrue);
+      expect(afterGroup0.activeGroupIndex, equals(1));
+      expect(afterGroup0.groups[0].isDue, isFalse);
+      expect(afterGroup0.groups[1].isDue, isTrue);
+
+      final group0NextCheckpoint = afterGroup0.groups[0].nextCheckpoint;
+      await container
+          .read(checkpointNotifierProvider.notifier)
+          .completeGroupMeasurement(0);
+      final afterDuplicate = container.read(checkpointNotifierProvider).value;
+      expect(afterDuplicate!.groups[0].nextCheckpoint, group0NextCheckpoint);
+      expect(afterDuplicate.activeGroupIndex, equals(1));
+    },
+  );
+
   // ── Scenario 3: updating one group does not affect others ───────────────
   // Requirement 15.3
 
@@ -201,15 +268,27 @@ void main() {
       final keepAlive = _keepAlive(container);
       addTearDown(keepAlive.close);
 
-      final players = _makePlayers(16); // 2 groups of 8
+      final players = _makePlayers(16); // 4 groups of up to 5
       final notifier = container.read(checkpointNotifierProvider.notifier);
       await notifier.initialize(players: players, intervalMinutes: 45);
 
       final stateBefore = await _awaitState(container);
       expect(stateBefore, isNotNull);
 
-      final group0Before = stateBefore!.groups[0];
-      final group1Before = stateBefore.groups[1];
+      final dueAt = DateTime.now().subtract(const Duration(seconds: 1));
+      final dueState = stateBefore!.copyWith(
+        groups: stateBefore.groups
+            .map(
+              (group) => group.groupIndex == 0
+                  ? group.copyWith(nextCheckpoint: dueAt)
+                  : group,
+            )
+            .toList(),
+      );
+      notifier.state = AsyncData(dueState);
+
+      final group0Before = dueState.groups[0];
+      final group1Before = dueState.groups[1];
 
       // Complete group 0
       await notifier.completeGroupMeasurement(0);
@@ -242,7 +321,7 @@ void main() {
     final keepAlive = _keepAlive(container);
     addTearDown(keepAlive.close);
 
-    // Initialize with 3 players (1 group since ≤8)
+      // Initialize with 3 players (1 group since ≤5)
     final players = _makePlayers(3);
     final notifier = container.read(checkpointNotifierProvider.notifier);
     await notifier.initialize(players: players, intervalMinutes: 45);
@@ -254,7 +333,11 @@ void main() {
     // Simulate the checkpoint becoming active by directly setting state
     // (the ticker would normally do this after the interval expires)
     final currentState = container.read(checkpointNotifierProvider).value!;
+    final dueAt = DateTime.now().subtract(const Duration(seconds: 1));
     final activeState = currentState.copyWith(
+      groups: currentState.groups
+          .map((group) => group.copyWith(nextCheckpoint: dueAt))
+          .toList(),
       isCheckpointActive: true,
       activeGroupIndex: 0,
     );
@@ -300,14 +383,14 @@ void main() {
       final keepAlive = _keepAlive(container);
       addTearDown(keepAlive.close);
 
-      // Initialize with 16 players → 2 groups
+      // Initialize with 16 players → 4 groups
       final players = _makePlayers(16);
       final notifier = container.read(checkpointNotifierProvider.notifier);
       await notifier.initialize(players: players, intervalMinutes: 45);
 
       final initialState = await _awaitState(container);
       expect(initialState, isNotNull);
-      expect(initialState!.groups.length, equals(2));
+      expect(initialState!.groups.length, equals(4));
 
       // Simulate both groups becoming due simultaneously
       final pastTime = DateTime.now().subtract(const Duration(hours: 2));

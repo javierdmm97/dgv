@@ -80,6 +80,7 @@ class FinalCeremonyScreen extends ConsumerWidget {
           moneyLost: 0,
           licenseImagePath: '',
           licenseBackImagePath: '',
+          isIncautado: false,
         ),
       );
     }
@@ -470,6 +471,7 @@ class _ColeccionistaRow extends StatelessWidget {
           const Text('👑', style: TextStyle(fontSize: 32)),
           const SizedBox(width: 12),
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -490,18 +492,20 @@ class _ColeccionistaRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                winnerName,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                textAlign: TextAlign.end,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  winnerName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               if (totalTitles > 0)
                 Text(
                   '$totalTitles títulos',
@@ -509,7 +513,8 @@ class _ColeccionistaRow extends StatelessWidget {
                     color: DGTColors.textSecondary,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

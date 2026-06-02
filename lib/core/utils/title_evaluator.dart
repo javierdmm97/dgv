@@ -204,21 +204,24 @@ class TitleEvaluator {
   }
 
   /// Sort players for leaderboard: primary = points desc, tiebreaker = perfection score asc.
+  /// Incautado players are excluded — they cannot place on the podium.
   static List<PlayerProfile> calculateLeaderboard(List<PlayerProfile> players) {
-    final sorted = [...players];
-    sorted.sort((a, b) {
+    final eligible = players.where((p) => !p.isIncautado).toList();
+    eligible.sort((a, b) {
       if (a.points != b.points) return b.points.compareTo(a.points);
       final aScore = PointsCalculator.calculatePerfectionScore(a.readings);
       final bScore = PointsCalculator.calculatePerfectionScore(b.readings);
       return aScore.compareTo(bScore);
     });
-    return sorted;
+    return eligible;
   }
 
   /// Returns the player with most accumulated DGT titles.
+  /// Incautado players are excluded — they cannot win the Coleccionista prize.
   static PlayerProfile? getMostTitlesPlayer(List<PlayerProfile> players) {
-    if (players.isEmpty) return null;
-    return players.reduce((a, b) {
+    final eligible = players.where((p) => !p.isIncautado).toList();
+    if (eligible.isEmpty) return null;
+    return eligible.reduce((a, b) {
       final aTotal = a.titleCounts.values.fold(0, (s, c) => s + c);
       final bTotal = b.titleCounts.values.fold(0, (s, c) => s + c);
       return aTotal >= bTotal ? a : b;

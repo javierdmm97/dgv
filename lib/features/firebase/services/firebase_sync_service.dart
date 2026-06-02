@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:dgv/core/models/bac_reading.dart';
+import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/game_state.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/features/firebase/models/notification_payload.dart';
@@ -44,9 +45,6 @@ class FirebaseSyncService {
   }
 
   /// Register a player — creates their top-level [players/{id}] doc.
-  ///
-  /// [player.photoPath] should already be the Firebase Storage URL at this
-  /// point (supplied by [FirebaseStorageService.uploadPlayerPhoto]).
   Future<void> syncPlayerRegistration(PlayerProfile player) async {
     await _safeWrite(
       () => _db.collection('players').doc(player.id).set(_playerDoc(player)),
@@ -90,10 +88,11 @@ class FirebaseSyncService {
     );
   }
 
-  /// Mark session as finished and do a final sync of all player data.
+  /// Mark session as finished, write ceremony results, and do a final player sync.
   Future<void> syncGameFinish(
     GameState gameState,
     List<PlayerProfile> players,
+    Map<String, dynamic> ceremony,
   ) async {
     await _safeWrite(() async {
       final batch = _db.batch();
@@ -104,6 +103,7 @@ class FirebaseSyncService {
         'finishTime': Timestamp.fromDate(
           gameState.finishTime ?? DateTime.now(),
         ),
+        'ceremony': ceremony,
       });
 
       for (final player in players) {
@@ -160,6 +160,15 @@ class FirebaseSyncService {
       'crossedOptimalLine': player.crossedOptimalLine,
       'isIncautado': player.isIncautado,
       'titleCounts': player.titleCounts.map((k, v) => MapEntry(k.name, v)),
+      'titleDetails': player.titleCounts.entries
+          .where((e) => e.value > 0)
+          .map((e) => {
+                'key': e.key.name,
+                'displayName': e.key.displayName,
+                'emoji': e.key.emoji,
+                'count': e.value,
+              })
+          .toList(),
       'bacHistory': _bacHistory(player.readings),
       'optimalBACHistory': _optimalBACHistory(player.readings),
       'updatedAt': FieldValue.serverTimestamp(),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
 /// OS notification service for checkpoint timers.
 ///
@@ -150,6 +151,54 @@ class NotificationService {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[NotificationService] showGroupDue failed: $e');
+      }
+    }
+  }
+
+  /// Schedule a native OS alarm that fires at [scheduledAt] and replaces the
+  /// countdown notification with the "measure now" alert.
+  ///
+  /// Uses [zonedSchedule] so the OS delivers it even when the app is in the
+  /// background, screen is off, or the Dart isolate has been suspended.
+  /// The same notification ID as [showGroupTimer] ensures the countdown is
+  /// replaced atomically when the alarm fires.
+  static Future<void> scheduleGroupDue(
+    int groupIndex,
+    String groupLabel,
+    DateTime scheduledAt,
+    int round,
+  ) async {
+    try {
+      final scheduledTZ = tz.TZDateTime.from(scheduledAt, tz.local);
+      final androidDetails = AndroidNotificationDetails(
+        _dueChannelId,
+        _dueChannelName,
+        channelDescription: _dueChannelDesc,
+        importance: Importance.high,
+        priority: Priority.high,
+        ongoing: true,
+        autoCancel: false,
+        showWhen: false,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+        playSound: false,
+        color: const Color(0xFFD32F2F),
+        colorized: true,
+        channelShowBadge: false,
+      );
+      await _plugin.zonedSchedule(
+        _baseId + groupIndex,
+        '🚨 $groupLabel — Ronda $round',
+        '¡Puedes medir al $groupLabel ahora!',
+        scheduledTZ,
+        NotificationDetails(android: androidDetails),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[NotificationService] scheduleGroupDue failed: $e');
       }
     }
   }

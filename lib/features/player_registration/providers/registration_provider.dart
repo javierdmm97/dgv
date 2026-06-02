@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -138,18 +142,13 @@ class RegistrationNotifier extends _$RegistrationNotifier {
       );
 
       await ref.read(playerListNotifierProvider.notifier).addPlayer(profile);
-      final storageService = ref.read(firebaseStorageServiceProvider);
       final syncService = ref.read(firebaseSyncServiceProvider);
       unawaited(
-        storageService
-            .uploadPlayerPhoto(profile.id, profile.photoPath)
-            .then(
-              (url) => syncService.syncPlayerRegistration(
-                url != profile.photoPath
-                    ? profile.copyWith(photoPath: url)
-                    : profile,
-              ),
-            ),
+        _compressPhotoToBase64(profile.photoPath).then(
+          (url) => syncService.syncPlayerRegistration(
+            url != null ? profile.copyWith(photoPath: url) : profile,
+          ),
+        ),
       );
       state = const RegistrationFormState();
     } on Exception catch (e) {
@@ -179,5 +178,26 @@ class RegistrationNotifier extends _$RegistrationNotifier {
     } on Exception catch (e) {
       state = s.copyWith(isLoading: false, error: e.toString());
     }
+  }
+}
+
+/// Compresses [localPath] to a JPEG and returns a base64 data URL, or null on failure.
+Future<String?> _compressPhotoToBase64(String localPath) async {
+  if (localPath.isEmpty) return null;
+  try {
+    final file = File(localPath);
+    if (!file.existsSync()) return null;
+    final compressed = await FlutterImageCompress.compressWithFile(
+      localPath,
+      minWidth: 400,
+      minHeight: 400,
+      quality: 75,
+      format: CompressFormat.webp,
+    );
+    if (compressed == null) return null;
+    return 'data:image/webp;base64,${base64Encode(compressed)}';
+  } on Exception catch (e) {
+    if (kDebugMode) debugPrint('[Registration] photo compress failed: $e');
+    return null;
   }
 }

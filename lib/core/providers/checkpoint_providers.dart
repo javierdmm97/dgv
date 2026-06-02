@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -38,8 +37,16 @@ class CheckpointNotifier extends _$CheckpointNotifier {
   Future<CheckpointState?> build() async {
     ref.onDispose(() => _ticker?.cancel());
     final repo = ref.watch(checkpointRepositoryProvider);
-    final existing = await repo.getCurrent();
+    var existing = await repo.getCurrent();
     if (existing != null) {
+      // Rehydrate active checkpoint state from absolute timestamps.
+      // An expired nextCheckpoint means the group is waiting to be measured;
+      // never push it forward unless completeGroupMeasurement() runs.
+      final rehydrated = _rehydrateDueState(existing);
+      if (rehydrated != existing) {
+        await repo.save(rehydrated);
+        existing = rehydrated;
+      }
       _startTicker();
     }
     return existing;
@@ -53,8 +60,6 @@ class CheckpointNotifier extends _$CheckpointNotifier {
   ///
   /// Divides [players] into groups using [CheckpointCalculator.divideIntoGroups],
   /// builds a [GroupCheckpoint] list, saves to Hive, and starts the ticker.
-  ///
-  /// In debug builds, [intervalMinutes] is overridden to 1 minute for fast testing.
   Future<void> initialize({
     required List<PlayerProfile> players,
     required int intervalMinutes,
@@ -70,12 +75,13 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     );
 
     final now = DateTime.now();
-    final rng = Random();
     final groups = playerGroups.asMap().entries.map((entry) {
-      // Add a small random offset (10–40 s) per group so timers never fire
-      // simultaneously. Simultaneous expiry causes _tick() to activate both
-      // groups at once, creating a state race in completeGroupMeasurement.
-      final jitterSeconds = 10 + rng.nextInt(31); // 10..40 s
+      // Spread group timers evenly across a 10–40 s window so they never fire
+      // simultaneously. With N groups: group 0 gets +10 s, group N-1 gets +40 s,
+      // intermediate groups are equally spaced. Guaranteed unique for any N.
+      final jitterSeconds = playerGroups.length <= 1
+          ? 10
+          : 10 + (entry.key * 30 ~/ (playerGroups.length - 1));
       final nextTime = now.add(
         Duration(minutes: intervalMinutes, seconds: jitterSeconds),
       );
@@ -99,12 +105,20 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     state = AsyncData(newState);
     _startTicker();
 
-    // Show an ongoing countdown notification for each group.
+    // Show countdown notification + schedule the OS alarm for each group.
     for (final group in groups) {
       final next = group.nextCheckpoint;
       if (next != null) {
         unawaited(
           NotificationService.showGroupTimer(
+            group.groupIndex,
+            'Grupo ${group.groupIndex + 1}',
+            next,
+            newState.currentRound,
+          ),
+        );
+        unawaited(
+          NotificationService.scheduleGroupDue(
             group.groupIndex,
             'Grupo ${group.groupIndex + 1}',
             next,
@@ -123,15 +137,25 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     final current = state.value;
     if (current == null) return;
     if (groupIndex < 0 || groupIndex >= current.groups.length) return;
+    final targetGroup = current.groups[groupIndex];
+    if (!targetGroup.isDue) return;
 
     final now = DateTime.now();
     final updatedGroups = current.groups.map((group) {
       if (group.groupIndex != groupIndex) return group;
       final nextTime = now.add(Duration(minutes: group.intervalMinutes));
-      // Cancel the old timer notification and show a fresh one for next round.
+      // Cancel old notification, show fresh countdown, schedule OS alarm.
       unawaited(NotificationService.cancelGroupTimer(group.groupIndex));
       unawaited(
         NotificationService.showGroupTimer(
+          group.groupIndex,
+          'Grupo ${group.groupIndex + 1}',
+          nextTime,
+          current.currentRound + 1,
+        ),
+      );
+      unawaited(
+        NotificationService.scheduleGroupDue(
           group.groupIndex,
           'Grupo ${group.groupIndex + 1}',
           nextTime,
@@ -162,10 +186,10 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     // Allow re-announcing this group when it becomes due next round.
     _announcedDueGroups.remove(groupIndex);
 
-    // Advance the round only when every group has measured once this cycle.
-    _measuredGroupsThisRound.add(groupIndex);
-    if (_measuredGroupsThisRound.length >= updatedState.groups.length) {
-      _measuredGroupsThisRound.clear();
+    // Advance the round only when every player in every group has a persisted
+    // reading for this round. This survives provider rebuilds and prevents the
+    // in-memory completion set from losing a previously measured group.
+    if (await _allGroupsAccountedForRound(updatedState.currentRound)) {
       await _onRoundComplete(updatedState.currentRound);
     }
   }
@@ -180,48 +204,48 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     final sessionId = ref.read(gameStateNotifierProvider).value?.id ?? '';
     final syncService = ref.read(firebaseSyncServiceProvider);
 
+    // Await title evaluation so awards are committed to Hive before the round
+    // advances. Fire sync/notifications as unawaited after — they are network
+    // calls and don't affect local game state.
+    final awards = await RoundCompletionService.evaluateAndApply(
+      players: players,
+      round: completedRound,
+      repo: playerRepo,
+    );
+    // Re-read after evaluateAndApply so syncRoundComplete sends fresh title counts.
+    final freshPlayers = await playerRepo.getAll();
+    ref.invalidate(playerListNotifierProvider);
+    if (awards.isNotEmpty) {
+      ref.read(lastRoundAwardsProvider.notifier).state = awards;
+    }
     unawaited(
-      RoundCompletionService.evaluateAndApply(
-        players: players,
+      syncService.syncRoundComplete(
+        sessionId: sessionId,
+        players: freshPlayers,
         round: completedRound,
-        repo: playerRepo,
-      ).then((awards) {
-        ref.invalidate(playerListNotifierProvider);
-        // Expose awards so CheckpointScreen can show the round summary sheet.
-        if (awards.isNotEmpty) {
-          ref.read(lastRoundAwardsProvider.notifier).state = awards;
-        }
-        // Sync round snapshot + auto-fire fine notifications.
+      ),
+    );
+    for (final entry in awards.entries) {
+      if (entry.value == DGTTitle.multaPorExceso) {
+        final playerName =
+            freshPlayers
+                .where((p) => p.id == entry.key)
+                .map((p) => p.name)
+                .firstOrNull ??
+            entry.key;
         unawaited(
-          syncService.syncRoundComplete(
-            sessionId: sessionId,
-            players: players,
-            round: completedRound,
+          syncService.sendNotification(
+            NotificationPayload(
+              id: const Uuid().v4(),
+              text: '🚔 Multa para $playerName',
+              timestamp: DateTime.now(),
+              type: 'fine',
+              targetPlayerId: entry.key,
+            ),
           ),
         );
-        for (final entry in awards.entries) {
-          if (entry.value == DGTTitle.multaPorExceso) {
-            final playerName =
-                players
-                    .where((p) => p.id == entry.key)
-                    .map((p) => p.name)
-                    .firstOrNull ??
-                entry.key;
-            unawaited(
-              syncService.sendNotification(
-                NotificationPayload(
-                  id: const Uuid().v4(),
-                  text: '🚔 Multa para $playerName',
-                  timestamp: DateTime.now(),
-                  type: 'fine',
-                  targetPlayerId: entry.key,
-                ),
-              ),
-            );
-          }
-        }
-      }),
-    );
+      }
+    }
 
     await ref.read(gameStateNotifierProvider.notifier).advanceRound();
 
@@ -250,6 +274,7 @@ class CheckpointNotifier extends _$CheckpointNotifier {
         .where((g) => g.playerIds.contains(playerId))
         .firstOrNull;
     if (playerGroup == null) return;
+    if (!playerGroup.isDue) return;
 
     final groupIndex = playerGroup.groupIndex;
     (_measuredPlayerIdsByGroup[groupIndex] ??= {}).add(playerId);
@@ -276,6 +301,7 @@ class CheckpointNotifier extends _$CheckpointNotifier {
         .where((g) => g.playerIds.contains(playerId))
         .firstOrNull;
     if (playerGroup == null) return;
+    if (!playerGroup.isDue) return;
 
     final groupIndex = playerGroup.groupIndex;
     (_measuredPlayerIdsByGroup[groupIndex] ??= {}).add(playerId);
@@ -336,11 +362,6 @@ class CheckpointNotifier extends _$CheckpointNotifier {
   /// Keyed by groupIndex so measuring group 2 never interferes with group 1.
   final Map<int, Set<String>> _measuredPlayerIdsByGroup = {};
 
-  /// Tracks which group indices have completed measurement in the current round.
-  /// Reset when the round advances. In-memory only — acceptable because if the
-  /// app restarts mid-round the players just re-measure (party game context).
-  final Set<int> _measuredGroupsThisRound = {};
-
   /// Tracks which group indices have already had their "due" notification shown.
   /// Prevents re-firing vibration every tick once a group is already announced.
   final Set<int> _announcedDueGroups = {};
@@ -351,9 +372,48 @@ class CheckpointNotifier extends _$CheckpointNotifier {
     return _measuredPlayerIdsByGroup.values.any((s) => s.contains(playerId));
   }
 
+  Future<bool> _allGroupsAccountedForRound(int round) async {
+    final current = state.value;
+    if (current == null) return false;
+
+    final playerRepo = ref.read(playerRepositoryProvider);
+    final players = await playerRepo.getAll();
+    final playersById = {for (final player in players) player.id: player};
+
+    for (final group in current.groups) {
+      for (final playerId in group.playerIds) {
+        final player = playersById[playerId];
+        if (player == null) return false;
+        if (player.isIncautado) continue;
+        if (player.latestReadingForRound(round) == null) return false;
+      }
+    }
+
+    return true;
+  }
+
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  CheckpointState _rehydrateDueState(CheckpointState checkpointState) {
+    final dueGroups = checkpointState.groups.where((g) => g.isDue).toList();
+    if (dueGroups.isEmpty) {
+      return checkpointState.copyWith(
+        isCheckpointActive: false,
+        activeGroupIndex: null,
+      );
+    }
+
+    final activeGroupIndex = dueGroups
+        .map((g) => g.groupIndex)
+        .reduce((a, b) => a < b ? a : b);
+
+    return checkpointState.copyWith(
+      isCheckpointActive: true,
+      activeGroupIndex: activeGroupIndex,
+    );
   }
 
   void _tick() {

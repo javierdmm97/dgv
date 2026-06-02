@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dgv/core/constants/dgt_strings.dart';
 import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/navigation/app_route_observer.dart';
 import 'package:dgv/core/providers/recovery_provider.dart';
 import 'package:dgv/core/theme/dgt_theme.dart';
 import 'package:dgv/features/breathalyzer/presentation/feedback_screen.dart';
@@ -37,6 +38,7 @@ class DGVApp extends ConsumerWidget {
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
+      navigatorObservers: [appRouteObserver],
       onGenerateRoute: _generateRoute,
     );
   }

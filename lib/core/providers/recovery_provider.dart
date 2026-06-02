@@ -36,19 +36,13 @@ class RecoveryNotifier extends _$RecoveryNotifier {
       return RecoveryRoute.mainMenu;
     }
 
-    // Game is in progress — check if a checkpoint is active.
-    final checkpointRepo = ref.watch(checkpointRepositoryProvider);
-    final checkpointState = await checkpointRepo.getCurrent();
+    // Await the notifier — its build() sanitizes stale timestamps and persists
+    // the clean state before returning. Reading isCheckpointActive from the
+    // notifier's resolved value avoids reading the pre-sanitization Hive snapshot.
+    final checkpointState = await ref.watch(checkpointNotifierProvider.future);
 
-    if (checkpointState != null) {
-      // The CheckpointNotifier already loads from Hive in its build() method
-      // and restarts the ticker automatically. Watching it here ensures it's
-      // initialized before we check its state.
-      ref.watch(checkpointNotifierProvider);
-
-      if (checkpointState.isCheckpointActive) {
-        return RecoveryRoute.checkpoint;
-      }
+    if (checkpointState?.isCheckpointActive == true) {
+      return RecoveryRoute.checkpoint;
     }
 
     return RecoveryRoute.leaderboard;

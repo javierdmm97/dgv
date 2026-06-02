@@ -18,16 +18,18 @@ class RoundCompletionService {
   }) async {
     final awards = TitleEvaluator.evaluateRound(players, round);
 
-    for (final entry in awards.entries) {
-      final idx = players.indexWhere((p) => p.id == entry.key);
-      if (idx < 0) continue;
-
-      final player = players[idx];
-      final newCounts = Map<DGTTitle, int>.from(player.titleCounts);
-      newCounts[entry.value] = (newCounts[entry.value] ?? 0) + 1;
-
-      final updated = player.copyWith(titleCounts: newCounts);
-      await repo.update(updated);
+    // Single pass over all players: apply title award if earned, then regenerate
+    // the license. This replaces the per-submitBAC license call so every player
+    // gets exactly one license write per round (after both points and title are final).
+    for (final player in players) {
+      final awarded = awards[player.id];
+      PlayerProfile updated = player;
+      if (awarded != null) {
+        final newCounts = Map<DGTTitle, int>.from(player.titleCounts);
+        newCounts[awarded] = (newCounts[awarded] ?? 0) + 1;
+        updated = player.copyWith(titleCounts: newCounts);
+        await repo.update(updated);
+      }
       await LicenseUpdateService.updateForPlayer(player: updated, repo: repo);
     }
 

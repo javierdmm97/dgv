@@ -48,7 +48,6 @@ class AppConstants {
   // Checkpoint Timer (per-group intervals, configurable)
   static const List<int> availableIntervalMinutes = [
     3,
-    30,
     45,
     60,
   ]; // User-selectable

@@ -124,7 +124,8 @@ class LicenseGenerator {
       (_cardHeight * _pixelRatio).toInt(),
     );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final pngBytes = byteData!.buffer.asUint8List();
+    if (byteData == null) throw StateError('toByteData returned null for license front PNG');
+    final pngBytes = byteData.buffer.asUint8List();
 
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/license_${player.id}.png');
@@ -193,7 +194,8 @@ class LicenseGenerator {
       (_cardHeight * _pixelRatio).toInt(),
     );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final pngBytes = byteData!.buffer.asUint8List();
+    if (byteData == null) throw StateError('toByteData returned null for license back PNG');
+    final pngBytes = byteData.buffer.asUint8List();
 
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/license_back_${player.id}.png');

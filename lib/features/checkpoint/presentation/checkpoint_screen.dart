@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import 'package:dgv/core/constants/route_constants.dart';
 import 'package:dgv/core/models/checkpoint_state.dart';
 import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/navigation/app_route_observer.dart';
 import 'package:dgv/core/providers/checkpoint_providers.dart';
 import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
@@ -26,7 +28,10 @@ class CheckpointScreen extends ConsumerStatefulWidget {
   ConsumerState<CheckpointScreen> createState() => _CheckpointScreenState();
 }
 
-class _CheckpointScreenState extends ConsumerState<CheckpointScreen> {
+class _CheckpointScreenState extends ConsumerState<CheckpointScreen>
+    with RouteAware {
+  bool _isShowingAwards = false;
+
   @override
   void initState() {
     super.initState();
@@ -34,16 +39,48 @@ class _CheckpointScreenState extends ConsumerState<CheckpointScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.listenManual(lastRoundAwardsProvider, (_, awards) {
         if (awards != null && awards.isNotEmpty && mounted) {
-          _showAwardsSheet(awards);
+          _showPendingAwardsIfVisible();
         }
       });
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _showPendingAwardsIfVisible();
+  }
+
+  void _showPendingAwardsIfVisible() {
+    if (!mounted || _isShowingAwards) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+    final awards = ref.read(lastRoundAwardsProvider);
+    if (awards == null || awards.isEmpty) return;
+    _showAwardsSheet(awards);
+  }
+
   void _showAwardsSheet(Map<String, DGTTitle> awards) {
+    _isShowingAwards = true;
     final players = ref.read(playerListProvider).value ?? [];
     showModalBottomSheet<void>(
       context: context,
+      isDismissible: false,
+      enableDrag: false,
       builder: (ctx) => _RoundAwardsSheet(
         awards: awards,
         players: players,
@@ -52,7 +89,11 @@ class _CheckpointScreenState extends ConsumerState<CheckpointScreen> {
           Navigator.pop(ctx);
         },
       ),
-    );
+    ).whenComplete(() {
+      // Safety net: clear provider even if sheet is dismissed by any other means.
+      ref.read(lastRoundAwardsProvider.notifier).state = null;
+      _isShowingAwards = false;
+    });
   }
 
   @override
@@ -76,26 +117,31 @@ class _CheckpointScreenState extends ConsumerState<CheckpointScreen> {
         backgroundColor: DGTColors.primary,
         foregroundColor: DGTColors.textOnPrimary,
       ),
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: () {
-          ref.read(checkpointNotifierProvider.notifier).skipToNextCheckpoint();
-          final state = ref.read(checkpointNotifierProvider).value;
-          final groupIndex = state?.activeGroupIndex;
-          final label = groupIndex != null
-              ? 'Grupo ${groupIndex + 1}'
-              : 'Grupo 1';
-          final gameRound =
-              ref.read(gameStateNotifierProvider).value?.currentRound ?? 1;
-          NotificationService.showGroupTimer(
-            99,
-            label,
-            DateTime.now().add(const Duration(seconds: 10)),
-            gameRound,
-          );
-        },
-        tooltip: 'Saltar timer + probar notificación',
-        child: const Icon(Icons.fast_forward),
-      ),
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.small(
+              onPressed: () {
+                ref
+                    .read(checkpointNotifierProvider.notifier)
+                    .skipToNextCheckpoint();
+                final state = ref.read(checkpointNotifierProvider).value;
+                final groupIndex = state?.activeGroupIndex;
+                final label = groupIndex != null
+                    ? 'Grupo ${groupIndex + 1}'
+                    : 'Grupo 1';
+                final gameRound =
+                    ref.read(gameStateNotifierProvider).value?.currentRound ??
+                    1;
+                NotificationService.showGroupTimer(
+                  99,
+                  label,
+                  DateTime.now().add(const Duration(seconds: 10)),
+                  gameRound,
+                );
+              },
+              tooltip: 'Saltar timer + probar notificación',
+              child: const Icon(Icons.fast_forward),
+            )
+          : null,
       body: asyncState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
