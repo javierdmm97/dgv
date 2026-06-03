@@ -80,7 +80,6 @@ test/.test_coverage.dart
 # Firebase
 **/google-services.json
 **/GoogleService-Info.plist
-firebase_options.dart
 
 # Sensitive data
 *.keystore

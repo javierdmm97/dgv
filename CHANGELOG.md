@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Firebase init in `main.dart` — gracefully disabled if `google-services.json` is absent
 - Firestore security rules deployed: `players`, `sessions`, `notifications` collections with field validation
 
+### Fixed — CI / Build
+- `firebase_options.dart` removed from `.gitignore` and committed — fixes `uri_does_not_exist` and `undefined_identifier` errors in CI `flutter analyze`
+
 ### Changed — Firebase
 - Firebase player sync now separates global profile data from session gameplay data: `players/{playerId}` stores identity fields, while `sessions/{sessionId}/players/{playerId}` stores points, readings, fines, titles, and BAC history
 - `GameStateNotifier.startGame` — syncs new session doc to Firestore on game start
