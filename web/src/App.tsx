@@ -50,7 +50,11 @@ export default function App() {
     )
   }
 
-  if (session.isFinished && session.ceremony) {
+  // Ceremony shows the moment the app finishes the game (writes isFinished=true
+  // via syncGameFinish). We derive podium/coleccionista/distintivos from the
+  // entries (lib/awards), so we don't depend on the app's precomputed
+  // session.ceremony payload being present — isFinished alone is enough.
+  if (session.isFinished) {
     return <Ceremony entries={players} variant={mode} />
   }
 
