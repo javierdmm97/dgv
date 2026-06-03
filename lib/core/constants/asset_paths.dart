@@ -35,21 +35,7 @@ class AssetPaths {
   static const String titleVelocidadCrucero =
       'assets/titles/velocidad_de_crucero_dgv.png';
 
-  // Plantillas (Example Screens)
-  static const String plantillaEjemplo1 =
-      'assets/plantillas_app_dgt/pantallas_ejemplo.jpg';
-  static const String plantillaEjemplo2 =
-      'assets/plantillas_app_dgt/pantallas_ejemplo_2.jpg';
-
-  // Fine
-  static const String fine = 'assets/fine.png';
-
-  // Checkpoint notification sound
-  static const String policiaControl = 'assets/sound/policia_control.mp3';
-
-  // Audio (to be added)
-  static const String sirenSound = 'assets/audio/siren.mp3';
-  static const String successSound = 'assets/audio/success.mp3';
-  static const String errorSound = 'assets/audio/error.mp3';
-  static const String warningSound = 'assets/audio/warning.mp3';
+  // Fine / Police
+  static const String fine = 'assets/policia_guardia_civil.png';
+  static const String fineIcon = 'assets/fine.png';
 }

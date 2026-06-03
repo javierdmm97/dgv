@@ -77,6 +77,11 @@ class _PlayerList extends StatelessWidget {
                 AppRoutes.license,
                 arguments: player.id,
               ),
+              onViewLicense: () => Navigator.pushNamed(
+                context,
+                AppRoutes.licenseViewer,
+                arguments: player,
+              ),
             ),
             if (index < 3)
               Positioned(top: 8, right: 8, child: _RankBadge(rank: index + 1)),

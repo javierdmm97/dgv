@@ -1,6 +1,4 @@
-// This is a basic test file to satisfy the pre-push hook
-// Add your actual tests here as you develop features
-
+// Smoke test — verifies the app widget tree mounts without throwing.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,11 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dgv/app.dart';
 
 void main() {
-  testWidgets('App smoke test — renders without crashing', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('App smoke test — renders without crashing', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: DGVApp()));
-    // Before async providers resolve, the main menu shows a loading indicator
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.pump();
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

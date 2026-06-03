@@ -9,10 +9,14 @@ import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/player_registration/providers/registration_provider.dart';
 import 'package:dgv/widgets/massive_button.dart';
 
-/// Multi-step player registration screen.
+/// Multi-step player registration (or edit) screen.
 /// Steps: 0=Name, 1=Surname, 2=Sex, 3=BodySize, 4=Photo
+///
+/// Pass [editingPlayer] to pre-populate fields for editing an existing player.
 class PlayerRegistrationScreen extends ConsumerStatefulWidget {
-  const PlayerRegistrationScreen({super.key});
+  const PlayerRegistrationScreen({super.key, this.editingPlayer});
+
+  final PlayerProfile? editingPlayer;
 
   @override
   ConsumerState<PlayerRegistrationScreen> createState() =>
@@ -24,6 +28,26 @@ class _PlayerRegistrationScreenState
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _pageController = PageController();
+
+  @override
+  void initState() {
+    super.initState();
+    final editing = widget.editingPlayer;
+    if (editing != null) {
+      _nameController.text = editing.name;
+      _surnameController.text = editing.surname;
+    }
+    // Defer provider mutations — modifying providers during initState is
+    // forbidden by Riverpod (would mutate while the tree is still building).
+    Future(() {
+      if (!mounted) return;
+      if (editing != null) {
+        ref.read(registrationNotifierProvider.notifier).initForEdit(editing);
+      } else {
+        ref.read(registrationNotifierProvider.notifier).reset();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -75,10 +99,15 @@ class _PlayerRegistrationScreenState
       }
     });
 
+    final isEditing = widget.editingPlayer != null;
+    final title = isEditing
+        ? 'Editar Conductor'
+        : 'Paso ${state.step + 1} de 5';
+
     return Scaffold(
       backgroundColor: DGTColors.background,
       appBar: AppBar(
-        title: Text('Paso ${state.step + 1} de 5'),
+        title: Text(title),
         backgroundColor: DGTColors.primary,
         foregroundColor: DGTColors.textOnPrimary,
         leading: state.step > 0
@@ -230,7 +259,7 @@ class _SurnamePage extends StatelessWidget {
   }
 }
 
-class _InputPage extends StatelessWidget {
+class _InputPage extends StatefulWidget {
   const _InputPage({
     required this.label,
     required this.hint,
@@ -244,6 +273,27 @@ class _InputPage extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
+  State<_InputPage> createState() => _InputPageState();
+}
+
+class _InputPageState extends State<_InputPage> {
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -251,7 +301,7 @@ class _InputPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            label,
+            widget.label,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: DGTColors.primary,
               fontWeight: FontWeight.bold,
@@ -259,16 +309,16 @@ class _InputPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           TextField(
-            controller: controller,
-            autofocus: true,
+            controller: widget.controller,
+            focusNode: _focusNode,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             style: Theme.of(context).textTheme.bodyLarge,
-            decoration: InputDecoration(hintText: hint),
-            onSubmitted: (_) => onNext(),
+            decoration: InputDecoration(hintText: widget.hint),
+            onSubmitted: (_) => widget.onNext(),
           ),
           const Spacer(),
-          MassiveButton(text: 'Siguiente', onPressed: onNext),
+          MassiveButton(text: 'Siguiente', onPressed: widget.onNext),
         ],
       ),
     );

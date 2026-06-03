@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dgv/core/models/checkpoint_state.dart';
+import 'package:dgv/core/models/game_state.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/checkpoint_providers.dart';
+import 'package:dgv/core/providers/game_state_providers.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/features/checkpoint/presentation/checkpoint_screen.dart';
 import 'package:dgv/widgets/massive_button.dart';
@@ -15,6 +17,14 @@ const _kEmptyPlayerList = <PlayerProfile>[];
 // ---------------------------------------------------------------------------
 // Fakes
 // ---------------------------------------------------------------------------
+
+class _FakeGameStateNotifier extends GameStateNotifier {
+  _FakeGameStateNotifier([this._gameState]);
+  final GameState? _gameState;
+
+  @override
+  Future<GameState?> build() async => _gameState;
+}
 
 class _FakeCheckpointNotifier extends CheckpointNotifier {
   _FakeCheckpointNotifier(this._initialState);
@@ -71,11 +81,14 @@ CheckpointState _makeState({
   );
 }
 
-Widget _wrap(CheckpointState? state) {
+Widget _wrap(CheckpointState? state, {GameState? gameState}) {
   return ProviderScope(
     overrides: [
       checkpointNotifierProvider.overrideWith(
         () => _FakeCheckpointNotifier(state),
+      ),
+      gameStateNotifierProvider.overrideWith(
+        () => _FakeGameStateNotifier(gameState),
       ),
       playerListProvider.overrideWith((ref) async => []),
     ],
@@ -124,20 +137,20 @@ void main() {
       expect(find.text('Ver Clasificación'), findsOneWidget);
     });
 
-    testWidgets('shows active checkpoint banner when isCheckpointActive', (
-      tester,
-    ) async {
-      final state = _makeState(isActive: true, activeGroupIndex: 0);
+    testWidgets('due group card shows MEDIR label', (tester) async {
+      final state = _makeState(
+        groups: [_makeGroup(index: 0, isDue: true), _makeGroup(index: 1)],
+      );
       await tester.pumpWidget(_wrap(state));
       await tester.pump();
 
-      expect(find.textContaining('CONTROL ACTIVO'), findsOneWidget);
+      expect(find.text('¡MEDIR!'), findsOneWidget);
     });
 
-    testWidgets('active checkpoint body shows "Ir al Retén" button', (
-      tester,
-    ) async {
-      final state = _makeState(isActive: true, activeGroupIndex: 0);
+    testWidgets('due group card shows "Ir al Retén" button', (tester) async {
+      final state = _makeState(
+        groups: [_makeGroup(index: 0, isDue: true), _makeGroup(index: 1)],
+      );
       await tester.pumpWidget(_wrap(state));
       await tester.pump();
 
@@ -151,7 +164,7 @@ void main() {
       await tester.pumpWidget(_wrap(state));
       await tester.pump();
 
-      expect(find.text('Control Sorpresa — Ronda 1'), findsOneWidget);
+      expect(find.text('Ronda 1'), findsOneWidget);
     });
 
     testWidgets('loading indicator shown before async resolves', (

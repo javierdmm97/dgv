@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dgv/core/models/player_profile.dart';
+import 'package:dgv/core/providers/game_state_providers.dart';
+import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
 import 'package:dgv/features/breathalyzer/presentation/manual_entry_screen.dart';
 import 'package:dgv/widgets/custom_keypad.dart';
@@ -21,7 +23,12 @@ PlayerProfile _player({String photoPath = ''}) {
 }
 
 Widget _wrap(Widget child) {
+  final player = _player();
   return ProviderScope(
+    overrides: [
+      currentGameStateProvider.overrideWith((ref) async => null),
+      playerByIdProvider(player.id).overrideWith((ref) async => player),
+    ],
     child: MaterialApp(theme: ThemeData.light(), home: child),
   );
 }

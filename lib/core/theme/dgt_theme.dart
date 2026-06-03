@@ -64,9 +64,7 @@ class DGTTheme {
           backgroundColor: DGTColors.primary,
           foregroundColor: DGTColors.textOnPrimary,
           textStyle: DGTTypography.buttonMedium,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: const RoundedRectangleBorder(),
           elevation: 4,
         ),
       ),
@@ -75,43 +73,32 @@ class DGTTheme {
       cardTheme: const CardThemeData(
         color: DGTColors.surface,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        shape: RoundedRectangleBorder(),
         margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
 
       // Input Decoration
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: DGTColors.surface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.primary, width: 2),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.primary, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: DGTColors.textSecondary,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.textSecondary, width: 2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.primary, width: 3),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.primary, width: 3),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.error, width: 2),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 20,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         labelStyle: DGTTypography.bodyMedium,
-        hintStyle: DGTTypography.bodyMedium.copyWith(
-          color: DGTColors.textSecondary,
-        ),
       ),
     );
   }
@@ -173,9 +160,7 @@ class DGTTheme {
           backgroundColor: DGTColors.primary,
           foregroundColor: DGTColors.textOnPrimary,
           textStyle: DGTTypography.buttonMedium,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: const RoundedRectangleBorder(),
           elevation: 4,
         ),
       ),
@@ -184,43 +169,32 @@ class DGTTheme {
       cardTheme: const CardThemeData(
         color: DGTColors.surfaceDark,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        shape: RoundedRectangleBorder(),
         margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
 
       // Input Decoration
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: DGTColors.surfaceDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.primary, width: 2),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.primary, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: DGTColors.textSecondary,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.textSecondary, width: 2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.primary, width: 3),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.primary, width: 3),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DGTColors.error, width: 2),
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: DGTColors.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 20,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         labelStyle: DGTTypography.bodyMedium,
-        hintStyle: DGTTypography.bodyMedium.copyWith(
-          color: DGTColors.textSecondary,
-        ),
       ),
     );
   }

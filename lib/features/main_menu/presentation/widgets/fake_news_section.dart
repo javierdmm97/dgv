@@ -108,10 +108,10 @@ class _ArticlePreviewTile extends StatelessWidget {
     return Container(
       width: 200,
       margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: DGTColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        borderRadius: BorderRadius.zero,
+        boxShadow: [
           BoxShadow(
             color: Color(0x1A000000),
             blurRadius: 4,

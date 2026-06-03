@@ -10,8 +10,8 @@ import 'package:dgv/core/theme/dgt_colors.dart';
 /// - [maxDigits] = 2 (default): buffer holds 2 digits, display as `0.XX`
 /// - [maxDigits] = 3: buffer holds 3 digits, display as `X.XX` (for BAC entry)
 /// - Haptic feedback on every tap
+/// - Press animation: scale down + flash to blue, spring back on release
 /// - Confirm button disabled when buffer is empty
-/// - Colors from [DGTColors]; display text from [Theme.of(context).textTheme]
 class CustomKeypad extends StatefulWidget {
   const CustomKeypad({
     super.key,
@@ -38,8 +38,6 @@ class _CustomKeypadState extends State<CustomKeypad> {
     _buffer = _parseInitialValue(widget.initialValue);
   }
 
-  /// Parses an optional initial value into a digit buffer.
-  /// maxDigits=2: 0.45 → [4, 5]; maxDigits=3: 1.50 → [1, 5, 0]
   List<int> _parseInitialValue(double? value) {
     if (value == null) return [];
     if (widget.maxDigits == 3) {
@@ -55,14 +53,13 @@ class _CustomKeypadState extends State<CustomKeypad> {
     return [tens, units];
   }
 
-  /// Formats the current buffer as the display string.
-  /// maxDigits=2: `0.XX`; maxDigits=3: `X.XX`
   String get _displayValue {
     if (widget.maxDigits == 3) {
-      if (_buffer.isEmpty) return '0.00';
+      if (_buffer.isEmpty) return '—.——';
       final digits = _buffer.map((d) => d.toString()).join().padRight(3, '0');
       return '${digits[0]}.${digits.substring(1)}';
     }
+    if (_buffer.isEmpty) return '0.——';
     final digits = _buffer.map((d) => d.toString()).join().padRight(2, '0');
     return '0.$digits';
   }
@@ -70,17 +67,13 @@ class _CustomKeypadState extends State<CustomKeypad> {
   void _onDigit(int digit) {
     if (_buffer.length >= widget.maxDigits) return;
     HapticFeedback.lightImpact();
-    setState(() {
-      _buffer = [..._buffer, digit];
-    });
+    setState(() => _buffer = [..._buffer, digit]);
   }
 
   void _onBackspace() {
     if (_buffer.isEmpty) return;
     HapticFeedback.lightImpact();
-    setState(() {
-      _buffer = _buffer.sublist(0, _buffer.length - 1);
-    });
+    setState(() => _buffer = _buffer.sublist(0, _buffer.length - 1));
   }
 
   void _onConfirm() {
@@ -101,7 +94,7 @@ class _CustomKeypadState extends State<CustomKeypad> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _DisplayValue(displayValue: _displayValue),
+        _DisplayValue(displayValue: _displayValue, isEmpty: _buffer.isEmpty),
         const SizedBox(height: 16),
         _KeypadGrid(
           onDigit: _onDigit,
@@ -114,19 +107,29 @@ class _CustomKeypadState extends State<CustomKeypad> {
   }
 }
 
-/// Displays the current formatted input value above the keypad.
+// ---------------------------------------------------------------------------
+// Display
+// ---------------------------------------------------------------------------
+
 class _DisplayValue extends StatelessWidget {
-  const _DisplayValue({required this.displayValue});
+  const _DisplayValue({required this.displayValue, required this.isEmpty});
 
   final String displayValue;
+  final bool isEmpty;
 
   @override
   Widget build(BuildContext context) {
-    return Text(displayValue, style: Theme.of(context).textTheme.displaySmall);
+    final style = Theme.of(context).textTheme.displaySmall?.copyWith(
+      color: isEmpty ? DGTColors.textSecondary : null,
+    );
+    return Text(displayValue, style: style);
   }
 }
 
-/// The 3×4 grid of keypad buttons.
+// ---------------------------------------------------------------------------
+// Grid
+// ---------------------------------------------------------------------------
+
 class _KeypadGrid extends StatelessWidget {
   const _KeypadGrid({
     required this.onDigit,
@@ -149,28 +152,28 @@ class _KeypadGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         // Row 1
-        _DigitButton(digit: 1, onTap: onDigit),
-        _DigitButton(digit: 2, onTap: onDigit),
-        _DigitButton(digit: 3, onTap: onDigit),
+        _DigitKey(digit: 1, onTap: onDigit),
+        _DigitKey(digit: 2, onTap: onDigit),
+        _DigitKey(digit: 3, onTap: onDigit),
         // Row 2
-        _DigitButton(digit: 4, onTap: onDigit),
-        _DigitButton(digit: 5, onTap: onDigit),
-        _DigitButton(digit: 6, onTap: onDigit),
+        _DigitKey(digit: 4, onTap: onDigit),
+        _DigitKey(digit: 5, onTap: onDigit),
+        _DigitKey(digit: 6, onTap: onDigit),
         // Row 3
-        _DigitButton(digit: 7, onTap: onDigit),
-        _DigitButton(digit: 8, onTap: onDigit),
-        _DigitButton(digit: 9, onTap: onDigit),
+        _DigitKey(digit: 7, onTap: onDigit),
+        _DigitKey(digit: 8, onTap: onDigit),
+        _DigitKey(digit: 9, onTap: onDigit),
         // Row 4
-        _ActionButton(
+        _ActionKey(
           label: '⌫',
           onTap: onBackspace,
-          backgroundColor: DGTColors.orange,
+          normalColor: DGTColors.orange,
         ),
-        _DigitButton(digit: 0, onTap: onDigit),
-        _ActionButton(
+        _DigitKey(digit: 0, onTap: onDigit),
+        _ActionKey(
           label: '✓',
           onTap: confirmEnabled ? onConfirm : null,
-          backgroundColor: confirmEnabled
+          normalColor: confirmEnabled
               ? DGTColors.primary
               : DGTColors.textSecondary,
         ),
@@ -179,81 +182,145 @@ class _KeypadGrid extends StatelessWidget {
   }
 }
 
-/// A single digit button in the keypad grid.
-class _DigitButton extends StatelessWidget {
-  const _DigitButton({required this.digit, required this.onTap});
+// ---------------------------------------------------------------------------
+// Individual keys
+// ---------------------------------------------------------------------------
+
+class _DigitKey extends StatelessWidget {
+  const _DigitKey({required this.digit, required this.onTap});
 
   final int digit;
   final void Function(int digit) onTap;
 
   @override
   Widget build(BuildContext context) {
-    return _KeypadCell(
-      child: ElevatedButton(
-        onPressed: () => onTap(digit),
-        style: _buttonStyle(DGTColors.surface),
-        child: Text(
-          digit.toString(),
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
+    return _KeypadKey(
+      label: digit.toString(),
+      normalColor: DGTColors.surface,
+      pressedColor: DGTColors.primary,
+      textStyle: Theme.of(context).textTheme.headlineMedium,
+      pressedTextStyle: Theme.of(
+        context,
+      ).textTheme.headlineMedium?.copyWith(color: Colors.white),
+      onTap: () => onTap(digit),
     );
   }
 }
 
-/// A non-digit action button (backspace or confirm).
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+class _ActionKey extends StatelessWidget {
+  const _ActionKey({
     required this.label,
     required this.onTap,
-    required this.backgroundColor,
+    required this.normalColor,
   });
 
   final String label;
   final VoidCallback? onTap;
-  final Color backgroundColor;
+  final Color normalColor;
 
   @override
   Widget build(BuildContext context) {
-    return _KeypadCell(
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: _buttonStyle(backgroundColor),
-        child: Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(color: DGTColors.textOnPrimary),
+    return _KeypadKey(
+      label: label,
+      normalColor: normalColor,
+      // Action keys flash white on press instead of changing to blue.
+      pressedColor: normalColor == DGTColors.primary
+          ? DGTColors.primary.withValues(alpha: 0.7)
+          : Colors.white.withValues(alpha: 0.85),
+      textStyle: Theme.of(
+        context,
+      ).textTheme.headlineMedium?.copyWith(color: DGTColors.textOnPrimary),
+      pressedTextStyle: Theme.of(
+        context,
+      ).textTheme.headlineMedium?.copyWith(color: DGTColors.textOnPrimary),
+      onTap: onTap,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Animated key — scale + color flash on press
+// ---------------------------------------------------------------------------
+
+class _KeypadKey extends StatefulWidget {
+  const _KeypadKey({
+    required this.label,
+    required this.onTap,
+    required this.normalColor,
+    required this.pressedColor,
+    required this.textStyle,
+    required this.pressedTextStyle,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final Color normalColor;
+  final Color pressedColor;
+  final TextStyle? textStyle;
+  final TextStyle? pressedTextStyle;
+
+  @override
+  State<_KeypadKey> createState() => _KeypadKeyState();
+}
+
+class _KeypadKeyState extends State<_KeypadKey> {
+  bool _pressed = false;
+
+  void _handleTapDown(TapDownDetails _) {
+    if (widget.onTap == null) return;
+    setState(() => _pressed = true);
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    if (!_pressed) return;
+    setState(() => _pressed = false);
+    widget.onTap?.call();
+  }
+
+  void _handleTapCancel() {
+    if (!_pressed) return;
+    setState(() => _pressed = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null;
+    final bgColor = _pressed ? widget.pressedColor : widget.normalColor;
+    final style = _pressed ? widget.pressedTextStyle : widget.textStyle;
+
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: GestureDetector(
+        onTapDown: enabled ? _handleTapDown : null,
+        onTapUp: enabled ? _handleTapUp : null,
+        onTapCancel: enabled ? _handleTapCancel : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.88 : 1.0,
+          duration: _pressed
+              ? const Duration(milliseconds: 60)
+              : const Duration(milliseconds: 120),
+          curve: _pressed ? Curves.easeIn : Curves.elasticOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 80),
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: _pressed
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Center(child: Text(widget.label, style: style)),
+          ),
         ),
       ),
     );
   }
-}
-
-/// Constrains a keypad cell to exactly 80×80 px.
-class _KeypadCell extends StatelessWidget {
-  const _KeypadCell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(4),
-      child: SizedBox(width: 80, height: 80, child: child),
-    );
-  }
-}
-
-ButtonStyle _buttonStyle(Color backgroundColor) {
-  return ButtonStyle(
-    minimumSize: const WidgetStatePropertyAll(Size(80, 80)),
-    backgroundColor: WidgetStatePropertyAll(backgroundColor),
-    shape: const WidgetStatePropertyAll(
-      RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
-    ),
-    padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-  );
 }

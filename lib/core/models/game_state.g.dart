@@ -24,6 +24,7 @@ _$GameStateImpl _$$GameStateImplFromJson(Map<String, dynamic> json) =>
       finishTime: json['finishTime'] == null
           ? null
           : DateTime.parse(json['finishTime'] as String),
+      preGameBeers: (json['preGameBeers'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$GameStateImplToJson(_$GameStateImpl instance) =>
@@ -36,4 +37,5 @@ Map<String, dynamic> _$$GameStateImplToJson(_$GameStateImpl instance) =>
       'playerIds': instance.playerIds,
       'lastCheckpointTime': instance.lastCheckpointTime?.toIso8601String(),
       'finishTime': instance.finishTime?.toIso8601String(),
+      'preGameBeers': instance.preGameBeers,
     };

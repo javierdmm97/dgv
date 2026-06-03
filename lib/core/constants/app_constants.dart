@@ -47,7 +47,7 @@ class AppConstants {
 
   // Checkpoint Timer (per-group intervals, configurable)
   static const List<int> availableIntervalMinutes = [
-    30,
+    3,
     45,
     60,
   ]; // User-selectable
@@ -80,6 +80,9 @@ class AppConstants {
   static const String keyFirstLaunch = 'first_launch';
   static const String keyDarkMode = 'dark_mode';
   static const String keyLastGameId = 'last_game_id';
+
+  // BAC threshold below which a player is considered sober/non-drinker (mg/L)
+  static const double soberThreshold = 0.10;
 
   // OCR Confidence
   static const double ocrMinConfidence = 0.90;

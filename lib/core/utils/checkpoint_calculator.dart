@@ -6,6 +6,8 @@ import '../models/player_profile.dart';
 class CheckpointCalculator {
   CheckpointCalculator._();
 
+  static const int maxPlayersPerGroup = 5;
+
   /// Calculate next checkpoint time for a group based on their last measurement
   static DateTime calculateNextCheckpoint(
     DateTime lastMeasurement,
@@ -58,13 +60,10 @@ class CheckpointCalculator {
     return groups;
   }
 
-  /// Suggest optimal number of groups based on player count
-  /// Keeps groups manageable (3-8 players per group)
+  /// Suggest optimal number of groups based on player count.
+  /// Keeps checkpoint groups short by targeting up to 5 players per group.
   static int suggestNumberOfGroups(int playerCount) {
-    if (playerCount <= 8) return 1;
-    if (playerCount <= 16) return 2;
-    if (playerCount <= 24) return 3;
-    return (playerCount / 8).ceil();
+    return (playerCount / maxPlayersPerGroup).ceil().clamp(1, playerCount);
   }
 
   /// Format time remaining as MM:SS

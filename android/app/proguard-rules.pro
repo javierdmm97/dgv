@@ -1,5 +1,2 @@
-# ML Kit Text Recognition
--keep class com.google.mlkit.** { *; }
--keep class com.google.android.gms.internal.mlkit_vision_text_common.** { *; }
--keep class com.google.android.gms.internal.mlkit_vision_text.** { *; }
--dontwarn com.google.mlkit.**
+# Flutter plugin rules are bundled with each plugin AAR — no need to repeat them here.
+# Add project-specific keep rules only if R8 strips something it shouldn't.

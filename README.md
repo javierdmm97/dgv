@@ -83,6 +83,7 @@ lib/
 │   ├── constants/           # App constants, asset paths, DGT strings + fake news
 │   ├── models/              # Freezed models (PlayerProfile, BACReading, GameState, etc.)
 │   ├── providers/           # Riverpod providers (player, game state, checkpoint)
+│   ├── services/            # Notification service, license update service
 │   ├── storage/             # Hive service
 │   ├── theme/               # DGT color palette, typography, theme config
 │   └── utils/               # Business logic (BACCalculator, PointsCalculator, etc.)
@@ -94,44 +95,69 @@ lib/
 │   ├── title_badge.dart     # DGT title icon + ×N counter
 │   └── license_card.dart    # Player license card with photo, points, badges
 └── features/                # Feature modules (feature-first architecture)
-    ├── main_menu/           # Persistent home screen + fake news/error screens
-    ├── player_registration/ # Player creation & setup (Phase 2)
-    ├── breathalyzer/        # BAC data entry & OCR (Phase 2/3)
-    ├── checkpoint/          # Round management & timer UI (Phase 2)
-    ├── scoring/             # Points calculation & penalties (Phase 2)
-    ├── leaderboard/         # "Carnet por Puntos" display (Phase 2)
-    ├── achievements/        # DGT titles & awards (Phase 3)
-    └── fake_id/             # DGT License generation (Phase 4)
+    ├── main_menu/           # Persistent home screen, fake news/error, ayuda
+    ├── player_registration/ # Player creation & setup ✅
+    ├── breathalyzer/        # BAC data entry, round-robin, feedback ✅
+    ├── checkpoint/          # Round management, timer UI, siren ✅
+    ├── scoring/             # Fine screen ✅
+    ├── leaderboard/         # Leaderboard, player detail, BAC graph ✅
+    ├── fake_id/             # License generator & update service ✅
+    │                        # front.png + back.png template rendering ✅ (Phase 3)
+    └── achievements/        # DGT titles & awards (Phase 3)
 ```
 
 ---
 
 ## 🎮 Core Features
 
-### ✅ Implemented (Phase 1)
-1. **Main Menu** - Persistent home screen with Start/Resume Game, Mis Vehículos, Fake News section
+### ✅ Implemented (Phases 1–3 complete + Phase 5 ~95% complete)
+1. **Main Menu** - Persistent home screen with Start/Resume Game, player list (swipe-to-delete), Settings, Fake News, Ayuda
 2. **Fake News Screen** - Satirical DGT articles list + full article view
 3. **Fake Error Screen** - Satirical DGT error modal with close button
-4. **Checkpoint Provider** - Per-group timer management with Hive persistence and restart recovery
-5. **MassiveButton** - 80px min-height, haptic feedback, drunk-proof button widget
-6. **CustomKeypad** - 3×4 grid, 80×80px buttons, 0.XX format, no native keyboard
-7. **TitleBadge** - DGT title icon with ×N accumulation counter
-8. **LicenseCard** - Player license with circular photo, points, title badges, impounded overlay
+4. **Ayuda Screen** - Satirical help screen ("Espabila y tómate una bien fría")
+5. **Checkpoint Provider** - Per-group timer management with Hive persistence and restart recovery
+6. **MassiveButton** - 80px min-height, haptic feedback, drunk-proof button widget
+7. **CustomKeypad** - 3×4 grid, 80×80px buttons, 0.XX format, no native keyboard
+8. **TitleBadge** - DGT title icon with ×N accumulation counter (cosmetic only)
+9. **LicenseCard** - Player license with circular photo, points, title badges
+10. **Player Registration** - Name + surname, sex/body size, photo capture, license auto-generated; **edit mode** pre-populates fields
+11. **Round 0 (Baseline)** - Silent initial measurement, no feedback, no points
+12. **Manual BAC Entry** - Custom keypad entry (X.XX format), saved to Hive (only BAC input method)
+13. **Round-Robin Flow** - "El Retén" player carousel, manual advance, progress indicator
+14. **Real-time Feedback** - Full-screen color-coded notifications after each measurement
+15. **Fine System** - Full-screen `fine.png` on -4 score; tracks `fineCount` + `moneyLost`
+16. **Checkpoint Timer UI** - `GroupCountdownCard` MM:SS, police siren flash (visual-only) + OS notification
+17. **Points System** - Proportional 5-tier scale (-2/-1/0/+1/+2), 15-point hard cap
+18. **Leaderboard** - Sorted by points (tiebreaker: perfection score), top 3 medals 🥇🥈🥉
+19. **BAC Progression Graph** - Custom lollipop `Canvas` chart with zone bands (round-aware widths); no `fl_chart` dependency
+20. **License Generation** - `dart:ui` canvas pipeline, updated after every round (front + back sides)
+21. **OS Push Notifications** - `flutter_local_notifications` for checkpoint alerts
+22. **Debug Skip Button** - Gated behind `kDebugMode` for testing
+23. **Keypad Confirmation Step** - `BacConfirmationScreen` before saving any BAC reading; "Corregir" returns to keypad with pre-populated value
+24. **Last Measurement Display** - `LastMeasurementWidget` on leaderboard cards ("Último registro: 0.XX mg/L — Ronda N")
+25. **DGT Title Badges on Leaderboard** - `TitleBadge` widgets with `×N` counters on each player card
+26. **License Viewing (Two-Sided)** - Full-screen swipeable `PageView` (front + back) with `InteractiveViewer` pinch-to-zoom; dynamic fallback when back PNG not yet generated
+27. **Game State Recovery** - `RecoveryNotifier` reads Hive on launch and routes to correct screen with timer restored
+28. **BAC Curve Multiplier** - `CurveSettingsRepository` + `curveMultiplierProvider`; `BACCalculator` applies multiplier to all optimal targets
+29. **Player Edit & Delete** - Swipe-to-delete (`Dismissible`) on player list; edit mode in `PlayerRegistrationScreen`
+30. **"Finish Game" Button** - In `MainMenuScreen` → navigates to `FinalCeremonyScreen` placeholder
+31. **BAC Curve Calibration Settings** - `SettingsScreen` with slider (0.80–1.20×) wired to `curveMultiplierProvider`
+32. **Splash / Landing Screen** - Full-screen DGT-blue `SplashScreen` with DGV logo, "Acceder" button, auto-skip after 3s
+33. **App Branding** - Launcher icons (all densities), DGV transparent logo in `MainMenuScreen` header
 
-### 📋 Planned (Phase 2+)
-9. **Player Registration** - Name + surname, sex/body size, photo capture, auto-generated license ID
-10. **Round 0 (Baseline)** - Initial BAC measurement with no feedback (silent baseline)
-11. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
-12. **Checkpoint System UI** - Timed rounds with police siren alerts
-13. **"Sweet Spot" System** - Price is Right mechanic: get close to optimal BAC without going over
-14. **Points System UI** - Hybrid scoring: gain points for staying in zone, lose for dangerous behavior
-15. **Real-time Feedback** - Messages after each measurement (points, titles, warnings)
-16. **Live License Updates** - Licenses auto-update with badges, viewable anytime by clicking player
-17. **Leaderboard** - Real-time rankings with BAC progression graphs
-18. **DGT Titles** - Per-round awards with logos (Velocidad de Crucero, Multa por Exceso, etc.)
-19. **Environmental Badges** - Top 5 highest BAC players get eco-style distinctive badges (as a joke)
-20. **Final Ceremony** - 3 Grand Prizes + Environmental Distinctives reveal with animations
-21. **Persistent State** - All data saved continuously, resume game after crash/restart
+### 🔥 Phase 4 (Planned — Developer C)
+34. **Firebase Sync** - Offline-first player data sync after each round
+35. **Web Leaderboard** - Real-time display screen with notification ticker
+36. **Checkpoint Sound** - `policia_control.mp3` played by web frontend via browser Audio API when checkpoint starts
+
+### ✅ Phase 5 Additional (Complete)
+34. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
+35. **License Export (Batch)** - Export all licenses to gallery in one tap
+36. **Comprehensive Testing** - 80%+ coverage, physical device testing, crash recovery, performance
+37. **App Size Optimization** - Split-per-abi APK, WebP assets, < 40 MB per ABI
+
+### 🚧 Phase 5 (Remaining)
+38. **License Export (Single)** - Export individual player license to gallery + unit tests
 
 ---
 
@@ -141,9 +167,7 @@ lib/
 - **State Management:** Riverpod 2.0+ with code generation
 - **Local Storage:** Hive 2.0+
 - **Models:** Freezed for immutable data classes
-- **OCR:** Google ML Kit Text Recognition
-- **Charts:** fl_chart
-- **Audio:** audioplayers
+- **Charts:** Custom canvas painter (`dart:ui`) — `fl_chart` dependency retained but unused in app code
 
 ---
 
@@ -247,6 +271,26 @@ Awarded **every checkpoint** based on player behavior. Titles are cosmetic — t
 
 Players accumulate these titles throughout the night (tracked with counters on the license).
 
+### Fake DGT License (Two-Sided)
+
+Each player gets a two-sided DGT-style license rendered via `dart:ui` Canvas onto PNG templates:
+
+**Front side** (`assets/license/front.png`) — identity + game status:
+- Circular photo crop (or initials fallback)
+- Name, surname, sex, body size
+- Current points
+- DGT title badges (actual PNGs from `assets/titles/`) with `×N` counters
+- Fine indicator (`🚗 N multas`) when applicable
+- Environmental badge slot (filled at end-of-game)
+
+**Back side** (`assets/license/back.png`) — measurement history:
+- Round-by-round table: Round N → BrAC reading → points change
+- Fine log: Fine N — Ronda N — 100€
+- Total money lost
+- Perfection score
+
+Both sides are regenerated after every round via `LicenseUpdateService`. Viewed in-app via a swipeable `PageView` with `InteractiveViewer` for pinch-to-zoom.
+
 ### Environmental Distinctive Badges
 At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) — **as a joke, because they are the least eco-friendly** 🏭💨.
 
@@ -271,9 +315,22 @@ Round 4: Optimal 0.45  → Reading 0.38 mg/L → "+1: Cerca del óptimo" (yellow
 
 This project uses:
 - **Git workflow:** `main` (production), `develop` (integration), `feature/*`, `fix/*`
-- **Commit convention:** `type(scope): description` (e.g., `feat(breathalyzer): add OCR camera`)
+- **Commit convention:** `type(scope): description` (e.g., `feat(leaderboard): add player detail graph`)
 - **Automated checks:** Pre-commit hooks format and analyze code
 - **CI/CD:** GitHub Actions run tests and build on every PR
+
+### Team
+
+| Developer | Role | Current Focus |
+|-----------|------|---------------|
+| **Developer A — Javier** | Core infrastructure, architecture | Phase 5 complete; Phase 4 support when unblocked |
+| **Developer B — Kristian** | UI/UX, screens, animations | Phase 5 complete |
+| **Developer C — Josema** | Firebase backend & Web frontend | Phase 4 lead (blocked on external dependency) |
+
+### Development Phases
+- **Phases 1–3** ✅ Complete — core infrastructure, full game loop, mechanics revision, player management, settings, splash
+- **Phase 4** ⏳ Blocked — Firebase sync + web leaderboard + checkpoint audio (external project dependency)
+- **Phase 5** 🚧 ~95% Complete — testing, optimisation, docs done; single-license export + APK release pending
 
 **See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.**
 
@@ -283,7 +340,7 @@ This project uses:
 
 | File | Purpose |
 |------|---------|
-| **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** | Complete project specification |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines (entry point) |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines |
 | **[ROADMAP.md](ROADMAP.md)** | Development plan and milestones |
 | **[CHANGELOG.md](CHANGELOG.md)** | Version history |

@@ -34,4 +34,7 @@ class DGTColors {
   // Siren Colors (for animations)
   static const sirenRed = Color(0xFFFF0000);
   static const sirenBlue = Color(0xFF0000FF);
+
+  // Overlay / divider on dark backgrounds (equivalent to Colors.white24)
+  static const dividerOnDark = Color(0x40FFFFFF);
 }

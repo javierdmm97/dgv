@@ -185,115 +185,114 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 - [x] Removed `Timer`-based auto-advance from `RoundRobinScreen`
 - [x] Player manually advances after confirming each BAC entry
 
-**Deliverables:** All complete — 0 analyzer issues, all tests passing
+**Deliverables:** All complete — 0 analyzer issues, 221 tests passing
+
+**Completed:** May 25, 2026
 
 ---
 
-### 🚀 Phase 3: Advanced Features (Week 3)
+### ✅ Phase 3: Advanced Features (Week 3) — COMPLETED (2026-05-30)
 
-**Goal:** Complete the game loop with OCR, full round-robin audit, license viewing, and game end flow
+**Goal:** Complete the game loop with full round-robin audit, license viewing, player management, and game end flow
 
-#### Tasks
+**Branch:** `feature/phase_3` | **Started:** May 26, 2026 | **Completed:** May 30, 2026
 
-**3.1 OCR Camera Integration ("El Radar")**
-- [ ] Set up ML Kit text recognition
-- [ ] Build camera OCR screen (`lib/features/breathalyzer/presentation/camera_ocr_screen.dart`)
-- [ ] Implement OCR service with confidence scoring (auto-confirm if >90%)
-- [ ] Implement fallback to manual entry
-- [ ] Handle edge cases (poor lighting, angles, multiple numbers)
-- [ ] Write tests with mock camera data
+#### Completed (Wave 0–1)
 
-**3.2 Round-Robin Flow ("El Retén") — Audit & Complete**
-- [ ] Audit current implementation — identify what is done vs. missing
-- [ ] No auto-advance: player manually moves to next after confirming entry
-- [ ] Ensure progress indicator is accurate ("3/8 players logged")
-- [ ] Write/update integration tests
+**Data Model & Repository Foundations**
+- [x] Add `licenseBackImagePath` field to `PlayerProfile` (`@HiveField(13)`)
+- [x] Create `CurveSettingsRepository` with `HiveCurveSettingsRepository` implementation
+- [x] Add `curveSettingsRepositoryProvider` and `curveMultiplierProvider` to repository providers
+- [x] Register `assets/sound/` in `pubspec.yaml`
 
-**3.3 Graph Zone Visualization**
-- [ ] Add zone bands to BAC progression graph: +2 (green), +1 (yellow), 0 (gray), -1 (orange), -2 (blue)
-- [ ] Fine zone (-4) not shown on graph since it's already indicated by the Multa icon
-- [ ] Zones should be round-aware (wider for rounds 1-2, standard for rounds 3+)
-- [ ] Update `LineChart` in player detail screen with zone bands
+**Business Logic Updates**
+- [x] Apply `curveMultiplier` parameter in `BACCalculator.calculateOptimalBrAC()`
+- [x] Update call sites in providers to read and pass `curveMultiplierProvider`
+- [x] Fix `TitleEvaluator` — `velocidadDeCrucero` tie-breaking by alphabetical name
+- [x] Fix `TitleEvaluator` — `multaPorExceso` awards all tied players; not awarded in round 1
+- [x] Unit tests for all business logic changes
 
-**3.4 Last Measurement Display**
-- [ ] Show last measurement on "Clasificación" (Carnet por Puntos) screen
-- [ ] Display format: "Último registro: 0.XX mg/L - Ronda N"
-- [ ] Update when keypad is open (already shown in "Detalle del Conductor")
-- [ ] Ensure "Último registro" is visible and prominent
+**Siren Audio (visual-only after Bug #3 fix)**
+- [x] ~~`AudioPlayer` wired in `SirenAlertOverlay` with try/catch~~ → removed entirely (Bug #3)
+- [x] `SirenAlertOverlay` is now visual-only; `policia_control.mp3` deferred to Phase 4 web frontend
 
-**3.5 Keypad Confirmation**
-- [ ] Add confirmation step to keypad before submitting BAC reading
-- [ ] Show "Confirmar" button after entering value
-- [ ] Allow user to go back and re-enter if incorrect
-- [ ] Prevent accidental submissions
+**License Back-Side Generation**
+- [x] Add `LicenseGenerator.generateBack()` — renders back-side PNG with round-by-round BAC table, fine log, total money lost, and perfection score
+- [x] Update `LicenseUpdateService.updateForPlayer()` to generate both front and back sides
 
-**3.6 Siren Audio Fix**
-- [ ] Register `assets/sound/` in `pubspec.yaml`
-- [ ] Uncomment `AudioPlayer` call in `SirenAlertOverlay`
-- [ ] Test audio on physical device
+#### Completed (Waves 2–4)
 
-**3.7 DGT Title System — Finalize**
-- [ ] Complete all 5 per-round title evaluators (including TBD vehiculoHibrido replacement)
-- [ ] Define final replacement title for `vehiculoHibrido` with team
-- [ ] Display title badges on leaderboard with counters
-- [ ] Write unit tests for all title logic
+**OCR Camera ("El Radar") — Discarded**
+- [x] ~~`OcrService` interface and `MlKitOcrService`~~ → removed (`ocr_service.dart` deleted)
+- [x] ~~`CameraOcrScreen`~~ → removed (`camera_ocr_screen.dart` deleted)
+- [x] OCR feature discarded entirely; manual entry is the only BAC input method
 
-**3.8 License Viewing**
-- [ ] Build full-screen license view screen (tap from leaderboard)
-- [ ] Show current license image with all badges
-- [ ] Add pinch-to-zoom functionality
-- [ ] Write widget tests
+**Keypad Confirmation Step**
+- [x] Create `BacConfirmationScreen` (player name + entered value, Confirmar/Corregir)
+- [x] Wire into `ManualEntryScreen` (replaces direct save)
 
-**3.9 Game State Recovery**
-- [ ] Implement game recovery provider
-- [ ] Check Hive for existing game state on app launch
-- [ ] Resume timer from saved state
-- [ ] Write integration tests for crash recovery
+**Graph Zone Visualization**
+- [x] Replace `fl_chart` `LineChart` with custom `_LollipopChart` drawn on `Canvas` — no third-party chart dependency in use
+- [x] Round-aware zone thresholds (wider sweet-spot for rounds 1–2)
+- [x] Zone bands rendered directly in custom painter
 
-**3.10 Player Management (Edit & Delete)**
-- [ ] Add swipe-to-delete on `LicenseCard` in the player list
-- [ ] Add "Editar Conductor" screen (reuse `PlayerRegistrationScreen` in edit mode)
-- [ ] Confirmation dialog before delete
-- [ ] Write widget tests
+**Last Measurement Display**
+- [x] Create `LastMeasurementWidget` ("Último registro: 0.XX mg/L — Ronda N")
+- [x] Add to leaderboard player cards
 
-**3.11 "Finish Game" Button (Post-Round 5)**
-- [ ] Add "Finish Game" button accessible when a game is in progress (main menu or game screen)
-- [ ] Button only enabled after Round 5 is complete (minimum rounds requirement)
-- [ ] Confirmation dialog → navigate to Final Ceremony
-- [ ] Clear game state on "Return to Menu"
-- [ ] Display message: "Minimum 5 rounds completed. Ready to finish?"
+**DGT Title Badges on Leaderboard**
+- [x] Display `TitleBadge` widgets with `×N` counters on each player card
 
-**3.12 BAC Curve Calibration System**
-- [ ] Add settings screen accessible from main menu
-- [ ] Implement curve multiplier setting (range: 0.80 to 1.20, default: 1.00)
-- [ ] Multiplier adjusts all optimal BAC targets proportionally
-- [ ] Setting can only be changed between rounds (not during active round)
-- [ ] Display warning: "Curve adjustment affects all players equally. No points will be refunded."
-- [ ] Persist multiplier setting in Hive
-- [ ] Update `BACCalculator.calculateOptimalBrAC()` to apply multiplier
-- [ ] Add unit tests for multiplier logic
-- [ ] UI shows current multiplier value (e.g., "Curva: 0.95x - Menos agresiva")
+**Two-Sided License Viewer**
+- [x] Create `LicenseViewerScreen` — swipeable `PageView` (front + back) with `InteractiveViewer`
+- [x] Wire tap from `LeaderboardScreen`
+
+**Game State Recovery**
+- [x] Create `RecoveryNotifier` provider — reads Hive on launch, routes to correct screen
+- [x] Wire into `app.dart` / `main.dart`
+
+#### Completed (Wave 5)
+
+**3.12 Player Edit & Delete**
+- [x] Swipe-to-delete (`Dismissible`) on player list in `MainMenuScreen`; hidden during active game
+- [x] Edit mode in `PlayerRegistrationScreen` — pre-populate fields via `initForEdit()`, update on save
+- [x] `/player-edit` route added to `AppRoutes`
+
+**3.13 Finish Game Button & Final Ceremony Placeholder**
+- [x] "Finish Game" button in `MainMenuScreen` → navigates to `FinalCeremonyScreen`
+- [x] `FinalCeremonyScreen` placeholder screen with "Volver al Menú" wired via `AppRoutes.finalCeremony`
+
+**3.14 BAC Curve Calibration Settings Screen**
+- [x] `SettingsScreen` with `Slider` (0.80–1.20×), human-readable label, wired to `curveMultiplierProvider`
+- [x] Settings `IconButton` in `MainMenuScreen` header → `AppRoutes.settings`
+
+**3.15 Final Verification**
+- [x] `flutter test` — all tests pass
+- [x] `flutter analyze` — 0 issues
+- [x] `dart run build_runner build -d` — 0 conflicts
 
 **Deliverables:**
-- ✅ Working OCR camera integration
-- ✅ Audited and complete round-robin flow
-- ✅ Graph zone visualization with round-aware bands
-- ✅ Last measurement display on Clasificación screen
-- ✅ Keypad confirmation step to prevent errors
-- ✅ Siren audio working
-- ✅ All 5 DGT titles finalized
-- ✅ Full-screen license viewing
-- ✅ Game state recovery
-- ✅ Player edit & delete UI
-- ✅ "Finish Game" accessible after Round 5
-- ✅ BAC curve calibration system
-- ✅ All tests passing
+- ✅ Data model foundations (licenseBackImagePath, CurveSettingsRepository)
+- ✅ License back-side generation
+- ✅ BACCalculator curve multiplier support
+- ✅ TitleEvaluator tie-breaking and multi-winner fixes
+- ✅ Keypad confirmation step (`BacConfirmationScreen`)
+- ✅ Custom lollipop BAC chart (replaces `fl_chart`)
+- ✅ Last measurement display (`LastMeasurementWidget`)
+- ✅ DGT title badges with `×N` counters on leaderboard
+- ✅ Two-sided license viewer (`LicenseViewerScreen` with `InteractiveViewer`)
+- ✅ Game state recovery (`RecoveryNotifier`)
+- ✅ Player swipe-to-delete + edit mode
+- ✅ "Finish Game" button + `FinalCeremonyScreen` placeholder
+- ✅ `SettingsScreen` with BAC curve calibration slider
+- ❌ OCR camera discarded (too fragile; manual entry only)
+- ❌ `policia_control.mp3` removed; siren is visual-only (Bug #3); sound deferred to Phase 4
 
-**Estimated Completion:** End of Week 3
+**Completed:** May 30, 2026
 
 ---
 
-### 🔥 Phase 4: Firebase & Web Frontend (New Phase — Josema Lead)
+### 🔥 Phase 4: Firebase & Web Frontend (Josema Lead — 🚧 App side complete, web frontend pending)
 
 **Goal:** Add real-time Firebase sync and a companion web frontend for the leaderboard display screen
 
@@ -302,49 +301,48 @@ Create a fun, safe, and technically excellent party app that gamifies responsibl
 #### Tasks
 
 **4.1 Firebase Setup**
-- [ ] Add `firebase_core`, `cloud_firestore` dependencies
-- [ ] Configure Firebase project (Android only initially)
-- [ ] Implement connectivity check before any Firestore write
-- [ ] Write Firebase service with offline-first wrapper
+- [x] Add `firebase_core`, `cloud_firestore`, `connectivity_plus` dependencies
+- ~~`firebase_storage`~~ removed — free-tier decision; photos are base64-encoded in Firestore
+- [x] Configure Firebase project (Android — `flutterfire configure`)
+- [x] Write Firebase service with offline-first wrapper (`FirebaseSyncService._safeWrite` + Firestore persistence)
+- [x] Firestore security rules deployed (players, sessions, notifications collections)
 
 **4.2 Firestore Data Schema**
 
-*Players collection:*
+*Implemented collections:*
 ```
-players/{unique_id}
-  name: String
-  surname: String
-  photoUrl: String (Firebase Storage URL)
-  points: int
-  pointsHistory: List<int>        # points after each round
-  bacHistory: List<double>        # BAC readings per round
-  fineCount: int
-  moneyLost: int
-  timestamp: Timestamp
-```
+sessions/{sessionId}
+  startTime, currentRound, isFinished, isInProgress, playerIds[], preGameBeers
+  ceremony: {
+    podium: [{rank, playerId, name, surname, points}]        ← top 3
+    coleccionista: {playerId, name, surname, totalTitles}    ← or null
+    environmentals: [{rank, stickerKey, playerId, name, surname, maxBAC}]
+  }
 
-*Notifications collection:*
-```
+players/{playerId}
+  name, surname, photoUrl (base64 data URL), points
+  bacHistory[], optimalBACHistory[]
+  titleCounts{}                                              ← {key: count}
+  titleDetails[]                                            ← [{key, displayName, emoji, count}]
+  fineCount, moneyLost, crossedOptimalLine, isIncautado
+
 notifications/{id}
-  text: String
-  imageUrl: String?               # optional
-  timestamp: Timestamp
-  status: String                  # "pending" | "read"
+  text, imageUrl?, timestamp, status ("pending"|"read"), type, targetPlayerId?
 ```
 
 **4.3 App → Firebase Sync**
-- [ ] Sync player data after each round (points, BAC, fines)
-- [ ] Upload player photo to Firebase Storage on registration
-- [ ] Auto-sync Notification writes from in-app events (new fine, streaks, etc.)
+- [x] Sync session doc on game start (`GameStateNotifier.startGame`)
+- [x] Sync all players + session round after each round (`CheckpointNotifier._onRoundComplete`)
+- [x] Sync individual player after each BAC entry (`BACEntryNotifier.submitBAC`)
+- [x] Sync player on registration with compressed base64 photo (`RegistrationNotifier._submitCreate`)
+- [x] Sync final state + all players + ceremony results on game finish (`GameStateNotifier.finishGame`)
+- [x] Auto-fire fine notification when `multaPorExceso` title awarded
 
 **4.4 In-App Notification Sender**
-- [ ] Build notification compose screen (custom text, optional image)
-- [ ] Predefined notification templates:
-  - New fine issued
-  - Player on streak (3+ rounds over the line)
-  - MOAB alert (Mother Of All Beers — extended streak, MW joke reference)
-  - Congratulations on zone entry
-- [ ] Writing a notification = writing to Firestore `notifications` collection
+- [x] `NotificationComposerScreen` with free-text + 4 predefined templates
+- [x] Player selector chips — target a specific player per notification
+- [x] Accessible from sidebar drawer (game-in-progress only)
+- [x] Writes to Firestore `notifications` collection
 
 **4.5 Web Frontend (Leaderboard Screen)**
 - [ ] Real-time leaderboard with player stats (points, BAC, fines)
@@ -359,84 +357,84 @@ notifications/{id}
 **Deliverables:**
 - ✅ Firebase integration with offline-first behavior
 - ✅ Real-time player sync after each round
-- ✅ In-app notification sender (custom + predefined)
-- ✅ Web frontend leaderboard with notification ticker
+- ✅ In-app notification sender (custom + predefined + player-targeted)
 - ✅ App works fully without internet
+- 🔜 Web frontend leaderboard with notification ticker (Josema)
 
 **Estimated Completion:** Parallel to / after Phase 3
 
 ---
 
-### 🎨 Phase 5: Polish & Release (formerly Phase 4)
+### 🎨 Phase 5: Polish & Release (formerly Phase 4) — 🚧 ~95% Complete (2026-06-01)
 
 **Goal:** Final UX polish, ceremony animations, and release preparation
 
 #### Tasks
 
 **5.1 Final Ceremony Screen**
-- [ ] Build final ceremony screen (triggered by "Finish Game" from Phase 3)
-- [ ] Top 3 leaderboard reveal with confetti
-- [ ] Environmental Distinctive reveal: envelope animations for top 5 highest BAC ("Los más contaminantes 🏭")
-- [ ] DGT Title Collector reveal ("El Coleccionista de Títulos")
-- [ ] "Return to Menu" + "View All Licenses" buttons
+- [x] Build final ceremony screen (triggered by "Finish Game" from Phase 3)
+- [x] Top 3 leaderboard reveal with confetti
+- [x] Environmental Distinctive reveal: envelope animations for top 5 highest BAC ("Los más contaminantes 🏭")
+- [x] DGT Title Collector reveal ("El Coleccionista de Títulos")
+- [x] "Return to Menu" + "View All Licenses" buttons
 
 **5.2 License Export System**
 - [ ] Export single license to gallery
-- [ ] Export all licenses as batch
+- [x] Export all licenses as batch
 - [ ] Write unit tests
 
 **5.3 Splash / Landing Screen**
-- [ ] Build full-screen DGT-blue splash screen on cold launch
-- [ ] DGV logo centered, white city-skyline silhouette
-- [ ] "Acceder" `MassiveButton` → `MainMenuScreen`
-- [ ] Auto-skip after 3s
+- [x] Build full-screen DGT-blue splash screen on cold launch
+- [x] DGV logo centered, white city-skyline silhouette
+- [x] "Acceder" `MassiveButton` → `MainMenuScreen`
+- [x] Auto-skip after 3s
 
 **5.4 App Branding & Identity**
-- [ ] Replace in-app header text with `assets/dgv_logo.png`
-- [ ] Configure `flutter_launcher_icons` with `assets/logo_app.png`
-- [ ] Apply branding consistently
+- [x] Replace in-app header text with `assets/dgv_logo.png`
+- [x] Configure `flutter_launcher_icons` with `assets/logo_app.png`
+- [x] Apply branding consistently
 
 **5.5 BAC Progression Graphs Audit**
-- [ ] Confirm `fl_chart` BAC graph is fully implemented (may already be done)
-- [ ] Ensure Round 0 baseline and optimal zone band are correct
+- [x] `fl_chart` replaced with custom `_LollipopChart` canvas painter in `PlayerDetailScreen` — no chart lib needed
+- [x] Round 0 baseline and zone bands handled correctly in custom painter
 
 **5.6 Visual Style Mod**
-- [ ] Option to switch UI style: rounded → boxy (border radius adjustments)
-- [ ] Font selection (2–3 options)
+- [x] Option to switch UI style: rounded → boxy (border radius adjustments)
+- [x] Font selection (2–3 options)
 
 **5.7 Checkpoint Audio Alert**
-- [ ] Decide on audio delivery strategy for checkpoint sound (`policia_control.mp3`):
-  - Option A: Play sound in-app via `audioplayers`/`just_audio` when app is in foreground (no OS notification sound)
-  - Option B: Firebase-triggered notification from a backend/cloud function so the OS delivers the sound natively
-  - Option C: Web frontend (Phase 4) acts as the "speaker host" — receives a Firestore write and plays the sound through browser audio API on a connected device
-- [ ] Current state: OS notification fires correctly with default system sound; custom sound blocked by Android channel caching behaviour
+- [x] Decision made (Bug #3): `policia_control.mp3` removed from `assets/sound/` and `android/res/raw/`; in-app audio dropped entirely
+- [ ] **Phase 4 owner:** web frontend plays `policia_control.mp3` via browser Audio API when the first checkpoint starts or when all players in a group have been measured — no Android channel-caching issues on the web
 
 **5.8 Comprehensive Testing**
-- [ ] Achieve 80%+ code coverage
-- [ ] Test all features on physical devices
-- [ ] Test persistent state (app restart, crash recovery)
-- [ ] Fix all bugs discovered during testing
-- [ ] Performance optimization (60fps animations)
+- [x] Achieve 80%+ code coverage
+- [x] Test all features on physical devices
+- [x] Test persistent state (app restart, crash recovery)
+- [x] Fix all bugs discovered during testing
+- [x] Performance optimization (60fps animations)
+- [x] Stability Audit (5 passes, 20 issues) — all critical and high issues resolved (see CHANGELOG v1.0.2)
 
-**5.8 App Size Optimization**
-- [ ] Audit APK with `flutter build apk --analyze-size`
-- [ ] Enable `--split-per-abi`
-- [ ] Replace large PNGs with WebP (target <200 KB per image)
-- [ ] Target: APK download size < 40 MB per ABI
+**5.8b App Size Optimization**
+- [x] Audit APK with `flutter build apk --analyze-size`
+- [x] Enable `--split-per-abi`
+- [x] Replace large PNGs with WebP (target <200 KB per image)
+- [x] Target: APK download size < 40 MB per ABI
 
 **5.9 Documentation & Release**
-- [ ] Update all documentation
+- [x] Update all documentation
 - [ ] Build release APK
 - [ ] Create GitHub release (v1.0.0)
 - [ ] Set up Firebase App Distribution
 
 **Deliverables:**
 - ✅ Final ceremony with top 3 + Environmental Distinctives envelopes
-- ✅ License export system
+- 🚧 License export system (batch ✅; single export + unit tests pending)
 - ✅ Splash screen + app branding
 - ✅ BAC graphs confirmed
 - ✅ 80%+ test coverage
-- ✅ Release APK on GitHub
+- ✅ App size optimised (split-per-abi)
+- ✅ All documentation updated
+- ⏳ Release APK on GitHub (pending build)
 
 **Estimated Completion:** End of Week 4 (after Phase 4 Firebase)
 
@@ -462,10 +460,10 @@ notifications/{id}
 - **Phase 0:** ✅ 100% Complete
 - **Phase 1:** ✅ 100% Complete
 - **Phase 2:** ✅ 100% Complete
-- **Phase 2.5:** 🚧 In Progress (mechanics revision)
-- **Phase 3:** ⏳ Planned
-- **Phase 4:** ⏳ Planned (Firebase & Web — Developer C)
-- **Phase 5:** ⏳ Planned (Polish & Release)
+- **Phase 2.5:** ✅ 100% Complete (mechanics revision — merged to main)
+- **Phase 3:** ✅ 100% Complete (waves 0–5 done — May 30, 2026)
+- **Phase 4:** ⏳ Blocked (Firebase & Web — Developer C — external project dependency)
+- **Phase 5:** 🚧 ~95% Complete (testing, optimisation, docs done; single-license export + APK release pending)
 
 ### Feature Completion
 | Feature | Status | Progress |
@@ -489,41 +487,56 @@ notifications/{id}
 | Leaderboard | ✅ Complete | 100% |
 | BAC Graphs | ✅ Complete | 100% |
 | Fake License Generation | ✅ Complete | 100% |
-| Points System (Simplified) | 🚧 Phase 2.5 | 0% |
-| Fine System (replaces impoundment) | 🚧 Phase 2.5 | 0% |
-| DGT Title Logic Update | 🚧 Phase 2.5 | 0% |
-| Leaderboard Reactivity Fix | 🚧 Phase 2.5 | 0% |
-| OS Push Notifications | 🚧 Phase 2.5 | 0% |
-| Debug Skip Button | 🚧 Phase 2.5 | 0% |
-| OCR Camera | ⏳ Phase 3 | 0% |
-| License Viewing | ⏳ Phase 3 | 0% |
-| Game State Recovery | ⏳ Phase 3 | 0% |
-| Player Edit & Delete UI | ⏳ Phase 3 | 0% |
-| Finish Game Button | ⏳ Phase 3 | 0% |
+| Points System (Simplified) | ✅ Complete | 100% |
+| Fine System (replaces impoundment) | ✅ Complete | 100% |
+| DGT Title Logic Update | ✅ Complete | 100% |
+| Leaderboard Reactivity Fix | ✅ Complete | 100% |
+| OS Push Notifications | ✅ Complete | 100% |
+| Debug Skip Button | ✅ Complete | 100% |
+| License Back-Side Generation | ✅ Phase 3 complete | 100% |
+| BAC Curve Multiplier (BACCalculator) | ✅ Phase 3 complete | 100% |
+| TitleEvaluator Fixes | ✅ Phase 3 complete | 100% |
+| Siren Alert (visual-only, Bug #3) | ✅ Phase 3 complete | 100% |
+| OCR Camera | ❌ Discarded | — |
+| Keypad Confirmation Step | ✅ Phase 3 complete | 100% |
+| BAC Graph (custom lollipop canvas) | ✅ Phase 3/5 complete | 100% |
+| Last Measurement Display | ✅ Phase 3 complete | 100% |
+| DGT Title Badges on Leaderboard | ✅ Phase 3 complete | 100% |
+| License Viewing (Two-Sided) | ✅ Phase 3 complete | 100% |
+| Game State Recovery | ✅ Phase 3 complete | 100% |
+| Player Edit & Delete UI | ✅ Phase 3 complete | 100% |
+| Finish Game Button + Ceremony Placeholder | ✅ Phase 3 complete | 100% |
+| BAC Curve Calibration Settings | ✅ Phase 3 complete | 100% |
+| Splash / Landing Screen | ✅ Phase 5 complete | 100% |
+| App Branding (launcher icons + logo) | ✅ Phase 5 complete | 100% |
+| Checkpoint Audio (`policia_control.mp3`) | ⏳ Phase 4 (web frontend) | 0% |
 | Firebase Integration | ⏳ Phase 4 | 0% |
 | Web Frontend | ⏳ Phase 4 | 0% |
-| Final Ceremony | ⏳ Phase 5 | 0% |
-| Splash / Landing Screen | ⏳ Phase 5 | 0% |
-| App Branding | ⏳ Phase 5 | 0% |
-| App Size Optimization | ⏳ Phase 5 | 0% |
+| Final Ceremony (animations) | ✅ Phase 5 complete | 100% |
+| License Export System (batch) | ✅ Phase 5 complete | 100% |
+| License Export System (single) | ⏳ Phase 5 pending | 0% |
+| Comprehensive Testing (80%+ coverage) | ✅ Phase 5 complete | 100% |
+| App Size Optimization (split-per-abi) | ✅ Phase 5 complete | 100% |
+| Documentation Update | ✅ Phase 5 complete | 100% |
 
 ---
 
 ## 🤝 Collaboration Strategy
 
-### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-2 COMPLETE
+### Developer A — Javier (Core Infrastructure) - ✅ PHASES 1-3 COMPLETE
 - ✅ All dependencies and project setup
 - ✅ Complete theme system, constants, domain models
 - ✅ All business logic utilities, data layer, Riverpod providers
-- 🚧 **Phase 2.5:** Points/fine system overhaul, model changes, tiebreaker logic
+- ✅ **Phase 2.5:** Points/fine system overhaul, model changes, tiebreaker logic
+- ✅ **Phase 3 (all waves):** `licenseBackImagePath`, `CurveSettingsRepository`, `BACCalculator` multiplier, `TitleEvaluator` fixes, `LicenseGenerator.generateBack()`, keypad confirmation, player edit/delete, finish game, settings screen, custom lollipop chart, OCR discarded
 - 🔜 **Phase 4 support:** Firebase architecture decisions, offline-first strategy
 
-### Developer B — Kristian (UI & Screens) - ✅ PHASES 1-2 COMPLETE
+### Developer B — Kristian (UI & Screens) - ✅ PHASES 1-2.5 COMPLETE
 - ✅ All screens, custom widgets, animations
 - ✅ Checkpoint timer UI, leaderboard, player detail, license generation
-- 🚧 **Phase 2.5:** Fine UI (fine.png screen), debug button, notification UI
-- 🔜 **Phase 3:** OCR screen, license viewing, final ceremony screen
-- 🔜 **Phase 5:** Splash screen, app branding, visual style mod
+- ✅ **Phase 2.5:** Fine UI (fine.png screen), debug button, notification UI, Ayuda screen
+- ✅ **Phase 3/5:** License viewing, splash screen, app branding, visual style mod
+- 🔜 **Phase 5:** Final ceremony animations, license export
 
 ### Developer C — Josema (Firebase & Web Frontend) - 🔜 PHASE 4 LEAD
 - 🔜 **Phase 4:** Firebase setup, Firestore schema, offline-first sync
@@ -550,17 +563,24 @@ notifications/{id}
 
 ---
 
-**Last Updated:** May 25, 2026  
-**Next Review:** End of Phase 2.5
+**Last Updated:** June 1, 2026  
+**Next Review:** When Phase 4 external dependency is resolved (Firebase & Web)
 
-**Key Changes in This Update (May 25 — Phase 2.5 planning):**
-- 🆕 Added **Phase 2.5** (mechanics revision: points simplification, fines, title logic, notifications)
-- 🆕 Added **Phase 4** (Firebase + Web Frontend, Developer C lead)
-- 📋 Renamed old **Phase 4 → Phase 5** (Polish & Release)
-- 🗑️ Removed 3 Grand Prizes as separate awards — Leaderboard is the sole source of truth
-- 🗑️ Removed impoundment system — replaced with Fine system
-- 🗑️ Removed Round-Robin auto-advance — manual progression only
-- 🗑️ Removed from Future Enhancements: social sharing, QR join, cross-device sync, avatar upload, configurable intervals, theme customization, BAC thresholds per player, achievement system, cross-game leaderboard, iOS, Bluetooth, WebSockets
-- 📋 Moved OS push notifications from Future → Phase 2.5 (critical)
-- 📋 Moved "Finish Game" button from Phase 4 → Phase 3
-- 👥 Added **Developer C (Josema)** for Phase 4 — Firebase & Web Frontend
+**Key Changes in This Update (June 1):**
+- ✅ **Phase 5 ~95% COMPLETE** — testing, optimisation, and documentation done
+- ✅ **5.8 Comprehensive Testing** — 80%+ coverage, physical device testing, crash recovery, bug fixes, 60fps animations
+- ✅ **5.8b App Size Optimization** — split-per-abi, WebP assets, size target met
+- ✅ **5.9 Documentation** — ROADMAP, CHANGELOG, and README updated for v1.0.0 readiness
+- ⏳ **Release APK / GitHub release / Firebase App Distribution** — pending (5.9 release tasks)
+- 🚧 **5.2 License Export (single)** — batch export done; single-license export and unit tests remaining
+- ⏳ **Phase 4** — blocked on external project dependency (Developer C / Josema)
+
+**Key Changes in Previous Update (May 30):**
+- ✅ **Phase 3 COMPLETE** — all waves 0–5 done
+- ✅ Player swipe-to-delete (`Dismissible`) + edit mode (`initForEdit()`) in `PlayerRegistrationScreen`
+- ✅ "Finish Game" button → `FinalCeremonyScreen` placeholder via `AppRoutes.finalCeremony`
+- ✅ `SettingsScreen` with BAC curve slider (0.80–1.20×) via `AppRoutes.settings`
+- ✅ **Splash screen** (`SplashScreen`) and **app branding** (launcher icons, DGV transparent logo) done — Phase 5 partially complete
+- ✅ **BAC graph**: `fl_chart` replaced with custom `_LollipopChart` canvas painter — no third-party chart lib
+- ❌ **OCR discarded**: `ocr_service.dart`, `camera_ocr_screen.dart`, `ocr_service_test.dart` deleted; manual entry is the only BAC input method
+- ❌ **`policia_control.mp3` removed** (Bug #3): siren is visual-only; sound deferred to Phase 4 web frontend (browser Audio API)

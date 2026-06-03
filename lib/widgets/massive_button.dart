@@ -20,6 +20,7 @@ class MassiveButton extends StatelessWidget {
     this.icon,
     this.isEnabled = true,
     this.backgroundColor,
+    this.foregroundColor,
   });
 
   final String text;
@@ -27,27 +28,25 @@ class MassiveButton extends StatelessWidget {
   final IconData? icon;
   final bool isEnabled;
   final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
     final effectiveBackground = backgroundColor ?? DGTColors.primary;
+    final effectiveForeground = foregroundColor ?? DGTColors.textOnPrimary;
 
     final button = ElevatedButton(
       onPressed: isEnabled ? _handlePress : null,
       style: ButtonStyle(
         minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 80)),
         backgroundColor: WidgetStatePropertyAll(effectiveBackground),
-        foregroundColor: const WidgetStatePropertyAll(DGTColors.textOnPrimary),
+        foregroundColor: WidgetStatePropertyAll(effectiveForeground),
         textStyle: WidgetStatePropertyAll(
           Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
-        shape: const WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
+        shape: const WidgetStatePropertyAll(RoundedRectangleBorder()),
       ),
       child: _ButtonContent(text: text, icon: icon),
     );

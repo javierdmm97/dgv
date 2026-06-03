@@ -1,9 +1,19 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dgv/features/firebase/providers/firebase_providers.dart';
 
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/player_providers.dart';
+import 'package:dgv/core/providers/repository_providers.dart';
+import 'package:dgv/features/fake_id/services/license_generator.dart';
+import 'package:dgv/features/fake_id/services/license_update_service.dart';
 
 part 'registration_provider.freezed.dart';
 part 'registration_provider.g.dart';
@@ -26,8 +36,29 @@ class RegistrationFormState with _$RegistrationFormState {
 
 @riverpod
 class RegistrationNotifier extends _$RegistrationNotifier {
+  /// Tracks the ID of the player being edited, or null for create mode.
+  String? _editingPlayerId;
+
   @override
   RegistrationFormState build() => const RegistrationFormState();
+
+  /// Pre-populates all fields for editing an existing player.
+  void initForEdit(PlayerProfile player) {
+    _editingPlayerId = player.id;
+    state = RegistrationFormState(
+      name: player.name,
+      surname: player.surname,
+      sex: player.sex,
+      bodySize: player.bodySize,
+      photoPath: player.photoPath,
+    );
+  }
+
+  /// Resets to blank create mode.
+  void reset() {
+    _editingPlayerId = null;
+    state = const RegistrationFormState();
+  }
 
   void setName(String value) =>
       state = state.copyWith(name: value.trim(), error: null);
@@ -81,8 +112,17 @@ class RegistrationNotifier extends _$RegistrationNotifier {
 
     state = s.copyWith(isLoading: true, error: null);
 
+    final editId = _editingPlayerId;
+    if (editId != null) {
+      await _submitEdit(s, editId);
+    } else {
+      await _submitCreate(s);
+    }
+  }
+
+  Future<void> _submitCreate(RegistrationFormState s) async {
     try {
-      final profile = PlayerProfile(
+      final bare = PlayerProfile(
         id: const Uuid().v4(),
         name: s.name,
         surname: s.surname,
@@ -93,11 +133,71 @@ class RegistrationNotifier extends _$RegistrationNotifier {
         createdAt: DateTime.now(),
       );
 
+      // Generate both license sides immediately so the viewer always has images.
+      final frontPath = await LicenseGenerator.generate(bare);
+      final backPath = await LicenseGenerator.generateBack(bare);
+      final profile = bare.copyWith(
+        licenseImagePath: frontPath,
+        licenseBackImagePath: backPath,
+      );
+
       await ref.read(playerListNotifierProvider.notifier).addPlayer(profile);
-      // Reset form after success
+      final syncService = ref.read(firebaseSyncServiceProvider);
+      unawaited(
+        _compressPhotoToBase64(profile.photoPath).then(
+          (url) => syncService.syncPlayerRegistration(
+            url != null ? profile.copyWith(photoPath: url) : profile,
+          ),
+        ),
+      );
       state = const RegistrationFormState();
     } on Exception catch (e) {
       state = s.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  Future<void> _submitEdit(RegistrationFormState s, String playerId) async {
+    try {
+      final repo = ref.read(playerRepositoryProvider);
+      final existing = await repo.getById(playerId);
+      if (existing == null) {
+        state = s.copyWith(isLoading: false, error: 'Conductor no encontrado');
+        return;
+      }
+      final updated = existing.copyWith(
+        name: s.name,
+        surname: s.surname,
+        sex: s.sex!,
+        bodySize: s.bodySize!,
+        photoPath: s.photoPath.isNotEmpty ? s.photoPath : existing.photoPath,
+      );
+      await LicenseUpdateService.updateForPlayer(player: updated, repo: repo);
+      ref.invalidate(playerListNotifierProvider);
+      _editingPlayerId = null;
+      state = const RegistrationFormState();
+    } on Exception catch (e) {
+      state = s.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+/// Compresses [localPath] to a JPEG and returns a base64 data URL, or null on failure.
+Future<String?> _compressPhotoToBase64(String localPath) async {
+  if (localPath.isEmpty) return null;
+  try {
+    final file = File(localPath);
+    if (!file.existsSync()) return null;
+    final compressed = await FlutterImageCompress.compressWithFile(
+      localPath,
+      minWidth: 400,
+      minHeight: 400,
+      quality: 75,
+      format: CompressFormat.webp,
+    );
+    if (compressed == null) return null;
+    return 'data:image/webp;base64,${base64Encode(compressed)}';
+  } on Exception catch (e) {
+    if (kDebugMode) debugPrint('[Registration] photo compress failed: $e');
+    return null;
   }
 }

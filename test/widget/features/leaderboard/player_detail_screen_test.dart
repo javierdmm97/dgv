@@ -1,4 +1,3 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,41 +42,92 @@ class _FakePlayerRepository implements PlayerRepository {
   Stream<List<PlayerProfile>> watchAll() => Stream.value(players);
 }
 
+Widget _wrap(Widget child, List<PlayerProfile> players) => ProviderScope(
+  overrides: [
+    playerRepositoryProvider.overrideWith(
+      (ref) => _FakePlayerRepository(players),
+    ),
+  ],
+  child: MaterialApp(home: child),
+);
+
 void main() {
+  final now = DateTime(2026);
+
   group('PlayerDetailScreen', () {
-    testWidgets('draws optimal BrAC as a per-round player-specific curve', (
+    testWidgets(
+      'renders lollipop chart (CustomPaint) when player has readings',
+      (tester) async {
+        final player = PlayerProfile(
+          id: 'player-1',
+          name: 'Test',
+          surname: 'Driver',
+          photoPath: '',
+          sex: Sex.male,
+          bodySize: BodySize.medium,
+          licenseImagePath: '',
+          readings: [
+            BACReading(
+              id: 'r1',
+              playerId: 'player-1',
+              bac: 0.12,
+              timestamp: now,
+              roundNumber: 1,
+              entryMethod: BACEntryMethod.manual,
+            ),
+            BACReading(
+              id: 'r2',
+              playerId: 'player-1',
+              bac: 0.24,
+              timestamp: now,
+              roundNumber: 2,
+              entryMethod: BACEntryMethod.manual,
+            ),
+            BACReading(
+              id: 'r3',
+              playerId: 'player-1',
+              bac: 0.39,
+              timestamp: now,
+              roundNumber: 3,
+              entryMethod: BACEntryMethod.manual,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          _wrap(const PlayerDetailScreen(playerId: 'player-1'), [player]),
+        );
+        await tester.pumpAndSettle();
+
+        // Chart is rendered as a CustomPaint.
+        expect(find.byType(CustomPaint), findsWidgets);
+      },
+    );
+
+    testWidgets('measurement table shows round numbers for active readings', (
       tester,
     ) async {
-      final now = DateTime(2026);
       final player = PlayerProfile(
-        id: 'player-1',
-        name: 'Test',
-        surname: 'Driver',
+        id: 'player-2',
+        name: 'Zone',
+        surname: 'Test',
         photoPath: '',
         sex: Sex.male,
         bodySize: BodySize.medium,
         licenseImagePath: '',
         readings: [
           BACReading(
+            id: 'r0',
+            playerId: 'player-2',
+            bac: 0.05,
+            timestamp: now,
+            roundNumber: 0,
+            entryMethod: BACEntryMethod.manual,
+          ),
+          BACReading(
             id: 'r1',
-            playerId: 'player-1',
-            bac: 0.12,
-            timestamp: now,
-            roundNumber: 1,
-            entryMethod: BACEntryMethod.manual,
-          ),
-          BACReading(
-            id: 'r2',
-            playerId: 'player-1',
-            bac: 0.24,
-            timestamp: now,
-            roundNumber: 2,
-            entryMethod: BACEntryMethod.manual,
-          ),
-          BACReading(
-            id: 'r3',
-            playerId: 'player-1',
-            bac: 0.39,
+            playerId: 'player-2',
+            bac: 0.33,
             timestamp: now,
             roundNumber: 3,
             entryMethod: BACEntryMethod.manual,
@@ -86,27 +136,76 @@ void main() {
       );
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            playerRepositoryProvider.overrideWith(
-              (ref) => _FakePlayerRepository([player]),
-            ),
-          ],
-          child: const MaterialApp(
-            home: PlayerDetailScreen(playerId: 'player-1'),
-          ),
-        ),
+        _wrap(const PlayerDetailScreen(playerId: 'player-2'), [player]),
       );
       await tester.pumpAndSettle();
 
-      final chart = tester.widget<LineChart>(find.byType(LineChart));
-      final optimalCurve = chart.data.lineBarsData[2];
+      // Round 1+ readings appear in the table.
+      expect(find.text('R3'), findsOneWidget);
+      // Round 0 baseline is also shown (with — for objective and diff).
+      expect(find.text('R0'), findsOneWidget);
+    });
 
-      expect(optimalCurve.spots, const [
-        FlSpot(1, 0.111),
-        FlSpot(2, 0.223),
-        FlSpot(3, 0.335),
-      ]);
+    testWidgets(
+      'perfection score row is visible when player has active readings',
+      (tester) async {
+        final player = PlayerProfile(
+          id: 'player-3',
+          name: 'Opacity',
+          surname: 'Test',
+          photoPath: '',
+          sex: Sex.male,
+          bodySize: BodySize.medium,
+          licenseImagePath: '',
+          readings: [
+            BACReading(
+              id: 'r1',
+              playerId: 'player-3',
+              bac: 0.33,
+              timestamp: now,
+              roundNumber: 3,
+              entryMethod: BACEntryMethod.manual,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          _wrap(const PlayerDetailScreen(playerId: 'player-3'), [player]),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Precisión: '), findsOneWidget);
+      },
+    );
+
+    testWidgets('single-reading chart renders without error', (tester) async {
+      final player = PlayerProfile(
+        id: 'player-4',
+        name: 'Single',
+        surname: 'Reading',
+        photoPath: '',
+        sex: Sex.male,
+        bodySize: BodySize.medium,
+        licenseImagePath: '',
+        readings: [
+          BACReading(
+            id: 'r1',
+            playerId: 'player-4',
+            bac: 0.11,
+            timestamp: now,
+            roundNumber: 1,
+            entryMethod: BACEntryMethod.manual,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _wrap(const PlayerDetailScreen(playerId: 'player-4'), [player]),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(CustomPaint), findsWidgets);
     });
   });
 }

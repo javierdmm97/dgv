@@ -1,3 +1,4 @@
+import '../constants/app_constants.dart';
 import '../models/dgt_title.dart';
 import '../models/player_profile.dart';
 import 'bac_calculator.dart';
@@ -21,38 +22,51 @@ class TitleEvaluator {
 
     if (playersWithReadings.isEmpty) return awards;
 
+    // Helper: set of player IDs that already have a title this round.
+    // Each subsequent title skips already-awarded players so no title
+    // is silently overwritten (e.g. lDePracticas overwriting velocidadDeCrucero).
+    Set<String> awarded() => awards.keys.toSet();
+
     // 🟢 Velocidad de Crucero: Closest to their optimal zone
     final closestPlayer = _findClosestToOptimal(
       playersWithReadings,
       currentRound,
+      skip: const {},
     );
     if (closestPlayer != null) {
       awards[closestPlayer.id] = DGTTitle.velocidadDeCrucero;
     }
 
-    // 🔴 Multa por Exceso: Highest BAC spike from last round
-    final highestSpikePlayer = _findHighestSpike(
+    // 🔴 Multa por Exceso: Highest BAC spike (skips already-awarded players)
+    _awardMultaPorExceso(
+      awards,
       playersWithReadings,
       currentRound,
+      skip: awarded(),
     );
-    if (highestSpikePlayer != null) {
-      awards[highestSpikePlayer.id] = DGTTitle.multaPorExceso;
-    }
 
-    // 🔰 L de Prácticas: Lowest BAC in the round
-    final lowestBACPlayer = _findLowestBAC(playersWithReadings, currentRound);
+    // 🔰 L de Prácticas: Lowest BAC among non-sober, non-awarded players
+    final lowestBACPlayer = _findLowestBAC(
+      playersWithReadings,
+      currentRound,
+      skip: awarded(),
+    );
     if (lowestBACPlayer != null) {
       awards[lowestBACPlayer.id] = DGTTitle.lDePracticas;
     }
 
-    // 🔋 Vehículo Híbrido: TBD — stubbed until replacement is defined
-    final hybridPlayers = _findHybridVehicles(playersWithReadings);
+    // 🔋 El favorito de la DGV: sober players (multiple ok, skip if awarded)
+    final hybridPlayers = _findHybridVehicles(
+      playersWithReadings,
+      currentRound,
+      skip: awarded(),
+    );
     for (final player in hybridPlayers) {
       awards[player.id] = DGTTitle.vehiculoHibrido;
     }
 
-    // 🛠️ ITV Passed: Lost points last round AND back in zone this round
-    final itvPlayers = _findITVPassed(playersWithReadings);
+    // 🛠️ ITV Passed: Lost points last round AND back in zone (skip if awarded)
+    final itvPlayers = _findITVPassed(playersWithReadings, skip: awarded());
     for (final player in itvPlayers) {
       awards[player.id] = DGTTitle.itvPassed;
     }
@@ -60,15 +74,16 @@ class TitleEvaluator {
     return awards;
   }
 
-  /// Find player closest to their per-round optimal zone.
   static PlayerProfile? _findClosestToOptimal(
     List<PlayerProfile> players,
-    int currentRound,
-  ) {
+    int currentRound, {
+    required Set<String> skip,
+  }) {
     PlayerProfile? closest;
     double minDistance = double.infinity;
 
     for (final player in players) {
+      if (skip.contains(player.id)) continue;
       final reading = player.latestReadingForRound(currentRound);
       if (reading == null) continue;
 
@@ -78,7 +93,10 @@ class TitleEvaluator {
         player.bodySize,
       );
       final distance = (reading.bac - optimal).abs();
-      if (distance < minDistance) {
+      if (distance < minDistance ||
+          (distance == minDistance &&
+              closest != null &&
+              player.name.compareTo(closest.name) < 0)) {
         minDistance = distance;
         closest = player;
       }
@@ -87,43 +105,48 @@ class TitleEvaluator {
     return closest;
   }
 
-  /// Find player with highest BAC spike from previous round.
-  static PlayerProfile? _findHighestSpike(
+  /// Award `multaPorExceso` to the player(s) with the highest absolute BAC
+  /// this round. Skips already-awarded players.
+  static void _awardMultaPorExceso(
+    Map<String, DGTTitle> awards,
     List<PlayerProfile> players,
-    int currentRound,
-  ) {
-    if (currentRound <= 1) return null;
+    int currentRound, {
+    required Set<String> skip,
+  }) {
+    final eligible = players.where((p) => !skip.contains(p.id)).toList();
 
-    PlayerProfile? highestSpike;
-    double maxSpike = 0.0;
-
-    for (final player in players) {
-      final currentReading = player.latestReadingForRound(currentRound);
-      final previousReading = player.latestReadingForRound(currentRound - 1);
-
-      if (currentReading == null || previousReading == null) continue;
-
-      final spike = currentReading.bac - previousReading.bac;
-      if (spike > maxSpike) {
-        maxSpike = spike;
-        highestSpike = player;
-      }
+    double maxBAC = 0.0;
+    for (final p in eligible) {
+      final cur = p.latestReadingForRound(currentRound);
+      if (cur == null) continue;
+      if (cur.bac > maxBAC) maxBAC = cur.bac;
     }
 
-    return highestSpike;
+    if (maxBAC <= 0) return;
+
+    for (final p in eligible) {
+      final cur = p.latestReadingForRound(currentRound);
+      if (cur == null) continue;
+      if (cur.bac == maxBAC) {
+        awards[p.id] = DGTTitle.multaPorExceso;
+      }
+    }
   }
 
-  /// Find player with lowest BAC in the round.
+  /// Lowest BAC among drinking (bac > soberThreshold) non-awarded players.
   static PlayerProfile? _findLowestBAC(
     List<PlayerProfile> players,
-    int currentRound,
-  ) {
+    int currentRound, {
+    required Set<String> skip,
+  }) {
     PlayerProfile? lowest;
     double minBAC = double.infinity;
 
     for (final player in players) {
+      if (skip.contains(player.id)) continue;
       final reading = player.latestReadingForRound(currentRound);
       if (reading == null) continue;
+      if (reading.bac <= AppConstants.soberThreshold) continue;
 
       if (reading.bac < minBAC) {
         minBAC = reading.bac;
@@ -134,15 +157,28 @@ class TitleEvaluator {
     return lowest;
   }
 
-  /// Vehículo Híbrido: replacement title is TBD — returns empty until defined.
-  static List<PlayerProfile> _findHybridVehicles(List<PlayerProfile> players) {
-    // vehiculoHibrido title replacement is TBD — returning empty until defined
-    return [];
+  /// El favorito de la DGV: sober players (BAC ≤ soberThreshold).
+  /// Multiple winners allowed; skips already-awarded players.
+  static List<PlayerProfile> _findHybridVehicles(
+    List<PlayerProfile> players,
+    int currentRound, {
+    required Set<String> skip,
+  }) {
+    return players.where((p) {
+      if (skip.contains(p.id)) return false;
+      final reading = p.latestReadingForRound(currentRound);
+      if (reading == null) return false;
+      return reading.bac <= AppConstants.soberThreshold;
+    }).toList();
   }
 
-  /// ITV Passed: player had negative points last round AND is back in zone.
-  static List<PlayerProfile> _findITVPassed(List<PlayerProfile> players) {
+  /// ITV Passed: lost points last round AND back in zone. Skips awarded players.
+  static List<PlayerProfile> _findITVPassed(
+    List<PlayerProfile> players, {
+    required Set<String> skip,
+  }) {
     return players.where((p) {
+      if (skip.contains(p.id)) return false;
       final activeReadings = p.readings.where((r) => r.roundNumber > 0).toList()
         ..sort((a, b) => a.roundNumber.compareTo(b.roundNumber));
       if (activeReadings.length < 2) return false;
@@ -150,22 +186,7 @@ class TitleEvaluator {
       final lastReading = activeReadings[activeReadings.length - 1];
       final prevReading = activeReadings[activeReadings.length - 2];
 
-      final prevOptimal = BACCalculator.calculateOptimalBrAC(
-        prevReading.roundNumber,
-        p.sex,
-        p.bodySize,
-      );
-      final wasOutOfZone =
-          !BACCalculator.isInOptimalZone(
-            prevReading.bac,
-            prevOptimal,
-            roundNumber: prevReading.roundNumber,
-          ) &&
-          !BACCalculator.isCloseToOptimal(
-            prevReading.bac,
-            prevOptimal,
-            roundNumber: prevReading.roundNumber,
-          );
+      final lostPointsLastRound = prevReading.pointsChange < 0;
 
       final lastOptimal = BACCalculator.calculateOptimalBrAC(
         lastReading.roundNumber,
@@ -178,34 +199,29 @@ class TitleEvaluator {
         roundNumber: lastReading.roundNumber,
       );
 
-      return wasOutOfZone && nowInZone;
+      return lostPointsLastRound && nowInZone;
     }).toList();
   }
 
   /// Sort players for leaderboard: primary = points desc, tiebreaker = perfection score asc.
+  /// Incautado players are excluded — they cannot place on the podium.
   static List<PlayerProfile> calculateLeaderboard(List<PlayerProfile> players) {
-    final sorted = [...players];
-    sorted.sort((a, b) {
+    final eligible = players.where((p) => !p.isIncautado).toList();
+    eligible.sort((a, b) {
       if (a.points != b.points) return b.points.compareTo(a.points);
-      final aScore = PointsCalculator.calculatePerfectionScore(
-        a.readings,
-        a.sex,
-        a.bodySize,
-      );
-      final bScore = PointsCalculator.calculatePerfectionScore(
-        b.readings,
-        b.sex,
-        b.bodySize,
-      );
+      final aScore = PointsCalculator.calculatePerfectionScore(a.readings);
+      final bScore = PointsCalculator.calculatePerfectionScore(b.readings);
       return aScore.compareTo(bScore);
     });
-    return sorted;
+    return eligible;
   }
 
   /// Returns the player with most accumulated DGT titles.
+  /// Incautado players are excluded — they cannot win the Coleccionista prize.
   static PlayerProfile? getMostTitlesPlayer(List<PlayerProfile> players) {
-    if (players.isEmpty) return null;
-    return players.reduce((a, b) {
+    final eligible = players.where((p) => !p.isIncautado).toList();
+    if (eligible.isEmpty) return null;
+    return eligible.reduce((a, b) {
       final aTotal = a.titleCounts.values.fold(0, (s, c) => s + c);
       final bTotal = b.titleCounts.values.fold(0, (s, c) => s + c);
       return aTotal >= bTotal ? a : b;

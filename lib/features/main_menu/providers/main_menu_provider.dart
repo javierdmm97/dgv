@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/checkpoint_providers.dart';
@@ -9,6 +10,8 @@ import 'package:dgv/core/providers/repository_providers.dart';
 
 part 'main_menu_provider.freezed.dart';
 part 'main_menu_provider.g.dart';
+
+const _kFakeErrorShownKey = 'fake_error_shown';
 
 /// State for the main menu screen
 @freezed
@@ -31,17 +34,23 @@ class MainMenuNotifier extends _$MainMenuNotifier {
     // Watch the mutating notifier so the list rebuilds after addPlayer/deletePlayer
     final players = await ref.watch(playerListNotifierProvider.future);
 
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyShown = prefs.getBool(_kFakeErrorShownKey) ?? false;
+
     return MainMenuState(
       isGameInProgress: gameState?.isInProgress ?? false,
       players: players,
+      isFakeErrorVisible: !alreadyShown,
     );
   }
 
-  /// Dismiss the fake error notification
-  void dismissFakeError() {
+  /// Dismiss the fake error notification and persist so it won't show again.
+  Future<void> dismissFakeError() async {
     final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(isFakeErrorVisible: false));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kFakeErrorShownKey, true);
   }
 
   /// Reset all game state and return to "no game in progress".
@@ -62,11 +71,15 @@ class MainMenuNotifier extends _$MainMenuNotifier {
           crossedOptimalLine: false,
           fineCount: 0,
           moneyLost: 0,
+          isIncautado: false,
           licenseImagePath: '',
+          licenseBackImagePath: '',
         ),
       );
     }
 
+    // Flush stale player cache so the main menu immediately shows reset data.
+    ref.invalidate(playerListNotifierProvider);
     ref.invalidateSelf();
   }
 }
