@@ -3,6 +3,9 @@ dist
 dist-ssr
 *.local
 .env
+# .env.production holds PUBLIC Firebase client keys and MUST be committed so CI
+# builds get the config (overrides the root .gitignore's `.env.*` rule).
+!.env.production
 .firebase
 .DS_Store
 
