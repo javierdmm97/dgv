@@ -10,7 +10,6 @@ import 'package:dgv/core/models/dgt_title.dart';
 import 'package:dgv/core/models/player_profile.dart';
 import 'package:dgv/core/providers/player_providers.dart';
 import 'package:dgv/core/theme/dgt_colors.dart';
-import 'package:dgv/core/utils/bac_calculator.dart';
 import 'package:dgv/core/utils/points_calculator.dart';
 import 'package:dgv/widgets/massive_button.dart';
 
