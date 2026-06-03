@@ -14,7 +14,7 @@ import { DEMO_NOTIFICATIONS, DEMO_PLAYERS, DEMO_SESSION } from './lib/demoData'
 const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')
 
 export default function App() {
-  const { session: liveSession, loading } = useActiveSession()
+  const { session: liveSession, loading, error } = useActiveSession()
   const livePlayers = usePlayers(liveSession?.id ?? null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -22,6 +22,14 @@ export default function App() {
   const players = DEMO ? DEMO_PLAYERS : livePlayers
 
   if (!DEMO && loading) return <EmptyState title="Conectando…" />
+  if (!DEMO && error && !liveSession) {
+    return (
+      <EmptyState
+        title="Error de conexión"
+        subtitle="No se pudo conectar con el servidor (¿red corporativa o bloqueador?). Recarga la página."
+      />
+    )
+  }
   if (!session) {
     return <EmptyState title="Sin partida activa" subtitle="Esperando a que empiece el control de alcoholemia…" />
   }
