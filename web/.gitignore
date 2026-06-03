@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.firebase
+.DS_Store
+
+# Build artifacts (tsc -b emits these from vite.config.ts / project refs)
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

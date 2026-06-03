@@ -1,0 +1,49 @@
+name: Deploy Web Frontend
+
+# Builds and deploys the /web leaderboard to Firebase Hosting.
+# Path-filtered: only runs when something under web/ (or this workflow) changes.
+on:
+  push:
+    # main = production. The feature branch is included so we can test the
+    # pipeline before merging — remove it from this list once merged.
+    branches: [main, feature/add-public-leaderboard-with-firebase]
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc + vite)
+        run: npm run build # VITE_FIREBASE_* come from web/.env.production (public)
+
+      # Deploys using web/firebase.json (public: dist) + web/.firebaserc.
+      # Requires a repo secret FIREBASE_TOKEN — generate locally with
+      # `firebase login:ci` (must be set by a repo admin).
+      - name: Deploy to Firebase Hosting (live channel)
+        run: npx --yes firebase-tools@latest deploy --only hosting --project dgv-project-7824a --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
