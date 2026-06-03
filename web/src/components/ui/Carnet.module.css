@@ -1,0 +1,243 @@
+/* Faithful satirical permit. Front overlays the app's front.webp template at the
+   generator's logical coordinates (canvas 600×375); positions are % and font
+   sizes are cqw, so everything scales exactly with the rendered card width. */
+
+.scene {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  perspective: 1600px;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 600 / 375;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.card[data-flipped] {
+  transform: rotateY(180deg);
+}
+
+.front,
+.back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-2), 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.back {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  color: var(--paper-ink);
+  font-family: var(--font-ui);
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- FRONT overlays ---------- */
+.photo {
+  position: absolute;
+  left: 10%;
+  top: 36.5%;
+  width: 16.3%;
+  height: 37.3%;
+  border-radius: 1.2cqw;
+  overflow: hidden;
+  background: #e2e8ee;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  display: grid;
+  place-content: center;
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photoInitials {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 7cqw;
+  color: var(--paper-blue);
+}
+
+.name {
+  position: absolute;
+  left: 28.3%;
+  top: 36.3%;
+  max-width: 62%;
+  font-weight: 700;
+  font-size: 3.5cqw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.points {
+  position: absolute;
+  left: 28.3%;
+  top: 44.4%;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3.3cqw;
+  color: var(--paper-blue);
+}
+.meta1 {
+  position: absolute;
+  left: 28.3%;
+  top: 53.2%;
+  font-size: 2.3cqw;
+  color: #34424e;
+}
+.meta2 {
+  position: absolute;
+  left: 28.3%;
+  top: 58.6%;
+  font-size: 2.15cqw;
+  color: #34424e;
+}
+.fines {
+  position: absolute;
+  left: 28.3%;
+  top: 63.8%;
+  font-size: 2.3cqw;
+  font-weight: 700;
+  color: #c8323c;
+}
+.titles {
+  position: absolute;
+  left: 28.3%;
+  top: 69.5%;
+  display: flex;
+  gap: 1.5cqw;
+}
+
+.medal {
+  position: absolute;
+  left: 81%;
+  top: 32%;
+  font-size: 7.5cqw;
+  filter: drop-shadow(0 0.4cqw 0.6cqw rgba(0, 0, 0, 0.4));
+}
+.crown {
+  position: absolute;
+  left: 82.5%;
+  top: 51%;
+  font-size: 5.5cqw;
+  filter: drop-shadow(0 0.4cqw 0.6cqw rgba(0, 0, 0, 0.4));
+}
+
+.stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  font-size: 6.2cqw;
+}
+
+/* ---------- BACK annex ---------- */
+.annex {
+  position: absolute;
+  right: 3%;
+  top: 6%;
+  width: 62%;
+  height: 88%;
+  padding: 2.6cqw 2.8cqw;
+  border-radius: 1.6cqw;
+  background: rgba(10, 18, 28, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #e8eef5;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4cqw;
+}
+.annexHead {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 2.7cqw;
+  color: #aee0ff;
+}
+.history {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55cqw;
+  font-size: 2.35cqw;
+  flex: 1;
+  overflow: hidden;
+}
+.history li {
+  display: flex;
+  align-items: center;
+  gap: 1.4cqw;
+}
+.histRound {
+  width: 5.5cqw;
+  color: #9fb4c6;
+  font-weight: 700;
+}
+.histEmpty {
+  color: #9fb4c6;
+}
+.histPts {
+  font-weight: 700;
+}
+.histPts[data-dir='up'] {
+  color: var(--green);
+}
+.histPts[data-dir='down'] {
+  color: var(--red);
+}
+.histPts[data-dir='flat'] {
+  color: #9fb4c6;
+}
+.annexTotals {
+  display: flex;
+  gap: 2.4cqw;
+  font-size: 2.3cqw;
+  color: #cdd8e3;
+}
+.annexTotals b {
+  color: #fff;
+}
+.annexSticker {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+}
+.annexMax {
+  font-size: 2.1cqw;
+  color: #cdd8e3;
+}
+
+/* ---------- flip control ---------- */
+.flip {
+  background: var(--ink-3);
+  color: var(--fg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.flip:hover {
+  background: var(--ink-4);
+}

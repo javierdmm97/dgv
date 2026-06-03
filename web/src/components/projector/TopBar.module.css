@@ -1,0 +1,55 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5em;
+  padding: 0.9em 1.4em;
+  background: linear-gradient(180deg, var(--ink-2) 0%, var(--ink-1) 100%);
+  border-bottom: 1px solid var(--line);
+  font-size: clamp(13px, 1vw, 20px);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 1.4em;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--red);
+  font-size: 1.05em;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  color: var(--fg-muted);
+  font-size: 1.05em;
+}
+.meta b {
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+
+.zone b {
+  color: var(--green);
+}
+.inc b {
+  color: var(--red);
+}

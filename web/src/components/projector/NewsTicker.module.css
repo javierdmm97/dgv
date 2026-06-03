@@ -1,0 +1,56 @@
+.news {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 0.7em 1.2em;
+  background: linear-gradient(180deg, var(--ink-2) 0%, var(--ink-0) 100%);
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  font-size: clamp(14px, 1vw, 22px);
+}
+
+.kicker {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3em 0.8em;
+  border-radius: var(--r-sm);
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85em;
+  box-shadow: var(--glow-red);
+}
+
+.emoji {
+  flex: none;
+  font-size: 1.4em;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 1.15em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news[data-idle] .text {
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--blue-bright);
+  transition: width 0.2s linear;
+}

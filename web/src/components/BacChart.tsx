@@ -1,5 +1,9 @@
-import { DGT, zoneColor } from '../lib/theme'
+import { ZONE, zoneColor } from '../lib/theme'
 import type { Reading } from '../lib/types'
+
+// On-dark chart ink (matches tokens.css --fg-dim / --line-2).
+const GRID = '#2A425A'
+const AXIS_TEXT = '#93A7BA'
 
 /**
  * BAC progression "lollipop" chart — mirrors the Flutter app's _LollipopChart.
@@ -29,7 +33,11 @@ export function BacChart({
     .sort((a, b) => a.roundNumber - b.roundNumber)
 
   if (pts.length === 0) {
-    return compact ? null : <div className="chart chart--empty">Sin mediciones todavía</div>
+    return compact ? null : (
+      <div style={{ color: AXIS_TEXT, padding: '24px 0', textAlign: 'center' }}>
+        Sin mediciones todavía
+      </div>
+    )
   }
 
   const leftPad = compact ? 4 : 44
@@ -65,15 +73,15 @@ export function BacChart({
       {/* Gridlines + Y labels */}
       {gridLines.map((v) => (
         <g key={v}>
-          <line x1={leftPad} y1={y(v)} x2={width - rightPad} y2={y(v)} stroke={DGT.textSecondary} strokeOpacity={0.15} />
-          <text x={leftPad - 6} y={y(v) + 3} textAnchor="end" fontSize={9} fill={DGT.textSecondary}>
+          <line x1={leftPad} y1={y(v)} x2={width - rightPad} y2={y(v)} stroke={GRID} strokeOpacity={0.6} />
+          <text x={leftPad - 6} y={y(v) + 3} textAnchor="end" fontSize={9} fill={AXIS_TEXT}>
             {v.toFixed(1)}
           </text>
         </g>
       ))}
 
       {/* Optimal target line (green) */}
-      <polyline points={targetPath} fill="none" stroke={DGT.green} strokeWidth={2} />
+      <polyline points={targetPath} fill="none" stroke={ZONE.green} strokeWidth={2.5} strokeDasharray="5 4" />
 
       {/* Lollipops: stick (optimal → bac) + dot, colored by zone */}
       {pts.map((p, i) => {
@@ -81,9 +89,9 @@ export function BacChart({
         return (
           <g key={p.id ?? i}>
             <line x1={x(i)} y1={y(p.optimalBAC)} x2={x(i)} y2={y(p.bac)} stroke={color} strokeOpacity={0.8} strokeWidth={2} />
-            <circle cx={x(i)} cy={y(p.bac)} r={dotR} fill={color} stroke="#fff" strokeWidth={compact ? 1 : 1.5} />
+            <circle cx={x(i)} cy={y(p.bac)} r={dotR} fill={color} stroke="#0B1622" strokeWidth={compact ? 1 : 1.5} />
             {!compact && (
-              <text x={x(i)} y={height - bottomPad + 16} textAnchor="middle" fontSize={9} fill={DGT.textSecondary}>
+              <text x={x(i)} y={height - bottomPad + 16} textAnchor="middle" fontSize={9} fill={AXIS_TEXT}>
                 R{p.roundNumber}
               </text>
             )}

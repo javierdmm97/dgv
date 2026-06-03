@@ -1,0 +1,121 @@
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.back {
+  align-self: flex-start;
+  background: var(--ink-3);
+  color: var(--fg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.idline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.rank {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--blue-bright);
+}
+.name {
+  font-size: 1.5rem;
+}
+
+.meToggle {
+  align-self: center;
+  background: transparent;
+  color: var(--blue-bright);
+  border: 1px solid color-mix(in srgb, var(--blue) 45%, transparent);
+  border-radius: var(--r-pill);
+  padding: 9px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.meToggle[data-on] {
+  color: var(--fg-muted);
+  border-color: var(--line-2);
+}
+
+.incauted {
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: rgba(255, 91, 91, 0.08);
+  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
+  color: var(--red);
+  font-weight: 600;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  text-align: center;
+}
+.statValue {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--fg);
+}
+.stat[data-tone='red'] .statValue {
+  color: var(--red);
+}
+.statLabel {
+  font-size: 0.7rem;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.panel {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.panelTitle {
+  font-size: 1.05rem;
+  color: var(--fg);
+  margin-bottom: 10px;
+}
+
+.titles {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.titleName {
+  flex: 1;
+  font-weight: 600;
+}
+.titleCount {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--blue-bright);
+}

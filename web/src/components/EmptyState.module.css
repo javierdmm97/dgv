@@ -1,0 +1,67 @@
+.empty {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  padding: 32px;
+  text-align: center;
+}
+
+.radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background:
+    radial-gradient(circle, rgba(46, 139, 214, 0.08) 0%, transparent 70%),
+    repeating-radial-gradient(circle, transparent 0 18px, rgba(46, 139, 214, 0.12) 18px 19px);
+  overflow: hidden;
+}
+.radar[data-tone='error'] {
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+}
+
+.sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(91, 176, 245, 0.5) 40deg, transparent 60deg);
+  animation: radar-spin 2.6s linear infinite;
+}
+.radar[data-tone='error'] .sweep {
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 91, 91, 0.5) 40deg, transparent 60deg);
+}
+
+.dot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--blue-bright);
+  box-shadow: 0 0 12px var(--blue-bright);
+}
+.radar[data-tone='error'] .dot {
+  background: var(--red);
+  box-shadow: 0 0 12px var(--red);
+}
+
+@keyframes radar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--fg);
+}
+.sub {
+  color: var(--fg-muted);
+  max-width: 30ch;
+  line-height: 1.5;
+}
