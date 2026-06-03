@@ -1,6 +1,6 @@
 name: dgv
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
@@ -10,11 +10,73 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.5
+
+  # Models & Serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # UI
+  fl_chart: ^0.70.2
+  image_picker: ^1.2.2
+
+  # Audio
+  audioplayers: ^6.7.0
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+
+  # Firebase
+  firebase_core: ^3.0.0
+  cloud_firestore: ^5.0.0
+  firebase_storage: ^12.0.0
+  flutter_image_compress: ^2.3.0
+
+  # Connectivity
+  connectivity_plus: ^6.0.0
+
+  # Utilities
+  uuid: ^4.5.3
+  intl: ^0.19.0
+  share_plus: ^13.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.5.4
+  riverpod_generator: ^2.6.4
+  freezed: ^2.5.8
+  json_serializable: ^6.9.5
+
+  # Linting
   flutter_lints: ^6.0.0
-  build_runner: ^2.15.0
+
+  # Testing
+  mockito: ^5.4.6
+  mocktail: ^1.0.5
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/dgv_logo.png
+    - assets/dgv_logo_transparent.png
+    - assets/fine.png
+    - assets/logo_app.png
+    - assets/msg_error.jpg
+    - assets/policia_guardia_civil.png
+    - assets/license/
+    - assets/environmentalDistinctives/
+    - assets/titles/
+    - assets/sound/

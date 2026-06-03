@@ -80,35 +80,84 @@ After installing lefthook, run the setup script to configure git hooks:
 ```
 lib/
 ├── core/                    # Shared resources (theme, constants, utils, models)
+│   ├── constants/           # App constants, asset paths, DGT strings + fake news
+│   ├── models/              # Freezed models (PlayerProfile, BACReading, GameState, etc.)
+│   ├── providers/           # Riverpod providers (player, game state, checkpoint)
+│   ├── services/            # Notification service, license update service
+│   ├── storage/             # Hive service
+│   ├── theme/               # DGT color palette, typography, theme config
+│   └── utils/               # Business logic (BACCalculator, PointsCalculator, etc.)
+├── data/
+│   └── repositories/        # Hive-backed repository implementations
 ├── widgets/                 # Reusable UI components
+│   ├── massive_button.dart  # 80px min-height drunk-proof button
+│   ├── custom_keypad.dart   # 3×4 grid keypad (no native keyboard)
+│   ├── title_badge.dart     # DGT title icon + ×N counter
+│   └── license_card.dart    # Player license card with photo, points, badges
 └── features/                # Feature modules (feature-first architecture)
-    ├── player_registration/ # Player creation & setup
-    ├── breathalyzer/        # BAC data entry & OCR
-    ├── checkpoint/          # Round management & timers
-    ├── scoring/             # Points calculation & penalties
-    ├── leaderboard/         # "Carnet por Puntos" display
-    ├── achievements/        # DGT titles & awards
-    └── fake_id/             # DGT License generation
+    ├── main_menu/           # Persistent home screen, fake news/error, ayuda
+    ├── player_registration/ # Player creation & setup ✅
+    ├── breathalyzer/        # BAC data entry, round-robin, feedback ✅
+    ├── checkpoint/          # Round management, timer UI, siren ✅
+    ├── scoring/             # Fine screen ✅
+    ├── leaderboard/         # Leaderboard, player detail, BAC graph ✅
+    ├── fake_id/             # License generator & update service ✅
+    │                        # front.png + back.png template rendering ✅ (Phase 3)
+    └── achievements/        # DGT titles & awards (Phase 3)
 ```
 
 ---
 
 ## 🎮 Core Features
 
-1. **Main Menu** - Persistent home screen with Add Player, Fake News, Fake Error (jokes), Start/Resume Game
-2. **Player Registration** - Name + surname, sex/body size, photo capture, auto-generated license ID
-3. **Round 0 (Baseline)** - Initial BAC measurement with no feedback (silent baseline)
-4. **Breathalyzer Data Entry** - Manual keypad, OCR camera, round-robin lineup
-5. **Checkpoint System** - Timed rounds with police siren alerts
-6. **"Sweet Spot" System** - Price is Right mechanic: get close to optimal BAC without going over
-7. **Points System** - Hybrid scoring: gain points for staying in zone, lose for dangerous behavior
-8. **Real-time Feedback** - Messages after each measurement (points, titles, warnings)
-9. **Live License Updates** - Licenses auto-update with badges, viewable anytime by clicking player
-10. **Leaderboard** - Real-time rankings with BAC progression graphs
-11. **DGT Titles** - Per-round awards with logos (Velocidad de Crucero, Multa por Exceso, etc.)
-12. **Environmental Badges** - Top 5 highest BAC players get eco-style distinctive badges (as a joke)
-13. **Final Ceremony** - 3 Grand Prizes + Environmental Distinctives reveal with animations
-14. **Persistent State** - All data saved continuously, resume game after crash/restart
+### ✅ Implemented (Phases 1–3 complete + Phase 5 ~95% complete)
+1. **Main Menu** - Persistent home screen with Start/Resume Game, player list (swipe-to-delete), Settings, Fake News, Ayuda
+2. **Fake News Screen** - Satirical DGT articles list + full article view
+3. **Fake Error Screen** - Satirical DGT error modal with close button
+4. **Ayuda Screen** - Satirical help screen ("Espabila y tómate una bien fría")
+5. **Checkpoint Provider** - Per-group timer management with Hive persistence and restart recovery
+6. **MassiveButton** - 80px min-height, haptic feedback, drunk-proof button widget
+7. **CustomKeypad** - 3×4 grid, 80×80px buttons, 0.XX format, no native keyboard
+8. **TitleBadge** - DGT title icon with ×N accumulation counter (cosmetic only)
+9. **LicenseCard** - Player license with circular photo, points, title badges
+10. **Player Registration** - Name + surname, sex/body size, photo capture, license auto-generated; **edit mode** pre-populates fields
+11. **Round 0 (Baseline)** - Silent initial measurement, no feedback, no points
+12. **Manual BAC Entry** - Custom keypad entry (X.XX format), saved to Hive (only BAC input method)
+13. **Round-Robin Flow** - "El Retén" player carousel, manual advance, progress indicator
+14. **Real-time Feedback** - Full-screen color-coded notifications after each measurement
+15. **Fine System** - Full-screen `fine.png` on -4 score; tracks `fineCount` + `moneyLost`
+16. **Checkpoint Timer UI** - `GroupCountdownCard` MM:SS, police siren flash (visual-only) + OS notification
+17. **Points System** - Proportional 5-tier scale (-2/-1/0/+1/+2), 15-point hard cap
+18. **Leaderboard** - Sorted by points (tiebreaker: perfection score), top 3 medals 🥇🥈🥉
+19. **BAC Progression Graph** - Custom lollipop `Canvas` chart with zone bands (round-aware widths); no `fl_chart` dependency
+20. **License Generation** - `dart:ui` canvas pipeline, updated after every round (front + back sides)
+21. **OS Push Notifications** - `flutter_local_notifications` for checkpoint alerts
+22. **Debug Skip Button** - Gated behind `kDebugMode` for testing
+23. **Keypad Confirmation Step** - `BacConfirmationScreen` before saving any BAC reading; "Corregir" returns to keypad with pre-populated value
+24. **Last Measurement Display** - `LastMeasurementWidget` on leaderboard cards ("Último registro: 0.XX mg/L — Ronda N")
+25. **DGT Title Badges on Leaderboard** - `TitleBadge` widgets with `×N` counters on each player card
+26. **License Viewing (Two-Sided)** - Full-screen swipeable `PageView` (front + back) with `InteractiveViewer` pinch-to-zoom; dynamic fallback when back PNG not yet generated
+27. **Game State Recovery** - `RecoveryNotifier` reads Hive on launch and routes to correct screen with timer restored
+28. **BAC Curve Multiplier** - `CurveSettingsRepository` + `curveMultiplierProvider`; `BACCalculator` applies multiplier to all optimal targets
+29. **Player Edit & Delete** - Swipe-to-delete (`Dismissible`) on player list; edit mode in `PlayerRegistrationScreen`
+30. **"Finish Game" Button** - In `MainMenuScreen` → navigates to `FinalCeremonyScreen` placeholder
+31. **BAC Curve Calibration Settings** - `SettingsScreen` with slider (0.80–1.20×) wired to `curveMultiplierProvider`
+32. **Splash / Landing Screen** - Full-screen DGT-blue `SplashScreen` with DGV logo, "Acceder" button, auto-skip after 3s
+33. **App Branding** - Launcher icons (all densities), DGV transparent logo in `MainMenuScreen` header
+
+### 🔥 Phase 4 (Planned — Developer C)
+34. **Firebase Sync** - Offline-first player data sync after each round
+35. **Web Leaderboard** - Real-time display screen with notification ticker
+36. **Checkpoint Sound** - `policia_control.mp3` played by web frontend via browser Audio API when checkpoint starts
+
+### ✅ Phase 5 Additional (Complete)
+34. **Final Ceremony** - Top 3 reveal + Environmental Distinctives envelope animations
+35. **License Export (Batch)** - Export all licenses to gallery in one tap
+36. **Comprehensive Testing** - 80%+ coverage, physical device testing, crash recovery, performance
+37. **App Size Optimization** - Split-per-abi APK, WebP assets, < 40 MB per ABI
+
+### 🚧 Phase 5 (Remaining)
+38. **License Export (Single)** - Export individual player license to gallery + unit tests
 
 ---
 
@@ -118,9 +167,7 @@ lib/
 - **State Management:** Riverpod 2.0+ with code generation
 - **Local Storage:** Hive 2.0+
 - **Models:** Freezed for immutable data classes
-- **OCR:** Google ML Kit Text Recognition
-- **Charts:** fl_chart
-- **Audio:** audioplayers
+- **Charts:** Custom canvas painter (`dart:ui`) — `fl_chart` dependency retained but unused in app code
 
 ---
 
@@ -169,86 +216,98 @@ flutter build appbundle --release       # Android App Bundle
 
 ## 🧮 Game Mechanics
 
-### "Sweet Spot" System (Price is Right Mechanic)
-Each player has a personalized **optimal BAC zone** based on body size:
-- **Small (S):** 0.05 optimal BAC
-- **Medium (M):** 0.07 optimal BAC
-- **Large (L):** 0.09 optimal BAC
-- **Tolerance:** ±0.02 (the "sweet spot")
+### Measurement System
+The app uses **breathalyzer readings in mg/L** (milligrams per liter of exhaled air), which is the standard DGT measurement format. This is different from blood alcohol concentration (BAC) percentages.
 
-### Points System (Hybrid)
-- Everyone starts with **15 points**
-- **Gain points** for staying in your zone:
-  - In the zone (±0.02): +2 points
-  - Close (±0.02-0.05): +1 point
-- **Lose points** for dangerous behavior:
-  - Too low (<-0.05): 0 points
-  - Over the line (>+0.05): -3 points + lose Grand Prize eligibility
-  - Spike too fast (>0.15/hr): -2 points
-  - Impoundment (≥1.2): -5 points + sit out next round
+### "Sweet Spot" System (Price is Right Mechanic)
+The optimal BrAC target **grows each round** using hardcoded party-mode targets calibrated per sex and body size, peaking at round 6 and winding down after. Targets model a realistic 6-hour party arc (gradual build-up → peak euphoria → wind-down).
+
+**Body size groups:**
+- Men: Small = 60–70 kg, Medium = 70–90 kg, Large = 90–110 kg
+- Women: Small = 40–50 kg, Medium = 50–70 kg, Large = 70–90 kg
+
+**Example progression (men, medium — 70–90 kg):**
+| Round | Optimal BrAC | Sweet spot (±10%) |
+|-------|-------------|-------------------|
+| 1 | 0.11 mg/L | 0.10–0.12 |
+| 3 | 0.34 mg/L | 0.30–0.37 |
+| 5 | 0.56 mg/L | 0.50–0.61 |
+| 6 (peak) | 0.67 mg/L | 0.60–0.74 |
+| 8 | 0.52 mg/L | 0.47–0.57 |
+
+**Tolerance zones — all proportional to the per-round optimal:**
+| Zone | Threshold | Score | Feedback |
+|------|-----------|-------|----------|
+| Sweet spot | ±10% of optimal | **+2** | ¡En la zona! |
+| Close | ±20% of optimal | **+1** | Cerca del óptimo |
+| Neutral | ±40% of optimal | **0** | Sin cambios |
+| Far | ±80% of optimal | **-1** | Alejándote del objetivo |
+| Way below | >80% below optimal | **-2** | Policía de la Diversión 🚔 |
+| Way above | >80% above optimal | **-4 + Fine** | ¡Te has pasado! 🚗 |
+
+### Points System
+- Everyone starts with **15 points** (hard cap — cannot exceed)
+- **Scale:** -2 / -1 / 0 / +1 / +2 per round; **-4 only for fines** (way above optimal)
+- **No impoundment** — players are never excluded from rounds
+- **Fine:** shown as `assets/fine.png` full-screen; tracks `fineCount` and `moneyLost` (100 per fine, used in a separate next-day game)
 
 ### Round System
 - **Round 0 (Baseline):** Initial measurement, NO feedback, NO points, NO titles
 - **Round 1+:** Full feedback after each measurement (points, titles, warnings)
 
-### BAC Calculation
-Uses the **Widmark formula** with sex and body size:
-- `BAC = (Alcohol in grams / (Body weight × r)) × 100`
-- `r = 0.68` for men, `0.55` for women
-- Body sizes: S (55kg), M (70kg), L (90kg)
+### BrAC Calculation
+Uses **hardcoded party-mode targets** per sex and body size:
+- Targets model a 6-hour party arc: steady build-up (rounds 1–6) then wind-down (rounds 7–10)
+- Peak BrAC at round 6; rounds 11+ use round 10 value
+- Body sizes: S, M, L with representative weights per sex
 
-### DGT Titles (Per-Round Awards)
-Awarded **every checkpoint** based on player behavior:
-- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
+### DGT Titles (Per-Round Awards — Visual/Cosmetic Only)
+Awarded **every checkpoint** based on player behavior. Titles are cosmetic — they accumulate on the license card but don't determine winners:
+- 🟢 **Velocidad de Crucero** - Closest to their optimal zone this round
 - 🔴 **Multa por Exceso** - Highest BAC spike from last round
-- 🔰 **L de Prácticas** - Lowest BAC in the round
-- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
+- 🔰 **L de Prácticas** - Lowest BAC reading in the round
+- 🔋 **Vehículo Híbrido** - [TBD — replacement title pending team decision]
+- 🔧 **ITV Passed** - Lost points last round but back in zone ("Redemption")
 
-Players accumulate these titles throughout the night (tracked with counters).
+Players accumulate these titles throughout the night (tracked with counters on the license).
+
+### Fake DGT License (Two-Sided)
+
+Each player gets a two-sided DGT-style license rendered via `dart:ui` Canvas onto PNG templates:
+
+**Front side** (`assets/license/front.png`) — identity + game status:
+- Circular photo crop (or initials fallback)
+- Name, surname, sex, body size
+- Current points
+- DGT title badges (actual PNGs from `assets/titles/`) with `×N` counters
+- Fine indicator (`🚗 N multas`) when applicable
+- Environmental badge slot (filled at end-of-game)
+
+**Back side** (`assets/license/back.png`) — measurement history:
+- Round-by-round table: Round N → BrAC reading → points change
+- Fine log: Fine N — Ronda N — 100€
+- Total money lost
+- Perfection score
+
+Both sides are regenerated after every round via `LicenseUpdateService`. Viewed in-app via a swipeable `PageView` with `InteractiveViewer` for pinch-to-zoom.
 
 ### Environmental Distinctive Badges
-At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
+At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) — **as a joke, because they are the least eco-friendly** 🏭💨.
 
-### Grand Prizes (Final Ceremony)
-Three separate grand prizes awarded at the end:
-1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
-2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
-3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
+### Winners & Leaderboard
+The **Leaderboard is the only source of truth**. The top 3 players (🥇🥈🥉) are the winners:
+1. **Primary:** Most points at game end
+2. **Tiebreaker:** Perfection score — who stayed closest to their optimal zone line throughout the game (lower deviation = better)
 
 ### Quick Example
 ```
-Player: Medium (M), Optimal: 0.07
-Round 0: BAC 0.03 → "Reading recorded" (no feedback)
-Round 1: BAC 0.07 → "+2 points: In the zone!" (green screen)
-Round 2: BAC 0.12 → "-3 points: Over the line!" (red screen)
+Player: Male, Medium (70–90 kg)
+Round 0: Optimal 0.00  → Reading 0.05 mg/L → "Reading recorded" (baseline, no feedback)
+Round 1: Optimal 0.11  → Reading 0.11 mg/L → "+2: ¡En la zona!" (green)
+Round 2: Optimal 0.22  → Reading 0.45 mg/L → "-4: ¡Te has pasado! + Multa 🚗" (red)
+Round 3: Optimal 0.34  → Reading 0.05 mg/L → "-2: Policía de la Diversión 🚔" (blue)
+Round 4: Optimal 0.45  → Reading 0.38 mg/L → "+1: Cerca del óptimo" (yellow)
 ```
-  - Impoundment (≥1.2): -5 points + sit out next round
-
-### BAC Calculation
-Uses the **Widmark formula** with sex and body size:
-- `BAC = (Alcohol in grams / (Body weight × r)) × 100`
-- `r = 0.68` for men, `0.55` for women
-- Body sizes: S (55kg), M (70kg), L (90kg)
-
-### DGT Titles (Per-Round Awards)
-Awarded **every checkpoint** based on player behavior:
-- 🟢 **Velocidad de Crucero** - Closest to their optimal zone
-- 🔴 **Multa por Exceso** - Highest BAC spike from last round
-- 🔰 **L de Prácticas** - Lowest BAC in the round
-- 🔋 **Vehículo Híbrido** - BAC dropped (drank water)
-- 🛠️ **ITV Passed** - Same reading twice in a row (±0.01)
-
-Players accumulate these titles throughout the night (tracked with counters).
-
-### Environmental Distinctive Badges
-At the end of the night, the **top 5 highest BAC players** receive satirical environmental badges (like DGT eco labels) as a joke.
-
-### Grand Prizes (Final Ceremony)
-Three separate grand prizes awarded at the end:
-1. 🏆 **El Conductor Perfecto** - Highest points + never crossed optimal line
-2. 🎯 **Precisión Absoluta** - Closest average to optimal zone across all rounds
-3. 👑 **Coleccionista de Títulos** - Most DGT titles accumulated
 
 ---
 
@@ -256,9 +315,22 @@ Three separate grand prizes awarded at the end:
 
 This project uses:
 - **Git workflow:** `main` (production), `develop` (integration), `feature/*`, `fix/*`
-- **Commit convention:** `type(scope): description` (e.g., `feat(breathalyzer): add OCR camera`)
+- **Commit convention:** `type(scope): description` (e.g., `feat(leaderboard): add player detail graph`)
 - **Automated checks:** Pre-commit hooks format and analyze code
 - **CI/CD:** GitHub Actions run tests and build on every PR
+
+### Team
+
+| Developer | Role | Current Focus |
+|-----------|------|---------------|
+| **Developer A — Javier** | Core infrastructure, architecture | Phase 5 complete; Phase 4 support when unblocked |
+| **Developer B — Kristian** | UI/UX, screens, animations | Phase 5 complete |
+| **Developer C — Josema** | Firebase backend & Web frontend | Phase 4 lead (blocked on external dependency) |
+
+### Development Phases
+- **Phases 1–3** ✅ Complete — core infrastructure, full game loop, mechanics revision, player management, settings, splash
+- **Phase 4** ⏳ Blocked — Firebase sync + web leaderboard + checkpoint audio (external project dependency)
+- **Phase 5** 🚧 ~95% Complete — testing, optimisation, docs done; single-license export + APK release pending
 
 **See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.**
 
@@ -268,7 +340,7 @@ This project uses:
 
 | File | Purpose |
 |------|---------|
-| **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** | Complete project specification |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines (entry point) |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contribution guidelines |
 | **[ROADMAP.md](ROADMAP.md)** | Development plan and milestones |
 | **[CHANGELOG.md](CHANGELOG.md)** | Version history |
@@ -303,8 +375,9 @@ Drunk-proof UX **cannot be validated in simulators**. Always test on real device
 
 ## 👥 Contributors
 
-- Developer 1: [Your name]
-- Developer 2: [Partner's name]
+- Developer A: [Javier] — Core infrastructure, architecture, Firebase
+- Developer B: [Kristian] — UI/UX, screens, animations
+- Developer C: [Josema] — Firebase backend & Web frontend (Phase 4)
 
 ---
 
