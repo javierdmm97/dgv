@@ -81,10 +81,8 @@ export function SirenController({ session, variant }: { session: Session; varian
       {takeoverRound !== null && (
         <div className={styles.takeover} data-variant={variant} role="alert">
           <div className={styles.takeoverInner}>
-            <span className={styles.takeoverKicker}>🚨 Nuevo control de alcoholemia</span>
-            <span className={styles.takeoverRound}>
-              Ronda <span className="tnum">{takeoverRound}</span>
-            </span>
+            <span className={styles.takeoverEmoji}>🚨</span>
+            <span className={styles.takeoverTitle}>Nuevo control de alcoholemia</span>
             <span className={styles.takeoverSub}>Preparen el etilómetro</span>
           </div>
         </div>

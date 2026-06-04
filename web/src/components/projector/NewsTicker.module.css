@@ -26,6 +26,26 @@
   box-shadow: var(--glow-red);
 }
 
+.item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  animation: news-fade 0.45s ease;
+}
+
+@keyframes news-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .emoji {
   flex: none;
   font-size: 1.4em;
