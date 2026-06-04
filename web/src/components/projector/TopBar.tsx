@@ -1,4 +1,5 @@
 import { Crest } from '../ui/Crest'
+import { ThemeToggle } from '../ui/ThemeToggle'
 import { useClock } from '../../hooks/useClock'
 import styles from './TopBar.module.css'
 
@@ -19,6 +20,7 @@ export function TopBar({
       <Crest subtitle="Control de alcoholemia" />
 
       <div className={styles.right}>
+        <ThemeToggle />
         <span className={styles.live}>
           <span className="live-dot" /> En vivo
         </span>

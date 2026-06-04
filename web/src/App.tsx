@@ -1,11 +1,9 @@
 import { useActiveSession } from './hooks/useActiveSession'
 import { usePlayers } from './hooks/usePlayers'
 import { useNotifications } from './hooks/useNotifications'
-import { useDisplayMode } from './hooks/useDisplayMode'
 import { EmptyState } from './components/EmptyState'
-import { Ceremony } from './components/Ceremony'
-import { ProjectorApp } from './app/ProjectorApp'
-import { MobileApp } from './app/MobileApp'
+import { MainView } from './app/MainView'
+import { AdminApp } from './app/AdminApp'
 import {
   DEMO_NOTIFICATIONS,
   DEMO_PLAYERS,
@@ -14,13 +12,18 @@ import {
 } from './lib/demoData'
 
 // ?demo=1 renders sample data; ?demo=ceremony shows the finished-game view.
+// ?admin=1 opens the local simulator panel (drives the views without Firestore).
 const params =
   typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
 const DEMO = params.has('demo')
 const DEMO_CEREMONY = params.get('demo') === 'ceremony'
+const ADMIN = params.has('admin')
 
 export default function App() {
-  const mode = useDisplayMode()
+  return ADMIN ? <AdminApp /> : <LiveApp />
+}
+
+function LiveApp() {
   const { session: liveSession, loading, error } = useActiveSession()
   const livePlayers = usePlayers(liveSession?.id ?? null)
   const liveNotifications = useNotifications()
@@ -50,17 +53,5 @@ export default function App() {
     )
   }
 
-  // Ceremony shows the moment the app finishes the game (writes isFinished=true
-  // via syncGameFinish). We derive podium/coleccionista/distintivos from the
-  // entries (lib/awards), so we don't depend on the app's precomputed
-  // session.ceremony payload being present — isFinished alone is enough.
-  if (session.isFinished) {
-    return <Ceremony entries={players} variant={mode} />
-  }
-
-  return mode === 'tv' ? (
-    <ProjectorApp session={session} players={players} notifications={notifications} />
-  ) : (
-    <MobileApp session={session} players={players} notifications={notifications} />
-  )
+  return <MainView session={session} players={players} notifications={notifications} />
 }

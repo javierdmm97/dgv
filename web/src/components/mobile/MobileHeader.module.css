@@ -18,6 +18,13 @@
   gap: 10px;
 }
 
+.right {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
 .live {
   flex: none;
   display: inline-flex;

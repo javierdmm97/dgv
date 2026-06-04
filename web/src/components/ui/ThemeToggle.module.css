@@ -1,0 +1,20 @@
+.toggle {
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  width: 2.2em;
+  height: 2.2em;
+  font-size: 1em;
+  line-height: 1;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-3);
+  color: var(--fg);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.toggle:hover {
+  background: var(--ink-4);
+}
+.toggle:active {
+  transform: scale(0.92);
+}

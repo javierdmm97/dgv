@@ -5,6 +5,7 @@ import { coleccionista, environmentals, podium } from '../lib/awards'
 import { totalTitles } from '../lib/leaderboard'
 import type { DisplayMode } from '../hooks/useDisplayMode'
 import { Crest } from './ui/Crest'
+import { ThemeToggle } from './ui/ThemeToggle'
 import { Avatar } from './ui/Avatar'
 import { Plate } from './ui/Plate'
 import { DistintivoAmbiental } from './ui/DistintivoAmbiental'
@@ -42,6 +43,9 @@ export function Ceremony({
 
   return (
     <div className={styles.wrap} data-variant={variant}>
+      <div className={styles.corner}>
+        <ThemeToggle />
+      </div>
       <header className={styles.header}>
         <Crest subtitle="Acta final del operativo" />
         <h1 className={styles.title}>Ceremonia de clausura</h1>

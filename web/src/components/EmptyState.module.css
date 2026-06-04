@@ -9,6 +9,12 @@
   text-align: center;
 }
 
+.corner {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+}
+
 .radar {
   position: relative;
   width: 120px;

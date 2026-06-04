@@ -1,10 +1,17 @@
 .wrap {
+  position: relative;
   max-width: 1100px;
   margin: 0 auto;
   padding: clamp(20px, 4vw, 56px) clamp(16px, 3vw, 40px) 64px;
   display: flex;
   flex-direction: column;
   gap: clamp(24px, 4vw, 44px);
+}
+
+.corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .header {

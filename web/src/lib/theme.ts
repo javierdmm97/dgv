@@ -19,12 +19,16 @@ export const DGT = {
 
 export type ZoneKey = 'green' | 'yellow' | 'orange' | 'red'
 
-/** Zone colors tuned for legibility on the dark broadcast theme (match tokens.css). */
+/**
+ * Zone colors as CSS variable references, so they follow the active theme
+ * (dark/light) automatically — the concrete hexes live in styles/tokens.css.
+ * Used in inline styles / SVG (via `style`), never as raw SVG attributes.
+ */
 export const ZONE: Record<ZoneKey, string> = {
-  green: '#5FD06B',
-  yellow: '#F4D43A',
-  orange: '#F39A1E',
-  red: '#FF5B5B',
+  green: 'var(--green)',
+  yellow: 'var(--yellow)',
+  orange: 'var(--orange)',
+  red: 'var(--red)',
 }
 
 /**
