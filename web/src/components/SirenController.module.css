@@ -80,13 +80,12 @@
   display: grid;
   place-content: center;
   text-align: center;
-  /* Single siren cycle (red→blue), then it's removed. */
-  animation: siren-flash 1.6s steps(1) 1 forwards;
+  animation: siren-flash 0.7s steps(1) infinite;
 }
 .takeover[data-variant='mobile'] {
   inset: auto 0 0 0;
   place-content: stretch;
-  animation: siren-flash 1.3s steps(1) 1 forwards;
+  animation: siren-flash 0.7s steps(1) infinite;
 }
 
 .takeoverInner {

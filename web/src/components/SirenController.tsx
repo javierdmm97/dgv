@@ -14,6 +14,42 @@ export function SirenController({ session, variant }: { session: Session; varian
   const [takeoverRound, setTakeoverRound] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const lastRound = useRef<number | null>(null)
+  const audioStop = useRef<number | null>(null)
+  const audioFade = useRef<number | null>(null)
+
+  const clearAudioTimers = () => {
+    if (audioStop.current) window.clearTimeout(audioStop.current)
+    if (audioFade.current) window.clearInterval(audioFade.current)
+    audioStop.current = null
+    audioFade.current = null
+  }
+
+  /**
+   * Play a SINGLE siren cycle. The mp3 is ~16 s (far too long), so we cut it after
+   * a short burst with a quick fade-out to avoid an abrupt click.
+   */
+  const playSirenOnce = () => {
+    const a = audioRef.current
+    if (!a) return
+    clearAudioTimers()
+    a.currentTime = 0
+    a.volume = 1
+    void a.play().catch(() => {})
+    audioStop.current = window.setTimeout(() => {
+      audioFade.current = window.setInterval(() => {
+        a.volume = Math.max(0, a.volume - 0.15)
+        if (a.volume <= 0.001) {
+          clearAudioTimers()
+          a.pause()
+          a.currentTime = 0
+          a.volume = 1
+        }
+      }, 40)
+    }, 2300)
+  }
+
+  // Stop audio + timers if unmounted mid-siren.
+  useEffect(() => clearAudioTimers, [])
 
   useEffect(() => {
     const round = session.currentRound
@@ -23,13 +59,9 @@ export function SirenController({ session, variant }: { session: Session; varian
     }
     if (round > lastRound.current) {
       lastRound.current = round
-      if (enabled && audioRef.current) {
-        audioRef.current.currentTime = 0
-        void audioRef.current.play().catch(() => {})
-      }
+      if (enabled) playSirenOnce()
       setTakeoverRound(round)
-      // One siren cycle (red→blue), matched to the flash animation length.
-      const t = setTimeout(() => setTakeoverRound(null), variant === 'tv' ? 1600 : 1300)
+      const t = setTimeout(() => setTakeoverRound(null), variant === 'tv' ? 4800 : 3200)
       return () => clearTimeout(t)
     }
   }, [session.currentRound, enabled, variant])
