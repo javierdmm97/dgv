@@ -1,0 +1,45 @@
+.crest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+}
+
+.logo {
+  height: 2.6em;
+  width: auto;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.brand b {
+  color: var(--blue-bright);
+}
+
+.sub {
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.crest[data-compact] .logo {
+  height: 1.9em;
+}
+.crest[data-compact] .brand {
+  font-size: 1.05em;
+}

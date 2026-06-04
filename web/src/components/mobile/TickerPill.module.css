@@ -1,0 +1,45 @@
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+  text-align: left;
+  padding: 0.5em 0.7em;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  color: var(--fg);
+  font-size: 0.9rem;
+}
+.pill[data-type='fine'] {
+  border-left-color: var(--red);
+}
+.pill[data-type='zone'] {
+  border-left-color: var(--green);
+}
+.pill[data-type='streak'] {
+  border-left-color: var(--orange);
+}
+.pill[data-type='moab'] {
+  border-left-color: var(--yellow);
+}
+
+.emoji {
+  flex: none;
+  font-size: 1.1em;
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+.chev {
+  flex: none;
+  color: var(--fg-dim);
+  font-size: 1.3em;
+  line-height: 1;
+}

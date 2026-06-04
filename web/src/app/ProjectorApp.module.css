@@ -1,0 +1,29 @@
+.app {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Everything inside scales with the viewport so it reads across a room. */
+  font-size: clamp(13px, 1.15vw, 22px);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 26vw, 460px);
+  gap: 1em;
+  padding: 1em;
+}
+
+.main {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.25em;
+}
+
+.aside {
+  min-height: 0;
+}

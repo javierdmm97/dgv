@@ -1,0 +1,174 @@
+.wrap {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 56px) clamp(16px, 3vw, 40px) 64px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 4vw, 44px);
+}
+
+.corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  color: var(--fg);
+}
+
+/* ---- podium ---- */
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(12px, 3vw, 36px);
+}
+.step {
+  flex: 1;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.step[data-rank='1'] {
+  transform: translateY(-18px);
+}
+.medal {
+  font-size: clamp(2rem, 5vw, 3rem);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5));
+}
+.stepName {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.stepPoints {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--blue-bright);
+}
+.pedestal {
+  margin-top: 6px;
+  width: 100%;
+  border-radius: var(--r) var(--r) 0 0;
+  background: linear-gradient(180deg, var(--ink-3), var(--ink-2));
+  border: 1px solid var(--line-2);
+  border-bottom: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--fg-muted);
+  display: grid;
+  place-content: center;
+}
+.pedestal[data-rank='1'] {
+  height: 120px;
+  color: var(--blue-bright);
+  box-shadow: var(--glow-blue);
+}
+.pedestal[data-rank='2'] {
+  height: 90px;
+}
+.pedestal[data-rank='3'] {
+  height: 64px;
+}
+
+/* ---- grand prizes ---- */
+.prizes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.prize {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding: 22px 18px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.prizeEmoji {
+  font-size: 2.4rem;
+}
+.prizeTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+.prizeName {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.prizeDetail {
+  color: var(--blue-bright);
+  font-weight: 600;
+}
+
+/* ---- environmentals ---- */
+.envCard {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+}
+.envTitle {
+  font-size: 1.3rem;
+  margin-bottom: 14px;
+}
+.envList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.envRow {
+  display: grid;
+  grid-template-columns: 2.4rem 44px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+}
+.envRank {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--fg-muted);
+  text-align: center;
+}
+.envName {
+  font-weight: 600;
+}
+.envBac {
+  color: var(--fg-muted);
+}
+
+@media (max-width: 720px) {
+  .prizes {
+    grid-template-columns: 1fr;
+  }
+  .podium {
+    gap: 8px;
+  }
+  .step {
+    font-size: 0.85rem;
+  }
+}

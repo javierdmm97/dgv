@@ -1,0 +1,17 @@
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.main {
+  flex: 1;
+  padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+}
+
+.detail {
+  flex: 1;
+  padding: 14px 14px calc(28px + env(safe-area-inset-bottom));
+}

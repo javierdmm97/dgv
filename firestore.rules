@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// Operación DGV — Firestore security rules.
+//
+// The mobile app has no Firebase Auth (offline-first party app), and the
+// companion web leaderboard reads anonymously. So reads are public and
+// writes are unauthenticated. The validation below rejects malformed
+// documents, but it cannot restrict *who* writes — any client holding the
+// public Firebase config can write a well-formed document.
+//
+// To harden later (free): enable Firebase App Check and require
+// request.app != null on writes. Tracked as a Phase 4 follow-up.
+//
+// Schema source of truth:
+//   lib/features/firebase/services/firebase_sync_service.dart
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global player identity (no per-session gameplay data).
+    // Written by syncPlayerRegistration and merged by syncRoundComplete /
+    // syncPlayerUpdate / syncGameFinish via _buildPlayerProfileDoc:
+    //   name, surname, sex, bodySize, createdAt?, updatedAt, photoUrl?
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string
+                            && request.resource.data.surname is string;
+      allow delete: if true;
+    }
+
+    // Game sessions and their per-session player gameplay state.
+    match /sessions/{sessionId} {
+      allow read: if true;
+      // Many partial updates (currentRound, isFinished, ceremony, ...);
+      // only the initial create needs a startTime.
+      allow create: if request.resource.data.startTime is timestamp;
+      allow update: if true;
+      allow delete: if true;
+
+      // Per-session per-player gameplay: points, fines, readings, titles...
+      // Written by _buildSessionPlayerDoc — every write includes points.
+      match /players/{playerId} {
+        allow read: if true;
+        allow create, update: if request.resource.data.points is number;
+        allow delete: if true;
+      }
+    }
+
+    // In-app notifications consumed by the web leaderboard ticker.
+    // Written by sendNotification: text, timestamp, status, type, ...
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.text is string;
+      allow delete: if true;
+    }
+
+    // Everything else: denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

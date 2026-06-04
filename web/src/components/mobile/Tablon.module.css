@@ -1,0 +1,61 @@
+.feed {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r);
+}
+.item[data-type='fine'] {
+  border-left-color: var(--red);
+}
+.item[data-type='zone'] {
+  border-left-color: var(--green);
+}
+.item[data-type='streak'] {
+  border-left-color: var(--orange);
+}
+.item[data-type='moab'] {
+  border-left-color: var(--yellow);
+}
+.item[data-type='manual'] {
+  border-left-color: var(--blue);
+}
+
+.emoji {
+  flex: none;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+.body {
+  flex: 1;
+  min-width: 0;
+}
+.text {
+  font-weight: 500;
+  line-height: 1.35;
+}
+.time {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+}
+
+.empty {
+  padding: 3em 1.5em;
+  text-align: center;
+  color: var(--fg-muted);
+  background: var(--ink-2);
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r);
+}

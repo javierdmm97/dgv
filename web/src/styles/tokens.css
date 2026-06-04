@@ -1,0 +1,217 @@
+/* ===========================================================================
+   Operación DGV — "Centro de Control" design tokens (dark broadcast theme).
+   The chrome is dark (ink); the carnet (EU pink permit) is a bright paper
+   artifact that pops against it. Traffic/zone colors are tuned for legibility
+   from across a room. Single source of truth for CSS; theme.ts mirrors the
+   handful of values needed inside SVG/inline styles.
+   ========================================================================== */
+
+:root {
+  /* --- ink / surfaces (dark) --- */
+  --ink-0: #070E16; /* page base (darkest) */
+  --ink-1: #0B1622; /* base */
+  --ink-2: #102032; /* panel */
+  --ink-3: #16293B; /* raised card */
+  --ink-4: #1D3346; /* hover / active */
+  --line: #1E3346; /* hairline */
+  --line-2: #2A425A; /* stronger divider */
+
+  /* --- brand blue --- */
+  --blue-deep: #0F5993; /* DGT brand blue */
+  --blue: #2E8BD6; /* accent */
+  --blue-bright: #5BB0F5; /* glow / focus */
+
+  /* --- traffic / zones (dark-tuned, distinguishable across a room) --- */
+  --green: #5FD06B;
+  --yellow: #F4D43A;
+  --orange: #F39A1E;
+  --red: #FF5B5B;
+  --red-deep: #C8323C;
+
+  /* --- text --- */
+  --fg: #EAF1F8;
+  --fg-muted: #93A7BA;
+  --fg-dim: #5E7286;
+
+  /* --- carnet "paper" --- */
+  --paper: #F3E8EC; /* EU permit pink */
+  --paper-ink: #16202B;
+  --paper-blue: #0F5993;
+
+  /* --- type --- */
+  --font-display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* --- radii --- */
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* --- elevation / glow --- */
+  --shadow-1: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --glow-blue: 0 0 0 1px rgba(91, 176, 245, 0.35), 0 0 22px rgba(46, 139, 214, 0.35);
+  --glow-red: 0 0 24px rgba(255, 91, 91, 0.55);
+
+  color-scheme: dark;
+}
+
+/* ---- Light theme ("fondo claro") — opt-in via [data-theme="light"] on <html>.
+   Dark stays the default. The carnet keeps its pink paper, which still reads as a
+   bright card on the light surfaces. Traffic colors are darkened for contrast. */
+:root[data-theme='light'] {
+  --ink-0: #dce3ea;
+  --ink-1: #eef2f6;
+  --ink-2: #ffffff;
+  --ink-3: #f6f9fc;
+  --ink-4: #e9eff5;
+  --line: #d7dee6;
+  --line-2: #bcc8d4;
+
+  --blue-deep: #0f5993;
+  --blue: #1c77c7;
+  --blue-bright: #1466b0;
+
+  --green: #2e9e42;
+  --yellow: #c28a00;
+  --orange: #d9760a;
+  --red: #e0322f;
+  --red-deep: #b62029;
+
+  --fg: #16222e;
+  --fg-muted: #51637a;
+  --fg-dim: #8294a6;
+
+  --shadow-1: 0 2px 10px rgba(20, 40, 60, 0.1);
+  --shadow-2: 0 10px 30px rgba(20, 40, 60, 0.14);
+  --glow-blue: 0 0 0 1px rgba(28, 119, 199, 0.25), 0 0 16px rgba(28, 119, 199, 0.18);
+  --glow-red: 0 0 18px rgba(224, 50, 47, 0.35);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(15, 89, 147, 0.18), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(15, 89, 147, 0.12), transparent 55%),
+    var(--ink-1);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='light'] body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(15, 89, 147, 0.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(15, 89, 147, 0.05), transparent 55%),
+    var(--ink-1);
+}
+
+#root {
+  min-height: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+}
+
+::selection {
+  background: rgba(91, 176, 245, 0.35);
+}
+
+a {
+  color: var(--blue-bright);
+}
+
+/* SVG charts scale down to their container. */
+.chart {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tabular figures for any numeric readout (points, BAC, €, time). */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* "EN VIVO" indicator — a pulsing red dot. */
+.live-dot {
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 0 rgba(255, 91, 91, 0.7);
+  animation: live-pulse 1.8s infinite;
+  flex: none;
+}
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 91, 91, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 91, 91, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 91, 91, 0);
+  }
+}
+
+/* Scrollbars — slim and on-theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 999px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue-bright);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

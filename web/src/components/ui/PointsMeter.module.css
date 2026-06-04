@@ -1,0 +1,64 @@
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+
+.segs {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.seg {
+  width: 0.5em;
+  height: 1.1em;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.seg[data-on] {
+  background: var(--pc);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--pc) 70%, transparent);
+}
+
+.value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.18em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--pc);
+  line-height: 1;
+}
+
+.value small {
+  font-size: 0.42em;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* sizes */
+.meter[data-size='sm'] {
+  font-size: 0.8rem;
+}
+.meter[data-size='sm'] .value {
+  font-size: 1.5rem;
+}
+
+.meter[data-size='md'] {
+  font-size: 1rem;
+}
+.meter[data-size='md'] .value {
+  font-size: 2.1rem;
+}
+
+.meter[data-size='lg'] {
+  font-size: 1.25rem;
+}
+.meter[data-size='lg'] .value {
+  font-size: 3rem;
+}

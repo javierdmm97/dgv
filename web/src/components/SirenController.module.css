@@ -1,0 +1,153 @@
+/* ---- one-time "enable sound" popup ---- */
+.modalScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(4, 8, 14, 0.66);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-content: center;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--ink-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 28px 32px;
+  max-width: 460px;
+  text-align: center;
+  box-shadow: var(--shadow-2);
+}
+.modalEmoji {
+  font-size: 3em;
+}
+.modal h2 {
+  margin: 10px 0;
+  color: var(--fg);
+}
+.modal p {
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.btnPrimary {
+  background: linear-gradient(180deg, var(--blue) 0%, var(--blue-deep) 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 12px 22px;
+  font-size: 1em;
+  font-weight: 700;
+  box-shadow: var(--glow-blue);
+}
+.btnGhost {
+  background: transparent;
+  color: var(--fg-muted);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 12px 22px;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.unlock {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 40;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-3);
+  color: #fff;
+  font-size: 1.3em;
+  box-shadow: var(--shadow-1);
+}
+
+/* ---- siren takeover ---- */
+.takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  animation: siren-flash 0.7s steps(1) infinite;
+}
+.takeover[data-variant='mobile'] {
+  inset: auto 0 0 0;
+  place-content: stretch;
+  animation: siren-flash 0.7s steps(1) infinite;
+}
+
+.takeoverInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 5vmin;
+  animation: siren-pop 0.45s cubic-bezier(0.2, 0.9, 0.2, 1.2);
+}
+.takeover[data-variant='mobile'] .takeoverInner {
+  padding: 22px;
+  gap: 0.2rem;
+}
+
+.takeoverEmoji {
+  font-size: clamp(2.4rem, 8vw, 5rem);
+  line-height: 1;
+}
+.takeoverTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(1.9rem, 6.5vw, 4.6rem);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  max-width: 14ch;
+}
+.takeover[data-variant='mobile'] .takeoverTitle {
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+}
+.takeover[data-variant='mobile'] .takeoverEmoji {
+  font-size: clamp(1.8rem, 7vw, 2.6rem);
+}
+.takeoverSub {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+}
+
+@keyframes siren-flash {
+  0% {
+    background: rgba(214, 40, 40, 0.92);
+  }
+  50% {
+    background: rgba(20, 60, 160, 0.92);
+  }
+  100% {
+    background: rgba(214, 40, 40, 0.92);
+  }
+}
+@keyframes siren-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
