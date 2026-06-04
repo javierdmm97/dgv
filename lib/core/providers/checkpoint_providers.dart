@@ -226,25 +226,24 @@ class CheckpointNotifier extends _$CheckpointNotifier {
       ),
     );
     for (final entry in awards.entries) {
-      if (entry.value == DGTTitle.multaPorExceso) {
-        final playerName =
-            freshPlayers
-                .where((p) => p.id == entry.key)
-                .map((p) => p.name)
-                .firstOrNull ??
-            entry.key;
-        unawaited(
-          syncService.sendNotification(
-            NotificationPayload(
-              id: const Uuid().v4(),
-              text: '🚔 Multa para $playerName',
-              timestamp: DateTime.now(),
-              type: 'fine',
-              targetPlayerId: entry.key,
-            ),
+      final playerName =
+          freshPlayers
+              .where((p) => p.id == entry.key)
+              .map((p) => p.name)
+              .firstOrNull ??
+          entry.key;
+      final title = entry.value;
+      unawaited(
+        syncService.sendNotification(
+          NotificationPayload(
+            id: const Uuid().v4(),
+            text: '${title.emoji} $playerName — ${title.displayName}',
+            timestamp: DateTime.now(),
+            type: 'title',
+            targetPlayerId: entry.key,
           ),
-        );
-      }
+        ),
+      );
     }
 
     await ref.read(gameStateNotifierProvider.notifier).advanceRound();

@@ -193,10 +193,10 @@ void main() {
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
-        // Round 1 optimal for medium male = 0.111, so 0.111 is in sweet spot
+        // Round 1 optimal for medium male = 0.082, so 0.082 is in sweet spot
         final result = await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 0.111);
+            .submitBAC('p1', 0.082);
 
         expect(result.pointsChange, equals(2));
       });
@@ -206,7 +206,7 @@ void main() {
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
-        // Round 1 optimal for medium male = 0.111, fine threshold = 0.111 * 1.8 = 0.200
+        // Round 1 optimal for medium male = 0.082, fine threshold = 0.082 * 1.8 = 0.148
         // 0.35 is well above threshold
         final result = await container
             .read(bACEntryNotifierProvider.notifier)
@@ -238,10 +238,10 @@ void main() {
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
-        // Round 1 optimal = 0.111, submit 0.111 for +2
+        // Round 1 optimal = 0.082, submit 0.082 for +2
         await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 0.111);
+            .submitBAC('p1', 0.082);
 
         expect(repo.lastUpdated, isNotNull);
         // +2 for sweet spot: 10+2=12
@@ -253,10 +253,10 @@ void main() {
         final container = _makeContainer(repo: repo, currentRound: 1);
         addTearDown(container.dispose);
 
-        // Round 1 optimal = 0.111, submit 0.111 for +2 (15+2 clamped to 15)
+        // Round 1 optimal = 0.082, submit 0.082 for +2 (15+2 clamped to 15)
         await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 0.111);
+            .submitBAC('p1', 0.082);
 
         expect(repo.lastUpdated!.points, equals(15));
       });
@@ -268,7 +268,7 @@ void main() {
 
         await container
             .read(bACEntryNotifierProvider.notifier)
-            .submitBAC('p1', 0.111, roundNumber: 1);
+            .submitBAC('p1', 0.082, roundNumber: 1);
 
         expect(repo.lastUpdated, isNotNull);
         expect(repo.lastUpdated!.readings.single.roundNumber, equals(1));

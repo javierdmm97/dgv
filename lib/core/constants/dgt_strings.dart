@@ -171,7 +171,7 @@ class DGTStrings {
 
   // DGT Titles
   static const String titleVelocidadDeCrucero = 'Velocidad de Crucero';
-  static const String titleMultaPorExceso = 'Multa por Exceso';
+  static const String titleMultaPorExceso = 'Vas en (de) cabeza';
   static const String titleLDePracticas = 'L de Prácticas';
   static const String titleVehiculoHibrido = 'El favorito de la DGV';
   static const String titleITVPassed = 'ITV Pasada';

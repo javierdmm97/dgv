@@ -8,7 +8,7 @@ class NotificationPayload {
     required this.text,
     required this.timestamp,
     this.status = 'pending',
-    // manual | fine | streak | moab | zone
+    // manual | fine | title | streak | moab | zone
     this.type = 'manual',
     this.imageUrl,
     this.targetPlayerId,

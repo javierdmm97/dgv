@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — Game Mechanics
+- `titleMultaPorExceso` display name changed from "Multa por Exceso" to "Vas en (de) cabeza" (highest-BAC per-round title, not a fine)
+- `maxPlayersPerGroup` raised from 5 → 30; groups only split beyond 30 players
+- Default checkpoint interval changed from 45 → 60 minutes; 45-minute option removed
+- `soberThreshold` tightened from 0.10 → 0.05 mg/L (non-drinker boundary)
+- BAC optimal targets recalibrated using Widmark net accumulation: (absorption × rate) − 0.07 mg/L/hr elimination; curves now rise continuously through R10 (no R7 plateau); females correctly show higher targets than males at same body-size category
+
+### Added — Firebase Notifications
+- Real fines (−4 points) now emit a `type: 'fine'` Firebase notification: `🚨 Multa para <name> (nº N · M€)` from `BACEntryNotifier.submitBAC`
+- All per-round DGT title awards now emit a `type: 'title'` notification using each title's own emoji and display name (was only `multaPorExceso` with wrong `'fine'` type)
+- `'title'` added as a valid `NotificationPayload.type` value
+
 ---
 
 ## [1.0.0] - 2026-06-03

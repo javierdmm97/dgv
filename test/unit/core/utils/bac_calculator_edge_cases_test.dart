@@ -29,16 +29,18 @@ void main() {
       expect(small, isNot(equals(large)));
     });
 
-    test('optimal BAC rises to R7 then plateaus through R10', () {
+    test('optimal BAC rises throughout but more slowly after R6', () {
       double r(int round) =>
           BACCalculator.calculateOptimalBrAC(round, Sex.male, BodySize.medium);
 
-      // Curve rises each round up to R7
-      expect(r(7), greaterThan(r(6)));
+      // Curve rises every round
       expect(r(6), greaterThan(r(1)));
-      // R7 onward is flat (plateau)
-      expect(r(8), equals(r(7)));
-      expect(r(10), equals(r(7)));
+      expect(r(7), greaterThan(r(6)));
+      expect(r(10), greaterThan(r(7)));
+      // R7-R10 increment is smaller than R1-R6 increment (slower pace)
+      final phase1Step = r(2) - r(1);
+      final phase2Step = r(8) - r(7);
+      expect(phase2Step, lessThan(phase1Step));
     });
 
     // ── isInOptimalZone — proportional boundary ──────────────────────────────

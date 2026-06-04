@@ -70,12 +70,12 @@ void main() {
 
     group('evaluateRound — velocidadDeCrucero', () {
       test('awards to player closest to their optimal zone', () {
-        // Medium male, round 1 optimal ≈ 0.111
-        // 'a' is 0.004 above optimal (closest), 'c' is 0.010 below optimal (lowest drinker BAC)
+        // Medium male, round 1 optimal ≈ 0.082
+        // 'a' is 0.003 above optimal (closest), 'c' is 0.022 below optimal (lowest drinker BAC)
         final players = [
           _playerWithReading(
             id: 'a',
-            bac: 0.115, // above optimal, distance=0.004 → velocidadDeCrucero
+            bac: 0.085, // above optimal, distance=0.003 → velocidadDeCrucero
             round: 1,
           ),
           _playerWithReading(
@@ -85,8 +85,7 @@ void main() {
           ),
           _playerWithReading(
             id: 'c',
-            bac:
-                0.101, // below optimal, distance=0.010; lowest BAC drinker → lDePracticas
+            bac: 0.060, // below optimal, distance=0.022; lowest BAC drinker → lDePracticas
             round: 1,
           ),
         ];
@@ -215,14 +214,14 @@ void main() {
 
     group('evaluateRound — vehiculoHibrido (El favorito de la DGV)', () {
       test('awards to all sober players not already holding another title', () {
-        // 'd' (0.115) is closest to optimal → velocidadDeCrucero
-        // 'a' (0.00) and 'c' (0.08) are sober → both get vehiculoHibrido
+        // 'd' (0.085) is closest to optimal → velocidadDeCrucero
+        // 'a' (0.00) and 'c' (0.04) are sober (≤0.05) → both get vehiculoHibrido
         // 'b' (0.35) is a drinker → does not get vehiculoHibrido
         final players = [
           _playerWithReading(id: 'a', bac: 0.00, round: 1),
           _playerWithReading(id: 'b', bac: 0.35, round: 1),
-          _playerWithReading(id: 'c', bac: 0.08, round: 1),
-          _playerWithReading(id: 'd', bac: 0.115, round: 1),
+          _playerWithReading(id: 'c', bac: 0.04, round: 1),
+          _playerWithReading(id: 'd', bac: 0.085, round: 1),
         ];
 
         final awards = TitleEvaluator.evaluateRound(players, 1);
@@ -248,13 +247,13 @@ void main() {
     group('evaluateRound — itvPassed', () {
       test('awards to players back in zone after being out', () {
         // ITV Passed logic: lost points last round AND now back in zone
-        // Round 2 optimal = 0.223 (±10% = [0.201, 0.245])
+        // Round 2 optimal = 0.164 (±10% = [0.148, 0.180])
         // 'b' is exactly at optimal → gets velocidadDeCrucero
-        // 'a' is in zone (0.21 ∈ [0.201, 0.245]) AND lost points → gets itvPassed
+        // 'a' is in zone (0.172 ∈ [0.148, 0.180]) AND lost points → gets itvPassed
         final players = [
           _playerWithReading(
             id: 'a',
-            bac: 0.21, // Round 2: in zone + lost points → itvPassed
+            bac: 0.172, // Round 2: in zone + lost points → itvPassed
             round: 2,
             previousBac: 0.55,
             previousRound: 1,
@@ -262,14 +261,14 @@ void main() {
           ),
           _playerWithReading(
             id: 'b',
-            bac: 0.223, // Round 2: exactly optimal → velocidadDeCrucero
+            bac: 0.164, // Round 2: exactly optimal → velocidadDeCrucero
             round: 2,
-            previousBac: 0.111,
+            previousBac: 0.082,
             previousRound: 1,
             previousPointsChange: 2,
           ),
           // 'c' absorbs lDePracticas so 'a' is not claimed by it first
-          _playerWithReading(id: 'c', bac: 0.15, round: 2),
+          _playerWithReading(id: 'c', bac: 0.10, round: 2),
           // 'd' absorbs multaPorExceso (highest BAC) so 'a' is free for itvPassed
           _playerWithReading(id: 'd', bac: 0.80, round: 2),
         ];

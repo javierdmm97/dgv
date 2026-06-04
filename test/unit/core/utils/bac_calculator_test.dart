@@ -64,9 +64,9 @@ void main() {
         );
       });
 
-      test('men have higher BrAC targets than women for same size', () {
-        // New table: males have higher peaks because they process more volume
-        // before reaching the same impairment level (higher body water ratio).
+      test('women have higher BrAC targets than men for the same size category', () {
+        // Widmark: females have lower body-water ratio (r=0.55 vs 0.68), so the
+        // same drink produces a higher BrAC even though they drink at a lower rate.
         final maleValue = BACCalculator.calculateOptimalBrAC(
           5,
           Sex.male,
@@ -77,7 +77,7 @@ void main() {
           Sex.female,
           BodySize.medium,
         );
-        expect(maleValue, greaterThan(femaleValue));
+        expect(femaleValue, greaterThan(maleValue));
       });
 
       // ── Curve multiplier ─────────────────────────────────────────────────

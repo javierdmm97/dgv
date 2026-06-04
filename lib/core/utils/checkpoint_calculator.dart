@@ -6,7 +6,7 @@ import '../models/player_profile.dart';
 class CheckpointCalculator {
   CheckpointCalculator._();
 
-  static const int maxPlayersPerGroup = 5;
+  static const int maxPlayersPerGroup = 30;
 
   /// Calculate next checkpoint time for a group based on their last measurement
   static DateTime calculateNextCheckpoint(

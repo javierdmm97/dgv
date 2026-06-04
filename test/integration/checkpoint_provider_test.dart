@@ -118,25 +118,25 @@ void main() {
   // Requirement 15.1
 
   test(
-    'Scenario 1: initialize() with 5 groups persists CheckpointState to Hive',
+    'Scenario 1: initialize() with 1 group persists CheckpointState to Hive',
     () async {
       final container = _makeContainer();
       addTearDown(container.dispose);
       final keepAlive = _keepAlive(container);
       addTearDown(keepAlive.close);
 
-      final players3Groups = _makePlayers(24);
+      final players = _makePlayers(24);
 
       final notifier = container.read(checkpointNotifierProvider.notifier);
-      await notifier.initialize(players: players3Groups, intervalMinutes: 45);
+      await notifier.initialize(players: players, intervalMinutes: 60);
 
       // Read directly from the repository (bypassing the provider cache)
       final repo = container.read(checkpointRepositoryProvider);
       final persisted = await repo.getCurrent();
 
       expect(persisted, isNotNull);
-      expect(persisted!.groups.length, equals(5));
-      expect(persisted.intervalMinutes, equals(45));
+      expect(persisted!.groups.length, equals(1));
+      expect(persisted.intervalMinutes, equals(60));
 
       // Total players across all groups equals 24
       final total = persisted.groups.fold<int>(
@@ -159,14 +159,14 @@ void main() {
       final keepAlive1 = _keepAlive(container1);
       addTearDown(keepAlive1.close);
 
-      final players = _makePlayers(9); // 2 groups
+      final players = _makePlayers(9); // 1 group (≤30)
       await container1
           .read(checkpointNotifierProvider.notifier)
-          .initialize(players: players, intervalMinutes: 45);
+          .initialize(players: players, intervalMinutes: 60);
 
       final state1 = await _awaitState(container1);
       expect(state1, isNotNull);
-      expect(state1!.groups.length, equals(2));
+      expect(state1!.groups.length, equals(1));
 
       // Dispose first container (simulates app restart)
       container1.dispose();
@@ -180,8 +180,8 @@ void main() {
       final state2 = await _awaitState(container2);
 
       expect(state2, isNotNull);
-      expect(state2!.groups.length, equals(2));
-      expect(state2.intervalMinutes, equals(45));
+      expect(state2!.groups.length, equals(1));
+      expect(state2.intervalMinutes, equals(60));
 
       // Each group's playerIds should be preserved
       for (var i = 0; i < state1.groups.length; i++) {
@@ -268,9 +268,9 @@ void main() {
       final keepAlive = _keepAlive(container);
       addTearDown(keepAlive.close);
 
-      final players = _makePlayers(16); // 4 groups of up to 5
+      final players = _makePlayers(31); // 2 groups (31 > maxPlayersPerGroup=30)
       final notifier = container.read(checkpointNotifierProvider.notifier);
-      await notifier.initialize(players: players, intervalMinutes: 45);
+      await notifier.initialize(players: players, intervalMinutes: 60);
 
       final stateBefore = await _awaitState(container);
       expect(stateBefore, isNotNull);
@@ -383,14 +383,14 @@ void main() {
       final keepAlive = _keepAlive(container);
       addTearDown(keepAlive.close);
 
-      // Initialize with 16 players → 4 groups
-      final players = _makePlayers(16);
+      // Initialize with 31 players → 2 groups (31 > maxPlayersPerGroup=30)
+      final players = _makePlayers(31);
       final notifier = container.read(checkpointNotifierProvider.notifier);
-      await notifier.initialize(players: players, intervalMinutes: 45);
+      await notifier.initialize(players: players, intervalMinutes: 60);
 
       final initialState = await _awaitState(container);
       expect(initialState, isNotNull);
-      expect(initialState!.groups.length, equals(4));
+      expect(initialState!.groups.length, equals(2));
 
       // Simulate both groups becoming due simultaneously
       final pastTime = DateTime.now().subtract(const Duration(hours: 2));

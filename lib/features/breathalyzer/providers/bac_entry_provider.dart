@@ -18,6 +18,7 @@ import 'package:dgv/core/utils/bac_calculator.dart';
 import 'package:dgv/core/utils/points_calculator.dart';
 import 'package:dgv/features/breathalyzer/providers/bac_entry_result.dart';
 import 'package:dgv/features/fake_id/services/license_update_service.dart';
+import 'package:dgv/features/firebase/models/notification_payload.dart';
 
 part 'bac_entry_provider.g.dart';
 
@@ -172,14 +173,28 @@ class BACEntryNotifier extends _$BACEntryNotifier {
     );
 
     await repo.update(updatedPlayer);
+    final syncSvc = ref.read(firebaseSyncServiceProvider);
     unawaited(
-      ref
-          .read(firebaseSyncServiceProvider)
-          .syncPlayerUpdate(
-            sessionId: gameState?.id ?? '',
-            player: updatedPlayer,
-          ),
+      syncSvc.syncPlayerUpdate(
+        sessionId: gameState?.id ?? '',
+        player: updatedPlayer,
+      ),
     );
+    if (issueFine) {
+      unawaited(
+        syncSvc.sendNotification(
+          NotificationPayload(
+            id: const Uuid().v4(),
+            text:
+                '🚨 Multa para ${player.name} '
+                '(nº $newFineCount · $newMoneyLost€)',
+            timestamp: DateTime.now(),
+            type: 'fine',
+            targetPlayerId: playerId,
+          ),
+        ),
+      );
+    }
     ref.invalidate(playerListNotifierProvider);
 
     // Notify checkpoint that this player has been measured

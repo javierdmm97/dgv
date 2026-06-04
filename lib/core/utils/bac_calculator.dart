@@ -3,48 +3,50 @@ import '../models/player_profile.dart';
 
 /// Predictive BrAC calculator for party mode pacing.
 ///
-/// Targets are calibrated for a 6-hour party window (rounds 1-6) with peak
-/// euphoria at round 4 (~0.35-0.48 mg/L), followed by gradual wind-down.
-/// Rounds 7+ use linear elimination from round 5 baseline.
+/// Targets use Widmark net accumulation: (absorption × rate) − 0.07 mg/L/hr elimination.
+/// Males: 1.3 beers/hr (R1–R6) → 1.0 beers/hr (R7–R10).
+/// Females: 1.0 beers/hr (R1–R6) → 0.7 beers/hr (R7–R10).
+/// Smaller bodies and females reach higher BrAC at the same drinking pace.
 class BACCalculator {
   BACCalculator._();
 
   // Party mode optimal BrAC targets for rounds 1-10 (mg/L)
-  // Calibrated for high-energy party state with peak at round 6
-  // Based on real consumption patterns: gradual build-up, plateau, wind-down
+  // Net increment = (beers/hr × Widmark absorption) − 0.07 mg/L/hr elimination
+  // Males: 1.3 beers/hr R1-6, 1.0 beers/hr R7-10
+  // Females: 1.0 beers/hr R1-6, 0.7 beers/hr R7-10
   static const Map<Sex, Map<BodySize, List<double>>> _partyModeTargets = {
     Sex.male: {
-      // M-S (~65kg)
+      // M-S (~65kg): +0.112 (R1-6), +0.070 (R7-10)
       BodySize.small: [
-        0.105, 0.210, 0.315, 0.420, 0.525, 0.630, 0.735, // R1–R7, peak at R7
-        0.735, 0.735, 0.735, // R8–R10 plateau
+        0.112, 0.224, 0.336, 0.448, 0.560, 0.672, // R1-R6
+        0.742, 0.812, 0.882, 0.952, // R7-R10
       ],
-      // M-M (~78kg)
+      // M-M (~78kg): +0.082 (R1-6), +0.047 (R7-10)
       BodySize.medium: [
-        0.111, 0.223, 0.335, 0.446, 0.558, 0.670, 0.782, // R1–R7, peak at R7
-        0.782, 0.782, 0.782, // R8–R10 plateau
+        0.082, 0.164, 0.246, 0.328, 0.410, 0.492, // R1-R6
+        0.539, 0.586, 0.633, 0.680, // R7-R10
       ],
-      // M-L (~95kg)
+      // M-L (~95kg): +0.055 (R1-6), +0.026 (R7-10)
       BodySize.large: [
-        0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 0.875, // R1–R7, peak at R7
-        0.875, 0.875, 0.875, // R8–R10 plateau
+        0.055, 0.110, 0.165, 0.220, 0.275, 0.330, // R1-R6
+        0.356, 0.382, 0.408, 0.434, // R7-R10
       ],
     },
     Sex.female: {
-      // F-S (~55kg)
+      // F-S (~55kg): +0.135 (R1-6), +0.074 (R7-10)
       BodySize.small: [
-        0.086, 0.173, 0.260, 0.346, 0.433, 0.520, 0.607, // R1–R7, peak at R7
-        0.607, 0.607, 0.607, // R8–R10 plateau
+        0.135, 0.270, 0.405, 0.540, 0.675, 0.810, // R1-R6
+        0.884, 0.958, 1.032, 1.106, // R7-R10
       ],
-      // F-M (~65kg)
+      // F-M (~65kg): +0.103 (R1-6), +0.051 (R7-10)
       BodySize.medium: [
-        0.108, 0.216, 0.325, 0.433, 0.541, 0.650, 0.758, // R1–R7, peak at R7
-        0.758, 0.758, 0.758, // R8–R10 plateau
+        0.103, 0.206, 0.309, 0.412, 0.515, 0.618, // R1-R6
+        0.669, 0.720, 0.771, 0.822, // R7-R10
       ],
-      // F-L (~80kg)
+      // F-L (~80kg): +0.071 (R1-6), +0.029 (R7-10)
       BodySize.large: [
-        0.118, 0.236, 0.355, 0.473, 0.591, 0.710, 0.828, // R1–R7, peak at R7
-        0.828, 0.828, 0.828, // R8–R10 plateau
+        0.071, 0.142, 0.213, 0.284, 0.355, 0.426, // R1-R6
+        0.455, 0.484, 0.513, 0.542, // R7-R10
       ],
     },
   };
@@ -102,6 +104,10 @@ class BACCalculator {
     if (round < 1 || round > 10) return null;
     return _partyModeTargets[sex]![size]![round - 1];
   }
+
+  /// Full target list (R1–R10) for a given profile.
+  static List<double> getTargets(Sex sex, BodySize size) =>
+      _partyModeTargets[sex]![size]!;
 
   static double _pct(double currentBrAC, double optimalBrAC) =>
       (currentBrAC - optimalBrAC).abs() / optimalBrAC;

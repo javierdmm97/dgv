@@ -144,24 +144,28 @@ void main() {
         expect(CheckpointCalculator.suggestNumberOfGroups(5), equals(1));
       });
 
-      test('returns 2 for 6 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(6), equals(2));
+      test('returns 1 for 6 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(6), equals(1));
       });
 
-      test('returns 4 for 20 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(20), equals(4));
+      test('returns 1 for 20 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(20), equals(1));
       });
 
-      test('returns 5 for 21 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(21), equals(5));
+      test('returns 1 for 21 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(21), equals(1));
       });
 
-      test('returns 5 for 24 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(24), equals(5));
+      test('returns 1 for 24 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(24), equals(1));
       });
 
-      test('returns 5 for 25 players', () {
-        expect(CheckpointCalculator.suggestNumberOfGroups(25), equals(5));
+      test('returns 1 for 30 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(30), equals(1));
+      });
+
+      test('returns 2 for 31 players', () {
+        expect(CheckpointCalculator.suggestNumberOfGroups(31), equals(2));
       });
 
       test('returns 1 for 1 player', () {

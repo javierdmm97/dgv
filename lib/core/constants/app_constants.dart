@@ -48,11 +48,10 @@ class AppConstants {
   // Checkpoint Timer (per-group intervals, configurable)
   static const List<int> availableIntervalMinutes = [
     3,
-    45,
     60,
   ]; // User-selectable
-  static const int defaultIntervalMinutes = 45;
-  static const Duration defaultCheckpointInterval = Duration(minutes: 45);
+  static const int defaultIntervalMinutes = 60;
+  static const Duration defaultCheckpointInterval = Duration(minutes: 60);
 
   // Beer consumption constants
   static const double standardBeerML = 330.0;
@@ -82,7 +81,7 @@ class AppConstants {
   static const String keyLastGameId = 'last_game_id';
 
   // BAC threshold below which a player is considered sober/non-drinker (mg/L)
-  static const double soberThreshold = 0.10;
+  static const double soberThreshold = 0.05;
 
   // OCR Confidence
   static const double ocrMinConfidence = 0.90;
