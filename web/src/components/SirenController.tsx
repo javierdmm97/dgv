@@ -28,7 +28,8 @@ export function SirenController({ session, variant }: { session: Session; varian
         void audioRef.current.play().catch(() => {})
       }
       setTakeoverRound(round)
-      const t = setTimeout(() => setTakeoverRound(null), variant === 'tv' ? 4800 : 3200)
+      // One siren cycle (red→blue), matched to the flash animation length.
+      const t = setTimeout(() => setTakeoverRound(null), variant === 'tv' ? 1600 : 1300)
       return () => clearTimeout(t)
     }
   }, [session.currentRound, enabled, variant])
